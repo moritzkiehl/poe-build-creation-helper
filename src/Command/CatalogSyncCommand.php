@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Catalog\GemSync;
+use App\Catalog\ItemSync;
 use App\Catalog\PassiveTreeSync;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -24,6 +25,7 @@ final class CatalogSyncCommand extends Command
     public function __construct(
         private readonly PassiveTreeSync $passiveTree,
         private readonly GemSync $gems,
+        private readonly ItemSync $items,
     ) {
         parent::__construct();
     }
@@ -40,7 +42,7 @@ final class CatalogSyncCommand extends Command
 
         $failed = false;
 
-        foreach (['passive_tree' => $this->passiveTree->run(...), 'skill_gems' => $this->gems->run(...)] as $source => $run) {
+        foreach (['passive_tree' => $this->passiveTree->run(...), 'skill_gems' => $this->gems->run(...), 'items' => $this->items->run(...)] as $source => $run) {
             $result = $run();
 
             if (!$result->ok) {

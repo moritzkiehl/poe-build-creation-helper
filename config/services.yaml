@@ -16,6 +16,9 @@ parameters:
     # committed or served on — the data belongs to Grinding Gear Games.
     app.catalog.passive_tree_url: 'https://raw.githubusercontent.com/grindinggear/poe2-skilltree-export/main/data.json'
     app.catalog.gems_url: 'https://repoe-fork.github.io/poe2/skill_gems.min.json'
+    app.catalog.uniques_url: 'https://repoe-fork.github.io/poe2/uniques.min.json'
+    app.catalog.base_items_url: 'https://repoe-fork.github.io/poe2/base_items.min.json'
+    app.catalog.mods_url: 'https://repoe-fork.github.io/poe2/mods.min.json'
     app.catalog.snapshot_dir: '%kernel.project_dir%/var/catalog'
     app.catalog.user_agent: 'poe-build-creation-helper/0.1 (+https://github.com/moritzkiehl/poe-build-creation-helper; contact: %app.catalog.contact%)'
     app.catalog.contact: '%env(default:app.catalog.contact_default:APP_CATALOG_CONTACT)%'

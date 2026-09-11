@@ -29,6 +29,8 @@ final class GemSync
         private readonly SupportRequirementParser $parser,
         private readonly Connection $db,
         private readonly EntityManagerInterface $entityManager,
+        #[Autowire('%app.default_game_version%')]
+        private readonly string $gameVersion,
         #[Autowire('%app.catalog.gems_url%')]
         private readonly string $url,
     ) {
@@ -161,6 +163,7 @@ final class GemSync
             count: $result->count,
             upstreamRevision: $upstreamRevision,
             error: $result->error,
+            gameVersion: $this->gameVersion,
         ));
         $this->entityManager->flush();
 

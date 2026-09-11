@@ -1,0 +1,82 @@
+{
+    "Metadata/Items/Amulets/SyntheticAmulet": {
+        "domain": "item",
+        "drop_level": 1,
+        "implicits": [
+            "SyntheticImplicit1"
+        ],
+        "inventory_height": 1,
+        "inventory_width": 1,
+        "inherits_from": "Metadata/Items/Amulets/AbstractAmulet",
+        "item_class": "Amulet",
+        "name": "Synthetic Amulet Base",
+        "properties": {},
+        "release_state": "released",
+        "tags": [
+            "amulet",
+            "default",
+            "amulet"
+        ],
+        "visual_identity": {
+            "dds_file": "a.dds",
+            "id": "y1"
+        }
+    },
+    "Metadata/Items/Gems/SkillGemNotAnItem": {
+        "domain": "item",
+        "drop_level": 1,
+        "implicits": [],
+        "inventory_height": 1,
+        "inventory_width": 1,
+        "inherits_from": "Metadata/Items/Gems/AbstractSkillGem",
+        "item_class": "Active Skill Gem",
+        "name": "Synthetic Gem",
+        "properties": {},
+        "release_state": "released",
+        "tags": [
+            "gem"
+        ],
+        "visual_identity": {
+            "dds_file": "b.dds",
+            "id": "y2"
+        }
+    },
+    "Metadata/Items/Armours/SyntheticUnreleased": {
+        "domain": "item",
+        "drop_level": 1,
+        "implicits": [],
+        "inventory_height": 2,
+        "inventory_width": 2,
+        "inherits_from": "Metadata/Items/Armours/AbstractBodyArmour",
+        "item_class": "Body Armour",
+        "name": "Synthetic Unreleased",
+        "properties": {},
+        "release_state": "unreleased",
+        "tags": [
+            "body_armour"
+        ],
+        "visual_identity": {
+            "dds_file": "c.dds",
+            "id": "y3"
+        }
+    },
+    "Metadata/Items/Currency/SyntheticCurrency": {
+        "domain": "item",
+        "drop_level": 1,
+        "implicits": [],
+        "inventory_height": 1,
+        "inventory_width": 1,
+        "inherits_from": "Metadata/Items/Currency/AbstractCurrency",
+        "item_class": "StackableCurrency",
+        "name": "Synthetic Orb",
+        "properties": {},
+        "release_state": "released",
+        "tags": [
+            "currency"
+        ],
+        "visual_identity": {
+            "dds_file": "d.dds",
+            "id": "y4"
+        }
+    }
+}

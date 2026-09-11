@@ -30,6 +30,8 @@ final class PassiveTreeSync
         private readonly PassiveTreeNormalizer $normalizer,
         private readonly Connection $db,
         private readonly EntityManagerInterface $entityManager,
+        #[Autowire('%app.default_game_version%')]
+        private readonly string $gameVersion,
         #[Autowire('%app.catalog.passive_tree_url%')]
         private readonly string $url,
     ) {
@@ -117,6 +119,7 @@ final class PassiveTreeSync
             count: $result->count,
             upstreamRevision: $upstreamRevision,
             error: $result->error,
+            gameVersion: $this->gameVersion,
         ));
         $this->entityManager->flush();
 

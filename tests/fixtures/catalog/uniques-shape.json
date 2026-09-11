@@ -1,0 +1,5 @@
+{
+    "101": {"id": "Synthetic Amulet", "name": "Synthetic Amulet", "item_class": "Amulet", "inventory_width": 1, "inventory_height": 1, "is_alternate_art": false, "visual_identity": {"dds_file": "Art/2DItems/Amulets/Uniques/Synthetic.dds", "id": "FourUniqueAmulet1"}},
+    "102": {"id": "Synthetic Twin", "name": "Synthetic Twin", "item_class": "Jewel", "inventory_width": 1, "inventory_height": 1, "is_alternate_art": false, "visual_identity": {"dds_file": "a.dds", "id": "x1"}},
+    "103": {"id": "Synthetic Twin", "name": "Synthetic Twin", "item_class": "Jewel", "inventory_width": 1, "inventory_height": 1, "is_alternate_art": false, "visual_identity": {"dds_file": "b.dds", "id": "x2"}}
+}

@@ -33,8 +33,15 @@ Not a DPS or EHP simulator — that stays with Path of Building 2.
 | Publication | Application code public under MIT; deployment configuration private |
 | LLM funding | Stage 2: the user's own key plus a capped shared monthly budget; paid credits as a switch that stays off |
 
-Deliberately out of the MVP: ladder meta, prices, login, LLM, rare mods and
-crafting.
+Deliberately out of the MVP: ladder meta, prices, login, LLM.
+
+Revised 2026-09-11: **craftable item mods are in** after all. The original line
+excluded them because the MVP does no rare crafting, and that reasoning still
+holds for the rules engine — see the limit below. What changed is the goal: item
+recommendations need to know what a base can carry. Synced are the 2586
+`domain: item` prefixes and suffixes with their readable text and the base tags
+they roll on. Unique-generation mods stay out: 10447 exist with readable text,
+and nothing published links any of them to a unique item.
 
 Clarified on 2026-09-11: "no Node" means no NodeJS backend and no Node
 dependency in the asset pipeline. Node as a development and CI tool is fine —
@@ -479,6 +486,51 @@ What the corpus settles:
 - **Level values run 0 to 100**, not 1 to 100.
 - The documented markup is real: `<b>{<m>{Allocation Step #1}}` with CRLF line
   breaks.
+
+### What the item data can and cannot do (2026-09-11)
+
+Established by reading the 0.5.5 files rather than by assuming:
+
+- **A unique has no modifiers in any published source.** `uniques` carries name,
+  class, size and artwork — nothing else. 10447 unique-generation mods exist in
+  `mods` and 7905 have readable text, but nothing maps them to the 441 unique
+  items; fuzzy name matching scores 27 hits in 200, which is noise. So every
+  claim the interface makes about what a unique *does* comes from
+  `interactions.yaml`, never from derivation.
+- **Unique names are genuinely ambiguous, and not through alternate art.** Not
+  one of the 449 entries is flagged as alternate art. Grand Spectrum (3),
+  Grip of Kulemak (5) and Guiding Palm (3) are distinct items sharing a name and
+  differing in modifiers we cannot see. Since `.build` identifies a unique by
+  name alone, `unique.name_ambiguous` is unavoidable.
+- **Crafting mods are usable.** 2586 item prefixes and suffixes, 2558 with
+  readable text, each carrying spawn weights per tag; 42 of those 54 tags occur
+  on base items, so "what can roll on this base" is a real query and is answered
+  by joining `catalog_mod_spawn_tag` to `catalog_base_item_tag`.
+- **The hard limit stays.** A `.build` file carries no rare items and no
+  modifiers, so the rules engine can never see a mod on a player's build. Mod
+  data serves browsing, crafting guidance and curated advice. It can never
+  validate what someone actually plans to wear, and the interface must not
+  suggest otherwise.
+
+Stored from a real run: 449 uniques, 2401 equippable bases, 10522 base tags,
+2558 mods, 3322 spawn links.
+
+### Re-indexing per patch
+
+Path of Exile 2 patches on roughly a four-month cycle, and every patch means a
+full re-sync and re-index of all five sources. Three consequences are built in
+rather than left to discipline:
+
+- Each `catalog_sync` row stamps the game version, so rows can be told apart and
+  the version-gated rules have something to compare against.
+- Each source rebuild runs in one transaction. Readers keep seeing the previous
+  catalog until it commits, so a sync never exposes an empty or half-filled
+  table.
+- Every run revalidates first, so a source that has not moved costs one request
+  instead of a download.
+
+Rare and heavy beats frequent and light here: the work per patch is a checklist,
+not a background job, and it belongs with the version acceptance.
 
 ### The support_text parser, measured (2026-09-11)
 

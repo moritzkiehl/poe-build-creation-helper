@@ -110,6 +110,7 @@ final class PassiveTreeSyncTest extends KernelTestCase
             new \App\Catalog\PassiveTreeNormalizer(),
             $this->db,
             $container->get(EntityManagerInterface::class),
+            '0.5.5',
             'https://example.test/data.json',
         );
     }

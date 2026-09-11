@@ -1,0 +1,90 @@
+{
+    "SyntheticStrengthSuffix1": {
+        "domain": "item",
+        "generation_type": "suffix",
+        "name": "of the Synthetic",
+        "text": "+(10-20) to [Strength]",
+        "required_level": 1,
+        "groups": [
+            "Strength"
+        ],
+        "implicit_tags": [
+            "attribute"
+        ],
+        "adds_tags": [],
+        "generation_weights": [],
+        "grants_effects": [],
+        "is_essence_only": false,
+        "stats": [],
+        "type": "SyntheticStrength",
+        "spawn_weights": [
+            {
+                "tag": "amulet",
+                "weight": 1000
+            },
+            {
+                "tag": "ring",
+                "weight": 0
+            },
+            {
+                "tag": "amulet",
+                "weight": 500
+            }
+        ]
+    },
+    "SyntheticDamagePrefix1": {
+        "domain": "item",
+        "generation_type": "prefix",
+        "name": "Synthetic",
+        "text": "(20-30)% increased [Physical] Damage",
+        "required_level": 20,
+        "groups": [
+            "PhysicalDamage"
+        ],
+        "implicit_tags": [],
+        "adds_tags": [],
+        "generation_weights": [],
+        "grants_effects": [],
+        "is_essence_only": false,
+        "stats": [],
+        "type": "SyntheticDamage",
+        "spawn_weights": [
+            {
+                "tag": "weapon",
+                "weight": 500
+            }
+        ]
+    },
+    "SyntheticUniqueMod1": {
+        "domain": "item",
+        "generation_type": "unique",
+        "name": "",
+        "text": "Orphaned unique text nothing points at",
+        "required_level": 1,
+        "groups": [],
+        "implicit_tags": [],
+        "adds_tags": [],
+        "generation_weights": [],
+        "grants_effects": [],
+        "is_essence_only": false,
+        "stats": [],
+        "type": "SyntheticUnique",
+        "spawn_weights": []
+    },
+    "SyntheticMonsterMod1": {
+        "domain": "monster",
+        "generation_type": "prefix",
+        "name": "Synthetic Beast",
+        "text": "Monsters have more life",
+        "required_level": 1,
+        "groups": [],
+        "implicit_tags": [],
+        "adds_tags": [],
+        "generation_weights": [],
+        "grants_effects": [],
+        "is_essence_only": false,
+        "stats": [],
+        "type": "SyntheticMonster",
+        "spawn_weights": []
+    }
+}
