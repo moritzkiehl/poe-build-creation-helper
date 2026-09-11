@@ -257,8 +257,22 @@ passives and is only ever 1 or 2.
 
 Where the files live: Windows
 `C:/Users/Name/Documents/My Games/Path of Exile 2/BuildPlanner`;
-SteamOS
+SteamOS, per GGG's documentation,
 `/home/deck/.local/share/Steam/steamapps/compatdata/2315204395/pfx/drive_c/users/steamuser/Documents/My Games/Path of Exile 2/BuildPlanner`.
+
+The app id in that documented path is not what a Linux Steam install uses. On
+the development machine (2026-09-11) Path of Exile 2 is app id **2694490**:
+
+```
+~/.local/share/Steam/steamapps/compatdata/2694490/pfx/drive_c/users/steamuser/Documents/My Games/Path of Exile 2/BuildPlanner
+```
+
+So the export page must not print one hardcoded Linux path. It should name the
+Windows path, explain the compatdata shape, and say that the app id is found
+under `steamapps/compatdata` next to a `Path of Exile 2` prefix. The
+`BuildPlanner` directory does not exist until the feature is first used, so the
+instructions have to say it may need creating.
+
 The game runs a file watcher that picks up changes. Alternatively, subscribe via
 pathofexile2.com.
 
