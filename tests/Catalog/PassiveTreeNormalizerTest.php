@@ -20,7 +20,7 @@ final class PassiveTreeNormalizerTest extends TestCase
         $nodes = $this->normalize()->nodes;
 
         self::assertNotContains(null, array_column($nodes, 'id'));
-        self::assertCount(4, $nodes);
+        self::assertCount(5, $nodes);
     }
 
     public function testTheSyntheticRootIsNotAPassive(): void
@@ -59,6 +59,24 @@ final class PassiveTreeNormalizerTest extends TestCase
             self::assertNotSame('root', $from);
             self::assertNotSame('root', $to);
         }
+    }
+
+    public function testEveryClassIsReadFromTheExportWithItsStartNode(): void
+    {
+        $classes = array_column($this->normalize()->classes, null, 'id');
+
+        self::assertCount(2, $classes);
+        self::assertSame('syntheticstart1', $classes['Warrior']['start_node_id']);
+        self::assertSame('syntheticstart1', $classes['Sorceress']['start_node_id'], 'two classes share one physical start node');
+        self::assertSame(15, $classes['Warrior']['base_str']);
+    }
+
+    public function testAClassCarriesItsAscendancies(): void
+    {
+        $classes = array_column($this->normalize()->classes, null, 'id');
+
+        self::assertSame([['id' => 'Synthetic1', 'name' => 'Synthetic Ascendant']], $classes['Warrior']['ascendancies']);
+        self::assertSame([], $classes['Sorceress']['ascendancies']);
     }
 
     private function normalize(): \App\Catalog\NormalizedTree

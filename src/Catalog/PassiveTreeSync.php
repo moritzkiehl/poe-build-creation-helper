@@ -65,6 +65,7 @@ final class PassiveTreeSync
     private function replace(NormalizedTree $tree): void
     {
         $this->db->transactional(static function (Connection $db) use ($tree): void {
+            $db->executeStatement('DELETE FROM catalog_class');
             $db->executeStatement('DELETE FROM catalog_passive_edge');
             $db->executeStatement('DELETE FROM catalog_passive');
 
@@ -86,6 +87,13 @@ final class PassiveTreeSync
                     array_push($params, $from, $to);
                 }
                 $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES '.implode(',', $values), $params);
+            }
+
+            foreach ($tree->classes as $class) {
+                $db->executeStatement(
+                    'INSERT INTO catalog_class (id, start_node_id, base_str, base_dex, base_int, ascendancies) VALUES (?, ?, ?, ?, ?, ?)',
+                    [$class['id'], $class['start_node_id'], $class['base_str'], $class['base_dex'], $class['base_int'], json_encode($class['ascendancies'], \JSON_THROW_ON_ERROR)],
+                );
             }
         });
     }

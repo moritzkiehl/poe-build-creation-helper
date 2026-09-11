@@ -21,6 +21,7 @@ final class PassiveTreeSyncTest extends KernelTestCase
     {
         self::bootKernel();
         $this->db = self::getContainer()->get(Connection::class);
+        $this->db->executeStatement('DELETE FROM catalog_class');
         $this->db->executeStatement('DELETE FROM catalog_passive_edge');
         $this->db->executeStatement('DELETE FROM catalog_passive');
         $this->db->executeStatement('DELETE FROM catalog_sync');
@@ -31,13 +32,13 @@ final class PassiveTreeSyncTest extends KernelTestCase
         $result = $this->sync($this->fixture())->run();
 
         self::assertTrue($result->ok);
-        self::assertSame(4, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'));
-        self::assertSame(1, $this->rowCount('SELECT COUNT(*) FROM catalog_passive_edge'));
+        self::assertSame(5, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'));
+        self::assertSame(2, $this->rowCount('SELECT COUNT(*) FROM catalog_passive_edge'));
 
         $log = self::getContainer()->get(EntityManagerInterface::class)->getRepository(CatalogSync::class)->findOneBy(['source' => 'passive_tree']);
         self::assertNotNull($log);
         self::assertSame('ok', $log->getStatus());
-        self::assertSame(4, $log->getCount());
+        self::assertSame(5, $log->getCount());
     }
 
     public function testARerunReplacesRatherThanDuplicates(): void
@@ -45,7 +46,7 @@ final class PassiveTreeSyncTest extends KernelTestCase
         $this->sync($this->fixture())->run();
         $this->sync($this->fixture())->run();
 
-        self::assertSame(4, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'));
+        self::assertSame(5, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'));
     }
 
     public function testAnUnchangedUpstreamIsNotRebuilt(): void
@@ -56,7 +57,7 @@ final class PassiveTreeSyncTest extends KernelTestCase
 
         self::assertTrue($result->ok);
         self::assertSame('unchanged', $result->status);
-        self::assertSame(4, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'));
+        self::assertSame(5, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'));
     }
 
     public function testTheRevisionUpstreamGaveIsRecorded(): void
@@ -73,8 +74,28 @@ final class PassiveTreeSyncTest extends KernelTestCase
         $result = $this->sync(new MockResponse('', ['http_code' => 503]))->run();
 
         self::assertFalse($result->ok);
-        self::assertSame(4, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'), 'a failed sync must not empty the catalog');
+        self::assertSame(5, $this->rowCount('SELECT COUNT(*) FROM catalog_passive'), 'a failed sync must not empty the catalog');
         self::assertSame('failed', $this->columnValue('SELECT status FROM catalog_sync ORDER BY id DESC LIMIT 1'));
+    }
+
+    public function testTheSyncStoresTheClassesFromTheExport(): void
+    {
+        $this->sync($this->fixture())->run();
+
+        $rows = $this->db->fetchAllAssociative('SELECT id, start_node_id FROM catalog_class ORDER BY id');
+
+        self::assertSame(
+            [['id' => 'Sorceress', 'start_node_id' => 'syntheticstart1'], ['id' => 'Warrior', 'start_node_id' => 'syntheticstart1']],
+            $rows,
+        );
+    }
+
+    public function testARerunReplacesClassesRatherThanAccumulating(): void
+    {
+        $this->sync($this->fixture())->run();
+        $this->sync($this->fixture())->run();
+
+        self::assertSame(2, $this->rowCount('SELECT COUNT(*) FROM catalog_class'));
     }
 
     private function rowCount(string $sql): int

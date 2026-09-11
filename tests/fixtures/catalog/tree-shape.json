@@ -1,9 +1,21 @@
 {
     "tree": "Default",
-    "classes": [{"name": "Warrior"}, {"name": "Sorceress"}],
+    "classes": [
+        {"name": "Warrior", "base_str": 15, "base_dex": 7, "base_int": 7, "ascendancies": [{"id": "Synthetic1", "name": "Synthetic Ascendant"}]},
+        {"name": "Sorceress", "base_str": 7, "base_dex": 7, "base_int": 15, "ascendancies": []}
+    ],
     "groups": {"1": {"x": 100.0, "y": 200.0, "orbits": [2], "nodes": ["1001", "1002"]}},
     "nodes": {
-        "root": {"group": 0, "orbit": 0, "orbitIndex": 0, "out": ["1001"], "in": [], "edges": [0]},
+        "root": {"group": 0, "orbit": 0, "orbitIndex": 0, "out": ["1000", "1001"], "in": [], "edges": [0]},
+        "1000": {
+            "id": "syntheticstart1",
+            "skill": 1000,
+            "name": "WARRIOR",
+            "classStartIndex": [0, 1],
+            "group": 1, "orbit": 0, "orbitIndex": 0,
+            "x": 0.0, "y": 0.0,
+            "out": ["1001"], "in": ["root"], "edges": [0]
+        },
         "1001": {
             "id": "synthetic12",
             "skill": 1001,

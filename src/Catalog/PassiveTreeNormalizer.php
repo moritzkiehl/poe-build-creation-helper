@@ -29,6 +29,8 @@ final class PassiveTreeNormalizer
             throw new \RuntimeException('The skill tree export has no "nodes" object.');
         }
 
+        /** @var array<string, mixed> $data */
+
         /** @var array<string, array<string, mixed>> $rawNodes */
         $rawNodes = $data['nodes'];
 
@@ -56,6 +58,7 @@ final class PassiveTreeNormalizer
         return new NormalizedTree(
             nodes: $nodes,
             edges: $this->edges($rawNodes, $allocatable),
+            classes: $this->classes($data, $rawNodes),
             treeVariant: \is_string($data['tree'] ?? null) ? $data['tree'] : null,
         );
     }
@@ -113,5 +116,78 @@ final class PassiveTreeNormalizer
         }
 
         return $edges;
+    }
+
+    /**
+     * The export names classes in one array and marks start nodes with the
+     * indices they serve. Six nodes cover twelve classes, in pairs.
+     *
+     * @param array<string, mixed>                $data
+     * @param array<string, array<string, mixed>> $rawNodes
+     *
+     * @return list<array{id: string, start_node_id: string, base_str: int, base_dex: int, base_int: int, ascendancies: list<array{id: string, name: string}>}>
+     */
+    private function classes(array $data, array $rawNodes): array
+    {
+        $startNodes = $this->startNodesByClassIndex($rawNodes);
+        $classes = [];
+
+        foreach (array_values((array) ($data['classes'] ?? [])) as $index => $class) {
+            if (!\is_array($class) || !\is_string($class['name'] ?? null) || !isset($startNodes[$index])) {
+                continue;
+            }
+
+            $classes[] = [
+                'id' => $class['name'],
+                'start_node_id' => $startNodes[$index],
+                'base_str' => is_numeric($class['base_str'] ?? null) ? (int) $class['base_str'] : 0,
+                'base_dex' => is_numeric($class['base_dex'] ?? null) ? (int) $class['base_dex'] : 0,
+                'base_int' => is_numeric($class['base_int'] ?? null) ? (int) $class['base_int'] : 0,
+                'ascendancies' => $this->ascendancies($class['ascendancies'] ?? []),
+            ];
+        }
+
+        return $classes;
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $rawNodes
+     *
+     * @return array<int, string> class index => passive id of its start node
+     */
+    private function startNodesByClassIndex(array $rawNodes): array
+    {
+        $starts = [];
+
+        foreach ($rawNodes as $node) {
+            $id = $node['id'] ?? null;
+            if (!\is_string($id) || !\is_array($node['classStartIndex'] ?? null)) {
+                continue;
+            }
+
+            foreach ($node['classStartIndex'] as $index) {
+                if (\is_int($index)) {
+                    $starts[$index] = $id;
+                }
+            }
+        }
+
+        return $starts;
+    }
+
+    /**
+     * @return list<array{id: string, name: string}>
+     */
+    private function ascendancies(mixed $raw): array
+    {
+        $ascendancies = [];
+
+        foreach ((array) $raw as $ascendancy) {
+            if (\is_array($ascendancy) && \is_string($ascendancy['id'] ?? null) && \is_string($ascendancy['name'] ?? null)) {
+                $ascendancies[] = ['id' => $ascendancy['id'], 'name' => $ascendancy['name']];
+            }
+        }
+
+        return $ascendancies;
     }
 }
