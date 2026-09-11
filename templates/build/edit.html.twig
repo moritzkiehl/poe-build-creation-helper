@@ -3,6 +3,8 @@
 {% block title %}{{ build.name }}{% endblock %}
 
 {% block body %}
+    {{ include('build/_summary.html.twig') }}
+
     {{ include('build/_error.html.twig') }}
 
     <div class="editor">

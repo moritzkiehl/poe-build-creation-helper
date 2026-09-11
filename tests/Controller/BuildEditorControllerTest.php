@@ -33,7 +33,7 @@ final class BuildEditorControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(303);
         $this->client->followRedirect();
-        self::assertSelectorTextContains('body', 'Respec at 60');
+        self::assertSelectorExists('input[value="Respec at 60"]');
     }
 
     public function testATurboRequestGetsStreamsInsteadOfARedirect(): void

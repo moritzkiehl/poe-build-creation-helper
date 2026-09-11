@@ -8,7 +8,6 @@
             <label for="header-{{ name }}">{{ label }}</label>
             <input type="{{ type|default('text') }}" id="header-{{ name }}" name="value" value="{{ value }}" onchange="this.form.requestSubmit()">
             <button type="submit">Save</button>
-            <span class="value">{{ value }}</span>
         </form>
     {% endmacro %}
 
