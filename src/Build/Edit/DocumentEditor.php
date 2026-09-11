@@ -58,6 +58,85 @@ final class DocumentEditor
         return $this->withPassives($document, $passives);
     }
 
+    public function addSkill(BuildDocument $document, string $gemId): BuildDocument
+    {
+        $skills = $document->skills;
+        $skills[] = ['id' => $gemId, 'level_interval' => [1, self::MAX_LEVEL]];
+
+        return $this->withSkills($document, $skills);
+    }
+
+    public function removeSkill(BuildDocument $document, int $index): BuildDocument
+    {
+        $skills = $document->skills;
+        $this->mustHaveSkill($skills, $index);
+        unset($skills[$index]);
+
+        return $this->withSkills($document, array_values($skills));
+    }
+
+    public function setSkillLevelInterval(BuildDocument $document, int $index, int $from, int $to): BuildDocument
+    {
+        $skills = $document->skills;
+        $this->mustHaveSkill($skills, $index);
+        $skills[$index]['level_interval'] = $this->levelInterval($from, $to);
+
+        return $this->withSkills($document, $skills);
+    }
+
+    public function addSupport(BuildDocument $document, int $skillIndex, string $supportId): BuildDocument
+    {
+        $skills = $document->skills;
+        $this->mustHaveSkill($skills, $skillIndex);
+        $supports = $this->supportsOf($skills[$skillIndex]);
+
+        if (null !== $this->indexOfSupport($supports, $supportId)) {
+            return $document;
+        }
+
+        $supports[] = ['id' => $supportId, 'level_interval' => [1, self::MAX_LEVEL]];
+        $skills[$skillIndex]['support_skills'] = $supports;
+
+        return $this->withSkills($document, $skills);
+    }
+
+    public function removeSupport(BuildDocument $document, int $skillIndex, string $supportId): BuildDocument
+    {
+        $skills = $document->skills;
+        $this->mustHaveSkill($skills, $skillIndex);
+        $supports = $this->supportsOf($skills[$skillIndex]);
+        $index = $this->indexOfSupport($supports, $supportId);
+
+        if (null === $index) {
+            return $document;
+        }
+
+        unset($supports[$index]);
+        $supports = array_values($supports);
+
+        // A skill the game wrote with no supports carries no key at all.
+        if ([] === $supports) {
+            unset($skills[$skillIndex]['support_skills']);
+        } else {
+            $skills[$skillIndex]['support_skills'] = $supports;
+        }
+
+        return $this->withSkills($document, $skills);
+    }
+
+    public function setSupportLevelInterval(BuildDocument $document, int $skillIndex, string $supportId, int $from, int $to): BuildDocument
+    {
+        $skills = $document->skills;
+        $this->mustHaveSkill($skills, $skillIndex);
+        $supports = $this->supportsOf($skills[$skillIndex]);
+        $index = $this->indexOfSupport($supports, $supportId) ?? throw InvalidEditCommand::noSuchEntry('support "'.$supportId.'"');
+
+        $supports[$index]['level_interval'] = $this->levelInterval($from, $to);
+        $skills[$skillIndex]['support_skills'] = $supports;
+
+        return $this->withSkills($document, $skills);
+    }
+
     /**
      * @return array{int, int}
      */
@@ -94,6 +173,66 @@ final class DocumentEditor
             ascendancy: $document->ascendancy,
             passives: $passives,
             skills: $document->skills,
+            inventorySlots: $document->inventorySlots,
+        );
+    }
+
+    /**
+     * @param list<array<string, mixed>> $skills
+     */
+    private function mustHaveSkill(array $skills, int $index): void
+    {
+        if (!isset($skills[$index])) {
+            throw InvalidEditCommand::noSuchEntry('skill #'.$index);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $skill
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function supportsOf(array $skill): array
+    {
+        $supports = [];
+
+        foreach ((array) ($skill['support_skills'] ?? []) as $support) {
+            if (\is_array($support)) {
+                /** @var array<string, mixed> $support */
+                $supports[] = $support;
+            }
+        }
+
+        return $supports;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $supports
+     */
+    private function indexOfSupport(array $supports, string $supportId): ?int
+    {
+        foreach ($supports as $index => $support) {
+            if (($support['id'] ?? null) === $supportId) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $skills
+     */
+    private function withSkills(BuildDocument $document, array $skills): BuildDocument
+    {
+        return new BuildDocument(
+            name: $document->name,
+            author: $document->author,
+            link: $document->link,
+            description: $document->description,
+            ascendancy: $document->ascendancy,
+            passives: $document->passives,
+            skills: $skills,
             inventorySlots: $document->inventorySlots,
         );
     }
