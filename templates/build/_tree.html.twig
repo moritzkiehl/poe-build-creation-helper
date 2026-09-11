@@ -1,1 +1,17 @@
-<section id="build-tree"><h2>Passive tree</h2>{{ include('build/_state.html.twig') }}</section>
+<section id="build-tree"
+         data-controller="tree"
+         data-tree-tree-url-value="{{ path('app_catalog_tree') }}"
+         data-tree-act-url-value="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}">
+    <h2>Passive tree</h2>
+
+    {% if build.classKey is null %}
+        <p>Choose a class above and the tree will centre on where that class starts.</p>
+    {% endif %}
+
+    <canvas class="tree-canvas"
+            data-tree-target="canvas"
+            data-action="pointerdown->tree#pointerdown pointermove->tree#pointermove pointerup->tree#pointerup wheel->tree#wheel"
+            aria-label="Passive tree. Drag to pan, scroll to zoom, click a node to allocate it. The searchable list beside this canvas does the same thing without a mouse."></canvas>
+
+    {{ include('build/_state.html.twig') }}
+</section>
