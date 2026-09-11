@@ -46,5 +46,12 @@ services:
             $snapshotDir: '%app.catalog.snapshot_dir%'
             $userAgent: '%app.catalog.user_agent%'
 
+    # No controller reaches EditHistory yet (that wiring is a later task), so
+    # nothing keeps it referenced and Symfony prunes unused private services
+    # from the compiled container. The test suite calls it directly, so it
+    # has to stay reachable.
+    App\Build\Edit\EditHistory:
+        public: true
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
