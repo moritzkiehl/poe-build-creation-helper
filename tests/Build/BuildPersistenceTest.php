@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Build;
+
+use App\Entity\Build;
+use App\Interchange\BuildDocumentReader;
+use App\Repository\BuildRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+
+final class BuildPersistenceTest extends KernelTestCase
+{
+    private EntityManagerInterface $entityManager;
+    private BuildRepository $builds;
+
+    protected function setUp(): void
+    {
+        self::bootKernel();
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $this->builds = self::getContainer()->get(BuildRepository::class);
+        $this->entityManager->createQuery('DELETE FROM '.Build::class.' b')->execute();
+    }
+
+    public function testAStoredBuildComesBackAsTheSameDocument(): void
+    {
+        $json = file_get_contents(__DIR__.'/../fixtures/build/valid-full.build');
+        self::assertIsString($json);
+        $document = (new BuildDocumentReader())->read($json);
+
+        $build = $this->builds->create($document, '0.5.5');
+        $slug = $build->getShareSlug();
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $reloaded = $this->builds->findOneByShareSlug($slug);
+
+        self::assertNotNull($reloaded);
+        self::assertEquals($document, $reloaded->toDocument());
+    }
+
+    public function testTheEditTokenIsHandedOutOnceAndStoredOnlyAsAHash(): void
+    {
+        $document = (new BuildDocumentReader())->read('{"name":"Titan Earthquake Slam"}');
+
+        $build = $this->builds->create($document, '0.5.5');
+        $token = $build->getEditToken();
+
+        self::assertNotSame($token, $build->getEditTokenHash());
+        self::assertTrue($this->builds->isEditableWith($build, $token));
+        self::assertFalse($this->builds->isEditableWith($build, 'not-the-token'));
+    }
+
+    public function testTwoBuildsNeverShareAShareSlug(): void
+    {
+        $document = (new BuildDocumentReader())->read('{"name":"Titan Earthquake Slam"}');
+
+        $first = $this->builds->create($document, '0.5.5');
+        $second = $this->builds->create($document, '0.5.5');
+
+        self::assertNotSame($first->getShareSlug(), $second->getShareSlug());
+    }
+}
