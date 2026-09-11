@@ -25,7 +25,7 @@ Not a DPS or EHP simulator — that stays with Path of Building 2.
 | Core job | Build discovery + guided assistant, first focus on the user's own build |
 | Assistant engine | Stage 1 rule-based. LLM in stage 2 with the user's own key or a capped operator budget |
 | Data path | MVP without any third-party API dependency; extensibility towards API access designed in |
-| Stack | Symfony 7 as the server from the MVP on, MariaDB/MySQL |
+| Stack | Symfony 8 as the server from the MVP on, MariaDB/MySQL |
 | Frontend | Twig + Symfony UX (Stimulus/Turbo), assets via AssetMapper |
 | Build ownership | Anonymous, unguessable share slug + separate edit token, no login |
 | Catalog storage | Option C: narrow filter columns + one JSON column per record |
@@ -39,6 +39,29 @@ crafting.
 Clarified on 2026-09-11: "no Node" means no NodeJS backend and no Node
 dependency in the asset pipeline. Node as a development and CI tool is fine —
 the E2E tests run on Playwright.
+
+Revised on 2026-09-11: the stack row said Symfony 7, and the scaffold was first
+built on 7.4 because of it. Corrected to **Symfony 8.1**. Reasoning: upgrades
+within a major are deprecation work rather than BC breaks, so starting on the
+current major trades one expensive 7 → 8 jump for several cheap ones, and the
+next LTS (8.4) is a natural place to settle shortly after launch. The price is a
+standing chore, and it has a date: **8.1 reaches end of maintenance in 01/2027**,
+the same month as the planned launch, so being on 8.2 by then is part of the
+launch checklist rather than an afterthought.
+
+PHP target is **8.5** (8.5.9 in development). Doctrine 3 and PHPUnit set a hard
+floor of 8.4 — Symfony 8.1 itself still allows 8.2 — and 8.5 is the current
+stable series, so `composer.json` requires `>=8.5`. No `config.platform.php`
+pin: the production PHP version is not decided, and pinning it now would be a
+guess.
+
+Local development runs on **DDEV** (PHP 8.5, MariaDB 11.4 LTS, nginx-fpm,
+docroot `public`, project type `symfony`). The Doctrine recipe's `compose.yaml`
+and `compose.override.yaml` were deleted: they define a PostgreSQL service that
+would run alongside DDEV's MariaDB and contradict the stack decision. `.ddev/config.yaml` is committed: it is local development
+configuration, and the only hostname in it is a `.ddev.site` development name.
+Real hosts, domains and secrets stay out, per "Deployment configuration kept
+private".
 
 ## Data sources (researched 2026-09-09)
 
