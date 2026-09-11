@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Build\InventorySlots;
+use App\Catalog\CatalogSearch;
 use App\Entity\Build;
 use App\Entity\CatalogClass;
 use App\Repository\BuildEventRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * What every partial of the editor renders from.
@@ -23,6 +25,8 @@ final class EditorContext
         private readonly BuildEventRepository $events,
         private readonly InventorySlots $slots,
         private readonly EntityManagerInterface $entityManager,
+        private readonly CatalogSearch $search,
+        private readonly RequestStack $requests,
     ) {
     }
 
@@ -31,6 +35,8 @@ final class EditorContext
      */
     public function of(Build $build, string $token, ?string $error = null): array
     {
+        $query = trim((string) ($this->requests->getCurrentRequest()?->query->get('q') ?? ''));
+
         return [
             'build' => $build,
             'token' => $token,
@@ -39,6 +45,8 @@ final class EditorContext
             'slots' => $this->slots->all(),
             'events' => $this->events->timeline($build),
             'error' => $error,
+            'passiveQuery' => $query,
+            'passiveResults' => $this->search->passives($query),
         ];
     }
 }

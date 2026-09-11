@@ -1,1 +1,58 @@
-<section id="build-nodes"><h2>Passives</h2></section>
+{% set allocatedIds = document.passives|map(p => p.id) %}
+
+<section id="build-nodes">
+    <h2>Passives</h2>
+
+    <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
+        <label for="passive-q">Search the tree</label>
+        <input type="search" id="passive-q" name="q" value="{{ passiveQuery }}" placeholder="name or id">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if passiveQuery is not empty %}
+        <ul>
+            {% for node in passiveResults %}
+                <li>
+                    <strong>{{ node.name }}</strong> <code>{{ node.id }}</code>
+                    {% if node.stats %}<span>{{ node.stats }}</span>{% endif %}
+                    {% if node.id in allocatedIds %}
+                        <span>allocated</span>
+                    {% else %}
+                        <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                            <input type="hidden" name="action" value="passive.allocate">
+                            <input type="hidden" name="id" value="{{ node.id }}">
+                            <button type="submit">Allocate</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% else %}
+                <li>Nothing matches “{{ passiveQuery }}”.</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Allocated ({{ document.passives|length }})</h3>
+    <ul>
+        {% for passive in document.passives %}
+            <li>
+                <code>{{ passive.id }}</code>
+                <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                    <input type="hidden" name="action" value="passive.interval">
+                    <input type="hidden" name="id" value="{{ passive.id }}">
+                    <label for="from-{{ loop.index }}">From</label>
+                    <input type="number" id="from-{{ loop.index }}" name="from" min="0" max="100" value="{{ passive.level_interval[0] ?? 1 }}">
+                    <label for="to-{{ loop.index }}">to</label>
+                    <input type="number" id="to-{{ loop.index }}" name="to" min="0" max="100" value="{{ passive.level_interval[1] ?? 100 }}">
+                    <button type="submit">Set levels</button>
+                </form>
+                <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                    <input type="hidden" name="action" value="passive.deallocate">
+                    <input type="hidden" name="id" value="{{ passive.id }}">
+                    <button type="submit">Remove</button>
+                </form>
+            </li>
+        {% else %}
+            <li>No passives yet. Search above, or click the tree.</li>
+        {% endfor %}
+    </ul>
+</section>

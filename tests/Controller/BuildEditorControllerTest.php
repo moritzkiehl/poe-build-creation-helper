@@ -69,6 +69,21 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    public function testAPassiveCanBeAllocatedAndRemovedWithoutJavascript(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee99_']);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextContains('#build-nodes', 'melee99_');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.deallocate', 'id' => 'melee99_']);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextNotContains('#build-nodes', 'melee99_');
+    }
+
     public function testTheEditorStillOffersTheWholeFileReplacement(): void
     {
         $this->client->request('GET', $this->createBuild());

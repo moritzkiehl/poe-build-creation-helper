@@ -35,6 +35,40 @@ final class CatalogSearch
     }
 
     /**
+     * Passives for the node list beside the tree. Ids are matched as well as
+     * names: a finding names a node by id, and the list is where that id is
+     * looked up.
+     *
+     * @return list<array{id: string, name: string, kind: string, stats: string}>
+     */
+    public function passives(string $query): array
+    {
+        if ('' === trim($query)) {
+            return [];
+        }
+
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT id, name, kind, stats FROM catalog_passive WHERE name LIKE ? OR id LIKE ? ORDER BY name LIMIT 50',
+            ['%'.$query.'%', '%'.$query.'%'],
+        );
+
+        $results = [];
+
+        foreach ($rows as $row) {
+            $stats = json_decode(Row::str($row, 'stats', '[]'), true);
+
+            $results[] = [
+                'id' => Row::str($row, 'id'),
+                'name' => Row::str($row, 'name'),
+                'kind' => Row::str($row, 'kind'),
+                'stats' => implode(', ', array_filter(\is_array($stats) ? $stats : [], is_string(...))),
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
      * @return array<string, int>
      */
     public function counts(): array
