@@ -1,0 +1,12 @@
+{
+    "name": "poe-creation-helper",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "test:js": "vitest run",
+        "test:e2e": "playwright test"
+    },
+    "devDependencies": {
+        "vitest": "^2"
+    }
+}

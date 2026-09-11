@@ -79,6 +79,11 @@ ddev php bin/console asset-map:compile
 to write the versioned files to `public/assets/` for production to serve
 directly.
 
+No bundler and no Node runtime in production, but the two pure geometry
+modules the editor's canvas rests on (`assets/lib/camera.js`,
+`assets/lib/spatial_grid.js`) do have unit tests, run under Node inside the
+DDEV web container: `ddev npm install` once, then `ddev npm run test:js`.
+
 ## Game data
 
 The catalog is empty until it is fetched, and the application is meant to work
