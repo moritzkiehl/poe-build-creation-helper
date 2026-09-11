@@ -36,6 +36,7 @@ final class EditorContext
     public function of(Build $build, string $token, ?string $error = null): array
     {
         $query = trim((string) ($this->requests->getCurrentRequest()?->query->get('q') ?? ''));
+        $gemQuery = trim((string) ($this->requests->getCurrentRequest()?->query->get('gem') ?? ''));
 
         return [
             'build' => $build,
@@ -47,6 +48,8 @@ final class EditorContext
             'error' => $error,
             'passiveQuery' => $query,
             'passiveResults' => $this->search->passives($query),
+            'gemQuery' => $gemQuery,
+            'gemResults' => $this->search->search($gemQuery ?: null, 'all'),
         ];
     }
 }

@@ -84,6 +84,26 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorTextNotContains('#build-nodes', 'melee99_');
     }
 
+    public function testASkillCanBeAddedGivenASupportAndRemovedAgain(): void
+    {
+        $edit = $this->createBuild();
+
+        // The fixture's second skill is already SkillGemHatefulFocus (index 1), so a
+        // distinct id is used here — otherwise the final "gone" assertion below would
+        // still match that untouched original entry and the test could never fail.
+        $this->client->request('POST', $edit.'/act', ['action' => 'skill.add', 'gem_id' => 'Metadata/Items/Gem/SkillGemFrostBlades']);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('#build-skills', 'Metadata/Items/Gem/SkillGemFrostBlades');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'support.add', 'skill_index' => '2', 'support_id' => 'Metadata/Items/Gems/SupportGemFastForward']);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('#build-skills', 'SupportGemFastForward');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'skill.remove', 'index' => '2']);
+        $this->client->followRedirect();
+        self::assertSelectorTextNotContains('#build-skills', 'FrostBlades');
+    }
+
     public function testTheEditorStillOffersTheWholeFileReplacement(): void
     {
         $this->client->request('GET', $this->createBuild());
