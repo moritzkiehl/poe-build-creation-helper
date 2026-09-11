@@ -154,9 +154,14 @@ Two files at the repository root:
   Gear Games and is not shipped; RePoE code is MIT (Copyright 2016 brather1ng),
   its data explicitly is not.
 
-A public repository sharpens measure 5: committed snapshots would be exactly the
-"publish" the terms forbid. Snapshots land in a `.gitignore` path and are
-produced by the sync command only.
+The repository has been public since the first commit on 2026-09-11. That
+sharpens measure 5 from day one: committed snapshots would be exactly the
+"publish" the terms forbid, and a public repository keeps them visible in the
+history even after a later deletion. Snapshots land in a `.gitignore` path and
+are produced by the sync command only.
+
+"Going public" elsewhere in this document means launching the website, not
+opening the repository — the repository is already open.
 
 ### Deployment configuration kept private
 
@@ -165,8 +170,9 @@ The public repository holds only a `.env` with harmless defaults and
 container configuration, deployment scripts, CI secrets. Those live privately or
 outside version control.
 
-Checkpoint before the first push: search the repository for domains, hosts, keys
-and tokens.
+Checkpoint before every push, not just the first: search the repository for
+domains, hosts, keys and tokens. The repository is public, so a secret is
+disclosed the moment it is pushed, and rewriting history does not undo that.
 
 ### LLM funding (stage 2, not the MVP)
 
@@ -277,8 +283,8 @@ Hence two phases:
 
 | Phase | Period | Game version | Goal |
 |---|---|---|---|
-| EA | September–December 2026 | 0.5.5 and later patches | Finish the mechanics, keep content deliberately thin, stay private |
-| 1.0 | December 2026–January 2027 | 1.0 | Re-sync, re-establish proofs, fill in content, publish |
+| EA | September–December 2026 | 0.5.5 and later patches | Finish the mechanics, keep content deliberately thin; repository public, website not yet launched |
+| 1.0 | December 2026–January 2027 | 1.0 | Re-sync, re-establish proofs, fill in content, launch the website |
 
 **Investment rule.** Anything the version jump devalues is built as late as
 possible. Curated knowledge stays at example size until 1.0 — just enough to
@@ -292,7 +298,7 @@ of the design may assume catalog data is stable across the jump.
 
 **Old builds.** A build keeps its `game_version`. Opened against a newer
 catalog, its `document` JSON is **not** silently rewritten; unknown IDs show up
-as findings. Before the public launch only our own test builds exist — the
+as findings. Before the website launch only our own test builds exist — the
 cheapest possible moment for a hard cut, should a 0.5.5 → 1.0 mapping not be
 worth it. A mapping command would be a bonus, not a requirement.
 
@@ -559,7 +565,7 @@ Three principles set the order: the named risk first, every iteration ends on
 something usable, and anything the 1.0 jump devalues is built as late as
 possible.
 
-### Phase EA (September–December 2026, against 0.5.5, private)
+### Phase EA (September–December 2026, against 0.5.5, website not yet launched)
 
 **Step 0 — key mapping spike.** Time-boxed, and its output is an answer rather
 than code. Do the skill tree export and RePoE carry exactly the keys `.build`
@@ -590,7 +596,7 @@ provenance display. `KnowledgePort` exists but holds only examples.
 `passive.suggestion`, the apply button, curated interactions with a handful of
 entries. Content stays thin on purpose.
 
-### Phase 1.0 (December 2026–January 2027, public)
+### Phase 1.0 (December 2026–January 2027, website launch)
 
 **Iteration 6 — version acceptance for 1.0.** Re-sync, proofs re-stamped, a
 walkthrough of the rule catalogue, a check of whether `.build` stayed
@@ -601,8 +607,8 @@ presumably a hard cut.
 full joint walkthrough of warnings and hints.
 
 **Iteration 8 — launch readiness.** Graphical passive tree, if the 1.0 layout
-holds; polish; secret scan; `LICENSE` and `NOTICE`; footer notice;
-`paid_credits` off; public repository; deployment.
+holds; polish; secret scan; `LICENSE` and `NOTICE` present; footer notice
+visible; `paid_credits` off; deployment; website launch.
 
 Not included and not planned for this arc: LLM, ladder meta, prices, rares and
 crafting, login.
@@ -639,7 +645,10 @@ Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0
   the correct path is still to be found (part of step 0).
 - Whether `.build` survives the 1.0 jump format-stable is unknown.
 
-### Before the public launch (January 2027)
+### Before the website launch (January 2027)
 
 Secret scan across the whole repository, `LICENSE` and `NOTICE` present, footer
 notice visible, `paid_credits` switched off.
+
+Note that the repository itself is already public, so the licensing measures and
+the secret checkpoint apply from today rather than from the launch date.
