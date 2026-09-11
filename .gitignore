@@ -8,6 +8,7 @@
 /public/assets/
 /.phpunit.cache/
 /.php-cs-fixer.cache
+/.phpstan.cache
 
 # Catalog snapshots — game data owned by Grinding Gear Games,
 # fetched at runtime by the sync command, never committed. See NOTICE.
@@ -37,3 +38,9 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+/.phpstan.cache
+###< friendsofphp/php-cs-fixer ###

@@ -9,15 +9,16 @@ final class BuildDocumentReader
     public function read(string $json): BuildDocument
     {
         try {
-            $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+            $data = json_decode($json, true, flags: \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             throw InvalidBuildDocument::notJson($e);
         }
 
-        if (!is_array($data) || array_is_list($data)) {
+        if (!\is_array($data) || array_is_list($data)) {
             throw InvalidBuildDocument::notAnObject();
         }
 
+        /** @var array<string, mixed> $data a JSON object decodes to string keys */
         return new BuildDocument(
             name: $this->requiredString($data, 'name'),
             author: $this->optionalString($data, 'author'),
@@ -35,11 +36,11 @@ final class BuildDocumentReader
      */
     private function requiredString(array $data, string $field): string
     {
-        if (!array_key_exists($field, $data)) {
+        if (!\array_key_exists($field, $data)) {
             throw InvalidBuildDocument::missingField($field);
         }
 
-        if (!is_string($data[$field])) {
+        if (!\is_string($data[$field])) {
             throw InvalidBuildDocument::wrongType($field, 'a string', get_debug_type($data[$field]));
         }
 
@@ -51,7 +52,7 @@ final class BuildDocumentReader
      */
     private function optionalString(array $data, string $field): ?string
     {
-        if (!array_key_exists($field, $data) || null === $data[$field]) {
+        if (!\array_key_exists($field, $data) || null === $data[$field]) {
             return null;
         }
 
@@ -65,16 +66,16 @@ final class BuildDocumentReader
      */
     private function objectList(array $data, string $field): array
     {
-        if (!array_key_exists($field, $data)) {
+        if (!\array_key_exists($field, $data)) {
             return [];
         }
 
-        if (!is_array($data[$field]) || !array_is_list($data[$field])) {
+        if (!\is_array($data[$field]) || !array_is_list($data[$field])) {
             throw InvalidBuildDocument::wrongType($field, 'a list', get_debug_type($data[$field]));
         }
 
         foreach ($data[$field] as $index => $entry) {
-            if (!is_array($entry) || array_is_list($entry)) {
+            if (!\is_array($entry) || array_is_list($entry)) {
                 throw InvalidBuildDocument::wrongType($field.'['.$index.']', 'an object', get_debug_type($entry));
             }
         }

@@ -136,7 +136,7 @@ final class BuildControllerTest extends WebTestCase
     {
         $this->client->request('POST', '/builds', files: ['build' => $this->fixtureUpload()]);
         $location = (string) $this->client->getResponse()->headers->get('Location');
-        preg_match('#/b/([0-9a-zA-Z]{22})#', $location, $m);
+        self::assertSame(1, preg_match('#/b/([0-9a-zA-Z]{22})#', $location, $m), 'creating a build redirects to its edit link');
 
         return $m[1];
     }

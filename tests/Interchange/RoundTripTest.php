@@ -20,7 +20,7 @@ final class RoundTripTest extends TestCase
         $json = file_get_contents(__DIR__.'/../fixtures/build/valid-full.build');
         self::assertIsString($json);
 
-        $written = (new BuildDocumentWriter())->write((new BuildDocumentReader())->read($json));
+        $written = new BuildDocumentWriter()->write(new BuildDocumentReader()->read($json));
 
         self::assertSame(json_decode($json, true), json_decode($written, true));
     }

@@ -12,7 +12,7 @@ final class BuildDocumentReaderTest extends TestCase
 {
     public function testReadsTheBuildName(): void
     {
-        $document = (new BuildDocumentReader())->read('{"name":"Titan Earthquake Slam"}');
+        $document = new BuildDocumentReader()->read('{"name":"Titan Earthquake Slam"}');
 
         self::assertSame('Titan Earthquake Slam', $document->name);
     }
@@ -22,7 +22,7 @@ final class BuildDocumentReaderTest extends TestCase
         $this->expectException(InvalidBuildDocument::class);
         $this->expectExceptionMessage('not valid JSON');
 
-        (new BuildDocumentReader())->read('{"name": ');
+        new BuildDocumentReader()->read('{"name": ');
     }
 
     public function testRejectsJsonThatIsNotAnObject(): void
@@ -30,7 +30,7 @@ final class BuildDocumentReaderTest extends TestCase
         $this->expectException(InvalidBuildDocument::class);
         $this->expectExceptionMessage('must be a JSON object');
 
-        (new BuildDocumentReader())->read('["Titan Earthquake Slam"]');
+        new BuildDocumentReader()->read('["Titan Earthquake Slam"]');
     }
 
     public function testRejectsADocumentWithoutAName(): void
@@ -38,6 +38,6 @@ final class BuildDocumentReaderTest extends TestCase
         $this->expectException(InvalidBuildDocument::class);
         $this->expectExceptionMessage('name');
 
-        (new BuildDocumentReader())->read('{"ascendancy": "Titan"}');
+        new BuildDocumentReader()->read('{"ascendancy": "Titan"}');
     }
 }

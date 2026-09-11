@@ -22,11 +22,11 @@ final class InvalidBuildDocument extends \RuntimeException
 
     public static function missingField(string $field): self
     {
-        return new self(sprintf('Required field "%s" is missing.', $field));
+        return new self(\sprintf('Required field "%s" is missing.', $field));
     }
 
     public static function wrongType(string $field, string $expected, string $actual): self
     {
-        return new self(sprintf('Field "%s" must be %s, got %s.', $field, $expected, $actual));
+        return new self(\sprintf('Field "%s" must be %s, got %s.', $field, $expected, $actual));
     }
 }

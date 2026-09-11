@@ -11,7 +11,7 @@ final class TokenGeneratorTest extends TestCase
 {
     public function testShareSlugIsUrlSafeAndLongEnoughToBeUnguessable(): void
     {
-        self::assertMatchesRegularExpression('/^[0-9a-zA-Z]{22}$/', (new TokenGenerator())->shareSlug());
+        self::assertMatchesRegularExpression('/^[0-9a-zA-Z]{22}$/', new TokenGenerator()->shareSlug());
     }
 
     public function testEverySlugIsDifferent(): void
