@@ -104,6 +104,26 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorTextNotContains('#build-skills', 'FrostBlades');
     }
 
+    public function testAUniqueCanBeNamedForASlotAndClearedAgain(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'slot.set', 'inventory_id' => 'Ring1', 'unique_name' => 'Kalandra\'s Touch', 'from' => '1', 'to' => '100', 'additional_text' => '']);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('#build-slots', "Kalandra's Touch");
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'slot.clear', 'inventory_id' => 'Ring1']);
+        $this->client->followRedirect();
+        self::assertSelectorTextNotContains('#build-slots', "Kalandra's Touch");
+    }
+
+    public function testAllFourteenSlotsAreOffered(): void
+    {
+        $this->client->request('GET', $this->createBuild());
+
+        self::assertSelectorCount(14, '#build-slots form[data-slot]');
+    }
+
     public function testTheEditorStillOffersTheWholeFileReplacement(): void
     {
         $this->client->request('GET', $this->createBuild());
