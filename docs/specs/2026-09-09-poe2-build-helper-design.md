@@ -254,6 +254,29 @@ in part 2 to `(BuildSketch, CatalogPort, KnowledgePort) -> Finding[]`. That make
 the rules engine fully unit-testable against a fake catalog — the part that gets
 readjusted with every PoE2 patch.
 
+### Rendering the passive tree (decided 2026-09-11)
+
+The tree is drawn on a `<canvas>` 2D context, not as SVG or DOM nodes. At 0.5.5
+the tree carries 4912 allocatable nodes and 6076 edges; as SVG that is roughly
+eleven thousand elements, and pan, zoom and hover all go through layout. This is
+the same reason poe.ninja draws its tree on a canvas.
+
+Consequences to design for:
+
+- Hit testing is ours to write. Node positions come from group centre plus orbit
+  radius and index, so a coarse grid index over node coordinates is enough to
+  resolve a click without walking all 4912.
+- Nothing in the tree is in the DOM, so nothing in it is reachable by keyboard or
+  a screen reader on its own. The searchable node list beside the tree is not
+  decoration — it is the accessible path to the same actions, and it also carries
+  the ids that findings target.
+- A Stimulus controller owns the canvas and redraws on state change; findings
+  keep arriving over Turbo as elsewhere.
+- Orbit geometry as measured on 0.5.5: radii `[0, 82, 164, 334, 488, 657, 839,
+  250, 1076, 1320]` with `[1, 12, 24, 24, 72, 72, 72, 24, 72, 140]` slots per
+  orbit. This belongs on the proof list — it is measured, not documented, and 1.0
+  may change it.
+
 ### Data flow
 
 ```
@@ -591,8 +614,9 @@ The editor has four areas:
 1. **Header** — name, class, ascendancy, target level, `game_version`, note,
    optionally an archetype. The archetype is the switch that arms the curated
    checks.
-2. **Passive tree** — search and allocate nodes, each with an optional
-   `level_interval`.
+2. **Passive tree** — the rendered tree, click to allocate, with search and a
+   list of allocated nodes beside it so the ids that findings target stay
+   visible. Each node takes an optional `level_interval`.
 3. **Skills** — main and secondary skills with their supports, level interval and
    free additional text.
 4. **Equipment slots** — optionally one unique per slot, by name. No rares, no
@@ -681,9 +705,12 @@ log, `CatalogPort`, search and browse view. From here on builds show names and
 icons instead of IDs.
 
 **Iteration 3 — editor.** Editing over Turbo and Stimulus: skills, supports,
-slots, level intervals, planning fields. The passive tree arrives first as a
-searchable node list, not as a graphic — the graphical rendering is its own large
-chunk, and its layout data is precisely what 1.0 overturns.
+slots, level intervals, planning fields — and the rendered passive tree, which is
+the primary way nodes are allocated. Revised 2026-09-11: the tree was originally
+deferred to iteration 8 as a later nicety. It is the main interaction of the
+editor, so a searchable node list alone would not be a usable editor. The list
+survives beside the tree, because findings target node ids and those ids have to
+stay readable.
 
 **Iteration 4 — rules engine, derived part.** `Advice`, `Rule` with version
 filters, the error and warning rules, the findings list, jump-to-target,
@@ -703,9 +730,10 @@ presumably a hard cut.
 **Iteration 7 — content.** Fill archetypes and interactions for 1.0, plus the
 full joint walkthrough of warnings and hints.
 
-**Iteration 8 — launch readiness.** Graphical passive tree, if the 1.0 layout
-holds; polish; secret scan; `LICENSE` and `NOTICE` present; footer notice
-visible; `paid_credits` off; deployment; website launch.
+**Iteration 8 — launch readiness.** Polish; secret scan; `LICENSE` and `NOTICE`
+present; footer notice visible; `paid_credits` off; deployment; website launch.
+Re-check the tree renderer against the 1.0 layout, which is expected to move
+node positions wholesale.
 
 Not included and not planned for this arc: LLM, ladder meta, prices, rares and
 crafting, login.
@@ -724,11 +752,13 @@ patch.
 4. Spirit sources: how much sits on the tree, how much only on gear
 5. Weapon binding of skills: whether RePoE models it as a tag or a requirement
 6. `weapon_set` semantics in the `.build` format: what 0, 1 and 2 mean exactly
-7. Which of the 12 classes the tree export lists (Marauder, Witch, Ranger,
+7. Orbit radii and slot counts for the tree renderer, measured above on 0.5.5
+   rather than taken from any documentation
+8. Which of the 12 classes the tree export lists (Marauder, Witch, Ranger,
    Duelist, Shadow, Templar, Warrior, Sorceress, Huntress, Mercenary, Monk,
    Druid) are actually selectable in 0.5.5, before class-to-start-node logic
    relies on the list
-8. Which spelling of `unique_name` the game accepts for the three ambiguous
+9. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
@@ -759,3 +789,20 @@ notice visible, `paid_credits` switched off.
 
 Note that the repository itself is already public, so the licensing measures and
 the secret checkpoint apply from today rather than from the launch date.
+
+## Design mockups
+
+The four core screens — start page, build editor, catalog, shared read-only view
+— are drawn as Design Component artboards under `design/`, and seeded into a
+published canvas for review. The `.dc.html` files and `canvas.json` are the
+source; the seeded page is a build artifact and is ignored.
+
+Two constraints shaped them and are worth keeping in mind when the real UI is
+built:
+
+- **The mockup tree is synthetic.** It uses the real orbit geometry but invented
+  positions and names. Real node coordinates in a file committed to a public
+  repository would be exactly the redistribution measure 5 forbids. The real
+  tree renders at runtime from the ignored snapshot.
+- Gem paths, unique names and `.build` ids in the mockups are real 0.5.5 values
+  from step 0, so the layout is sized against the strings it will actually carry.

@@ -1,9 +1,41 @@
 {
   "artboards": [
-    { "file": "Start.dc.html", "title": "Start page", "x": 0, "y": 0, "w": 1440, "h": 900, "is_interactive": true },
-    { "file": "Main.dc.html", "title": "Build editor", "x": 1560, "y": 0, "w": 1440, "h": 980, "is_interactive": true },
-    { "file": "Catalog.dc.html", "title": "Catalog", "x": 0, "y": 1120, "w": 1440, "h": 900, "is_interactive": true },
-    { "file": "Shared.dc.html", "title": "Shared build, read only", "x": 1560, "y": 1120, "w": 1440, "h": 900, "is_interactive": true }
+    {
+      "file": "Start.dc.html",
+      "title": "Start page",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "is_interactive": true
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "Build editor",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1400,
+      "is_interactive": true
+    },
+    {
+      "file": "Catalog.dc.html",
+      "title": "Catalog",
+      "x": 0,
+      "y": 1560,
+      "w": 1440,
+      "h": 900,
+      "is_interactive": true
+    },
+    {
+      "file": "Shared.dc.html",
+      "title": "Shared build, read only",
+      "x": 1560,
+      "y": 1560,
+      "w": 1440,
+      "h": 900,
+      "is_interactive": true
+    }
   ],
   "annotations": [
     {
@@ -11,12 +43,12 @@
       "x": 1560,
       "y": -150,
       "w": 420,
-      "text": "The editor is the product. Try it:\n- click a node row to allocate or unallocate it\n- unallocate strength89 and the disconnected error appears\n- remove the Abiding Hex chip and its warning goes\n- Apply on the suggestion sockets Concentrated Effect"
+      "text": "The editor is the product. Try it:\n- click a node in the tree to allocate or unallocate it\n- unallocate the Attribute node feeding Kindling and the disconnected error appears\n- remove the Abiding Hex chip and its warning goes\n- Apply on the suggestion sockets Concentrated Effect"
     },
     {
       "id": "provenance-note",
       "x": 3060,
-      "y": 120,
+      "y": 200,
       "w": 360,
       "text": "Every finding states where it came from: derived from catalog data, parsed from support_text with partial coverage, or curated. That line is the reason a player can trust or discount it."
     },
@@ -25,8 +57,10 @@
       "x": 0,
       "y": -150,
       "w": 420,
-      "text": "All names, ids and paths are real 0.5.5 data from the step 0 spike - strength89, Metadata/Items/Gems/SkillGemEarthquake, Astramentis, Grand Spectrum (which really is an ambiguous name)."
+      "text": "Gem paths, unique names and the .build ids are real 0.5.5 data from the step 0 spike.\n\nThe tree itself is synthetic: real PoE2 orbit geometry (radii 82/164/334/488..., 12/24/72 slots per orbit), invented positions and names. Shipping real node coordinates would be the redistribution measure 5 forbids."
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": {
+    "view": "canvas"
+  }
 }

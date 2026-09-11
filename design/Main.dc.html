@@ -120,21 +120,52 @@
           <span style="font-size: 15px; font-weight: 600;">Passive tree</span>
           <span style="font-size: 13px; color: var(--muted);">{{pointsUsed}} of {{pointsBudget}} points</span>
           <div style="flex-grow: 1;"></div>
-          <div style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; width: 260px;">
+          <div style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; width: 240px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="color: var(--muted);"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path></svg>
             <span style="color: var(--muted);">Search nodes</span>
           </div>
         </div>
-        <div style="display: flex; flex-direction: column;">
-          <sc-for list="{{nodes}}" as="node" hint-placeholder-count="5">
-            <div onClick="{{node.toggle}}" style="display: flex; align-items: center; gap: 14px; padding: 11px 20px; border-bottom: 1px solid var(--border); cursor: pointer; background: {{node.rowBg}};">
-              <span style="width: 18px; height: 18px; border-radius: 5px; border: 1px solid {{node.markBorder}}; background: {{node.markBg}}; flex-shrink: 0;"></span>
-              <span class="mono" style="font-size: 12px; color: var(--muted); width: 120px; flex-shrink: 0;">{{node.id}}</span>
-              <span style="font-weight: 500; width: 150px; flex-shrink: 0;">{{node.name}}</span>
-              <span style="color: var(--muted); flex-grow: 1;">{{node.stat}}</span>
-              <span style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);">{{node.kind}}</span>
+
+        <div style="display: flex; align-items: stretch;">
+          <div style="width: 600px; flex-shrink: 0; background: var(--surface-2); border-right: 1px solid var(--border); border-bottom-left-radius: 10px;">
+            <svg width="600" height="600" viewBox="{{viewBox}}" style="display: block;">
+              <sc-for list="{{treeEdges}}" as="e" hint-placeholder-count="140">
+                <line x1="{{e.x1}}" y1="{{e.y1}}" x2="{{e.x2}}" y2="{{e.y2}}" stroke="{{e.stroke}}" stroke-width="{{e.w}}" stroke-linecap="round"></line>
+              </sc-for>
+              <sc-for list="{{treeNodes}}" as="tn" hint-placeholder-count="99">
+                <circle cx="{{tn.x}}" cy="{{tn.y}}" r="{{tn.r}}" fill="{{tn.fill}}" stroke="{{tn.stroke}}" stroke-width="{{tn.sw}}" onClick="{{tn.toggle}}" style="cursor: pointer;"></circle>
+              </sc-for>
+              <sc-for list="{{treeLabels}}" as="tl" hint-placeholder-count="6">
+                <text x="{{tl.x}}" y="{{tl.y}}" fill="{{tl.fill}}" font-size="{{tl.size}}" text-anchor="middle" font-family="IBM Plex Sans, sans-serif">{{tl.text}}</text>
+              </sc-for>
+            </svg>
+          </div>
+
+          <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border);">
+              <sc-for list="{{legend}}" as="lg" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <span style="width: {{lg.dot}}px; height: {{lg.dot}}px; border-radius: 50%; background: {{lg.fill}}; border: 1px solid {{lg.stroke}};"></span>
+                  <span style="font-size: 12px; color: var(--muted);">{{lg.label}}</span>
+                </div>
+              </sc-for>
             </div>
-          </sc-for>
+
+            <div style="padding: 12px 18px 8px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Allocated</div>
+            <div style="flex-grow: 1; overflow: hidden;">
+              <sc-for list="{{allocated}}" as="al" hint-placeholder-count="8">
+                <div onClick="{{al.toggle}}" style="display: flex; align-items: baseline; gap: 9px; padding: 7px 18px; cursor: pointer;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: {{al.dotFill}}; flex-shrink: 0;"></span>
+                  <span style="font-size: 13px; font-weight: 500;">{{al.name}}</span>
+                  <span class="mono" style="font-size: 11px; color: var(--muted);">{{al.id}}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="padding: 12px 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); line-height: 1.45;">
+              Click a node to allocate or unallocate it. Findings update as you go.
+            </div>
+          </div>
         </div>
       </div>
 
@@ -258,15 +289,46 @@
 </x-dc>
 
 <script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":980}}'>
+// Synthetic tree: real PoE2 orbit geometry (radii [0, 82, 164, 334, 488, 657, 839, 250, 1076, 1320], slots [1, 12, 24, 24, 72, 72, 72, 24, 72, 140]),
+// invented positions and names. No GGG data is embedded here - measure 5.
+var VIEWBOX = "-1305 -1680 2794 3172";
+var TREE_NODES = [{"x":0,"y":0,"k":"start","n":"Warrior","s":"Class start","id":null},{"x":0,"y":-684,"k":"small","n":"Attribute","s":"+5 to Strength","id":"strength89"},{"x":116,"y":-636,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":164,"y":-520,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":116,"y":-404,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":0,"y":-356,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":-116,"y":-404,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":-164,"y":-520,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":-116,"y":-636,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":450,"y":-424,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":566,"y":-376,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":614,"y":-260,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":566,"y":-144,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":450,"y":-96,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":334,"y":-144,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":286,"y":-260,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":334,"y":-376,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":450,"y":96,"k":"small","n":"Kindling","s":"12% increased Fire Damage","id":"fire40"},{"x":566,"y":144,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":614,"y":260,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":566,"y":376,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":450,"y":424,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":334,"y":376,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":286,"y":260,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":334,"y":144,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":0,"y":356,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":116,"y":404,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":164,"y":520,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":116,"y":636,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":0,"y":684,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":-116,"y":636,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":-164,"y":520,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":-116,"y":404,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":-450,"y":96,"k":"small","n":"Attribute","s":"+5 to all Attributes","id":"attributes70"},{"x":-334,"y":144,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":-286,"y":260,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":-334,"y":376,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":-450,"y":424,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":-566,"y":376,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":-614,"y":260,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":-566,"y":144,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":-450,"y":-424,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":-334,"y":-376,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":-286,"y":-260,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":-334,"y":-144,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":-450,"y":-96,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":-566,"y":-144,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":-614,"y":-260,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":-566,"y":-376,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":370,"y":-1015,"k":"notable","n":"Brutal Blows","s":"15% increased Melee Damage","id":"melee22_"},{"x":370,"y":-1349,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":660,"y":-1182,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":660,"y":-848,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":370,"y":-681,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":81,"y":-848,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":81,"y":-1182,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":1079,"y":39,"k":"notable","n":"Broad Sweep","s":"25% increased Area of Effect for Slam skills","id":null},{"x":1079,"y":-295,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":1369,"y":-128,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":1369,"y":206,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":1079,"y":373,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":790,"y":206,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":790,"y":-128,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":297,"y":1038,"k":"notable","n":"Precision","s":"20% increased Critical Hit Chance","id":"criticals12"},{"x":297,"y":704,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":586,"y":871,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":586,"y":1205,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":297,"y":1372,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":7,"y":1205,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":7,"y":871,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":-896,"y":603,"k":"notable","n":"Tremor Line","s":"Slams have 15% chance to cause aftershocks","id":null},{"x":-896,"y":269,"k":"small","n":"Physical","s":"10% increased Physical Damage","id":null},{"x":-607,"y":436,"k":"small","n":"Accuracy","s":"+40 to Accuracy Rating","id":null},{"x":-607,"y":770,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":-896,"y":937,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":-1185,"y":770,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":-1185,"y":436,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":-850,"y":-666,"k":"notable","n":"Long Haft","s":"18% increased Melee Damage with two-handed weapons","id":null},{"x":-850,"y":-1000,"k":"small","n":"Strength","s":"+5 to Strength","id":null},{"x":-561,"y":-833,"k":"small","n":"Melee damage","s":"8% increased Melee Damage","id":null},{"x":-561,"y":-499,"k":"small","n":"Attack speed","s":"3% increased Attack Speed","id":null},{"x":-850,"y":-332,"k":"small","n":"Stun buildup","s":"10% increased Stun Buildup","id":null},{"x":-1140,"y":-499,"k":"small","n":"Area","s":"6% increased Area of Effect","id":null},{"x":-1140,"y":-833,"k":"small","n":"Armour","s":"12% increased Armour","id":null},{"x":0,"y":-1560,"k":"keystone","n":"Unwavering","s":"You cannot be interrupted, but you cannot evade","id":null}];
+var TREE_EDGES = [[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,1],[0,1],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,9],[0,9],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,17],[0,17],[25,26],[26,27],[27,28],[28,29],[29,30],[30,31],[31,32],[32,25],[0,25],[33,34],[34,35],[35,36],[36,37],[37,38],[38,39],[39,40],[40,33],[0,33],[41,42],[42,43],[43,44],[44,45],[45,46],[46,47],[47,48],[48,41],[0,41],[49,50],[49,51],[49,52],[49,53],[49,54],[49,55],[8,50],[56,57],[56,58],[56,59],[56,60],[56,61],[56,62],[16,57],[63,64],[63,65],[63,66],[63,67],[63,68],[63,69],[24,64],[70,71],[70,72],[70,73],[70,74],[70,75],[70,76],[32,71],[77,78],[77,79],[77,80],[77,81],[77,82],[77,83],[40,78],[1,84]];
+
+function indexById(id) {
+  for (var i = 0; i < TREE_NODES.length; i++) {
+    if (TREE_NODES[i].id === id) { return i; }
+  }
+  return -1;
+}
+
+var I_STRENGTH = indexById('strength89');
+var I_FIRE = indexById('fire40');
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
+    var alloc = {};
+    // A plausible starting allocation: the start, the whole first ring, two notables.
+    alloc[0] = true;
+    for (var i = 1; i <= 24; i++) { alloc[i] = true; }
+    alloc[49] = true;
+    alloc[56] = true;
     this.state = {
       theme: null,
-      alloc: { strength89: true, fire40: true, melee22_: true, attributes70: false, criticals12: false },
+      alloc: alloc,
       supports: ['Martial Tempo', 'Abiding Hex'],
       filter: 'all'
     };
+  }
+
+  isOn(i) { return !!this.state.alloc[i]; }
+
+  toggleNode(i) {
+    var next = {};
+    for (var k in this.state.alloc) { next[k] = this.state.alloc[k]; }
+    if (next[i]) { delete next[i]; } else { next[i] = true; }
+    this.setState({ alloc: next });
   }
 
   theme() {
@@ -282,23 +344,12 @@ class Component extends DCLogic {
     };
   }
 
-  nodeList() {
-    return [
-      { id: 'strength89', name: 'Attribute', stat: '+5 to Strength', kind: 'small' },
-      { id: 'fire40', name: 'Kindling', stat: '12% increased Fire Damage', kind: 'small' },
-      { id: 'melee22_', name: 'Brutal Blows', stat: '15% increased Melee Damage', kind: 'notable' },
-      { id: 'attributes70', name: 'Attribute', stat: '+5 to all Attributes', kind: 'small' },
-      { id: 'criticals12', name: 'Precision', stat: '20% increased Critical Hit Chance', kind: 'notable' }
-    ];
-  }
-
   computeFindings() {
     var t = this.tokens();
-    var a = this.state.alloc;
     var sups = this.state.supports;
     var out = [];
 
-    if (a.fire40 && !a.strength89) {
+    if (this.isOn(I_FIRE) && !this.isOn(I_STRENGTH)) {
       out.push({
         key: 'disc', severity: 'error', color: t.error, soft: t.errorSoft,
         rule: 'passive.disconnected', target: 'passive:fire40',
@@ -353,21 +404,57 @@ class Component extends DCLogic {
   renderVals() {
     var self = this;
     var dark = this.theme() === 'dark';
-    var a = this.state.alloc;
     var t = this.tokens();
 
-    var nodes = this.nodeList().map(function (n) {
-      var on = !!a[n.id];
+    var R = { start: 64, keystone: 74, notable: 52, small: 26 };
+
+    var treeNodes = TREE_NODES.map(function (n, i) {
+      var on = self.isOn(i);
       return {
-        id: n.id, name: n.name, stat: n.stat, kind: n.kind,
-        rowBg: on ? 'var(--surface-2)' : 'transparent',
-        markBg: on ? 'var(--primary)' : 'transparent',
-        markBorder: on ? 'var(--primary)' : 'var(--border-strong)',
-        toggle: function () {
-          var next = Object.assign({}, self.state.alloc);
-          next[n.id] = !next[n.id];
-          self.setState({ alloc: next });
-        }
+        x: n.x, y: n.y, r: R[n.k],
+        fill: on ? 'var(--primary)' : 'var(--surface)',
+        stroke: on ? 'var(--primary)' : 'var(--border-strong)',
+        sw: n.k === 'small' ? 8 : 12,
+        toggle: function () { self.toggleNode(i); }
+      };
+    });
+
+    var treeEdges = TREE_EDGES.map(function (e) {
+      var both = self.isOn(e[0]) && self.isOn(e[1]);
+      return {
+        x1: TREE_NODES[e[0]].x, y1: TREE_NODES[e[0]].y,
+        x2: TREE_NODES[e[1]].x, y2: TREE_NODES[e[1]].y,
+        stroke: both ? 'var(--primary)' : 'var(--border)',
+        w: both ? 11 : 7
+      };
+    });
+
+    var treeLabels = TREE_NODES.map(function (n, i) {
+      if (n.k !== 'notable' && n.k !== 'keystone') { return null; }
+      return {
+        x: n.x, y: n.y - (R[n.k] + 34), size: 52,
+        fill: self.isOn(i) ? 'var(--text)' : 'var(--muted)',
+        text: n.n
+      };
+    }).filter(function (l) { return l !== null; });
+
+    var legend = [
+      { label: 'allocated', dot: 11, fill: 'var(--primary)', stroke: 'var(--primary)' },
+      { label: 'available', dot: 11, fill: 'var(--surface)', stroke: 'var(--border-strong)' },
+      { label: 'notable', dot: 15, fill: 'var(--surface)', stroke: 'var(--border-strong)' },
+      { label: 'keystone', dot: 19, fill: 'var(--surface)', stroke: 'var(--border-strong)' }
+    ];
+
+    var allocated = TREE_NODES.map(function (n, i) {
+      return { n: n, i: i };
+    }).filter(function (p) {
+      return self.isOn(p.i) && (p.n.k === 'notable' || p.n.k === 'keystone' || p.n.id);
+    }).map(function (p) {
+      return {
+        name: p.n.n,
+        id: p.n.id || p.n.k,
+        dotFill: 'var(--primary)',
+        toggle: function () { self.toggleNode(p.i); }
       };
     });
 
@@ -434,14 +521,19 @@ class Component extends DCLogic {
       return { id: s.id, item: s.item, cls: s.cls, fg: s.empty ? 'var(--muted)' : 'var(--text)' };
     });
 
-    var used = Object.keys(a).filter(function (k) { return a[k]; }).length;
+    var used = Object.keys(this.state.alloc).length;
 
     return {
       theme: this.theme(),
       themeLabel: dark ? 'Light' : 'Dark',
       toggleTheme: function () { self.setState({ theme: dark ? 'light' : 'dark' }); },
-      nodes: nodes,
-      pointsUsed: used + 84,
+      viewBox: VIEWBOX,
+      treeNodes: treeNodes,
+      treeEdges: treeEdges,
+      treeLabels: treeLabels,
+      legend: legend,
+      allocated: allocated,
+      pointsUsed: used + 63,
       pointsBudget: 112,
       supports: supports,
       socketsFree: 5 - this.state.supports.length,
