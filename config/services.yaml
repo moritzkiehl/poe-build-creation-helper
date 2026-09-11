@@ -11,6 +11,15 @@ parameters:
     # catalog data are version-bound, so this is a real setting, not a label.
     app.default_game_version: '0.5.5'
 
+    # Catalog sources. Both are static files on GitHub: no API key, no OAuth.
+    # Snapshots are fetched at runtime into an ignored directory and are never
+    # committed or served on — the data belongs to Grinding Gear Games.
+    app.catalog.passive_tree_url: 'https://raw.githubusercontent.com/grindinggear/poe2-skilltree-export/main/data.json'
+    app.catalog.snapshot_dir: '%kernel.project_dir%/var/catalog'
+    app.catalog.user_agent: 'poe-build-creation-helper/0.1 (+https://github.com/moritzkiehl/poe-build-creation-helper; contact: %app.catalog.contact%)'
+    app.catalog.contact: '%env(default:app.catalog.contact_default:APP_CATALOG_CONTACT)%'
+    app.catalog.contact_default: 'unset@example.invalid'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -21,6 +30,13 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    # Scalar arguments autowiring cannot guess. Defined after the resource
+    # block above, because later definitions replace earlier ones.
+    App\Catalog\SourceFetcher:
+        arguments:
+            $snapshotDir: '%app.catalog.snapshot_dir%'
+            $userAgent: '%app.catalog.user_agent%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

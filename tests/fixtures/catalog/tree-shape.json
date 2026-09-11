@@ -1,0 +1,59 @@
+{
+    "tree": "Default",
+    "classes": [{"name": "Warrior"}, {"name": "Sorceress"}],
+    "groups": {"1": {"x": 100.0, "y": 200.0, "orbits": [2], "nodes": ["1001", "1002"]}},
+    "nodes": {
+        "root": {"group": 0, "orbit": 0, "orbitIndex": 0, "out": ["1001"], "in": [], "edges": [0]},
+        "1001": {
+            "id": "synthetic12",
+            "skill": 1001,
+            "name": "Synthetic Attribute",
+            "icon": "Art/2DArt/SkillIcons/passives/example.png",
+            "stats": ["+5 to Strength"],
+            "group": 1, "orbit": 2, "orbitIndex": 0,
+            "x": 100.0, "y": 36.0,
+            "out": ["1002"], "in": ["root"], "edges": [0, 1]
+        },
+        "1002": {
+            "id": "synthetic13_",
+            "skill": 1002,
+            "name": "Synthetic Notable",
+            "isNotable": true,
+            "stats": ["15% increased Melee Damage"],
+            "group": 1, "orbit": 2, "orbitIndex": 6,
+            "x": 264.0, "y": 200.0,
+            "out": [], "in": ["1001"], "edges": [1]
+        },
+        "1003": {
+            "id": "synthetic14",
+            "skill": 1003,
+            "name": "Synthetic Keystone",
+            "isKeystone": true,
+            "stats": ["You cannot be interrupted"],
+            "group": 1, "orbit": 0, "orbitIndex": 0,
+            "x": 500.0, "y": 500.0,
+            "out": [], "in": [], "edges": []
+        },
+        "1004": {
+            "id": "AscendancySynthetic1Small1",
+            "skill": 1004,
+            "name": "Synthetic Ascendancy Node",
+            "ascendancyId": "Synthetic1",
+            "stats": ["+2% Critical Hit Chance"],
+            "group": 1, "orbit": 2, "orbitIndex": 12,
+            "x": 300.0, "y": 300.0,
+            "out": [], "in": [], "edges": []
+        },
+        "1005": {
+            "id": null,
+            "skill": 1005,
+            "name": "",
+            "ascendancyId": "Synthetic1",
+            "group": 1, "orbit": 2, "orbitIndex": 18,
+            "x": 400.0, "y": 400.0,
+            "out": [], "in": [], "edges": []
+        }
+    },
+    "edges": [{"from": "root", "to": 1001}, {"from": "1001", "to": 1002}],
+    "min_x": 0, "min_y": 0, "max_x": 600, "max_y": 600
+}
