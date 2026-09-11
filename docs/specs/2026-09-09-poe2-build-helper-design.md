@@ -480,6 +480,40 @@ What the corpus settles:
 - The documented markup is real: `<b>{<m>{Allocation Step #1}}` with CRLF line
   breaks.
 
+### The support_text parser, measured (2026-09-11)
+
+Built and run over all 614 support gems that survive placeholder filtering in
+0.5.5:
+
+| Outcome | Count | Share |
+|---|---|---|
+| Every clause understood | 523 | 85.2% |
+| Some clauses understood | 18 | 2.9% |
+| Nothing extracted | 73 | 11.9% |
+
+45 distinct clauses resist extraction, led by "any skill that deals damage",
+"Skills which already have a cooldown", "Skills you use yourself" and "Skills
+which create Ground Surfaces" — requirements no term vocabulary can express.
+`app:catalog:sync --report-unparsed` lists them all, which is the report the
+testing section asks for.
+
+This is the measurement that justifies the severity split: a parser wrong about
+one support in seven must not produce errors. What it produces is 821
+requirement rows across 541 gems, every one carrying `origin = parsed` and the
+clause it came from, so a wrong extraction can be reviewed rather than guessed
+at.
+
+Two corrections the real data forced, both caught by measuring rather than by
+reading:
+
+- Placeholder gems are marked **`[DNT]`** and **`[DNT-UNUSED]`**, in brackets, in
+  the display name. A filter looking for a bare `DNT` prefix matches none of the
+  77 entries that carry it. Earlier notes said 22; that number counted only the
+  supports without a leading clause.
+- At least one gem lists the same support twice under `recommended_supports`
+  (SkillGemColdSnap). The pair is a primary key, so the duplicate aborted the
+  entire sync until the normaliser de-duplicated.
+
 ### A better source for suggestions
 
 `recommended_supports` is present on 379 of 505 active gems and on all 44 spirit

@@ -1,0 +1,117 @@
+{
+    "Metadata/Items/Gems/SkillGemSyntheticStrike": {
+        "base_item": {
+            "display_name": "Synthetic Strike",
+            "id": "Metadata/Items/Gems/SkillGemSyntheticStrike",
+            "release_state": "released"
+        },
+        "color": "r",
+        "crafting_level": 0,
+        "gem_type": "active",
+        "grants_skills": [
+            "SyntheticStrike"
+        ],
+        "icon_dds_file": "Art/2DArt/SkillIcons/4k/Synthetic.dds",
+        "recommended_supports": [
+            "Metadata/Items/Gem/SupportGemSyntheticBoost",
+            "Metadata/Items/Gems/SupportGemMissingFromCatalog",
+            "Metadata/Items/Gem/SupportGemSyntheticBoost"
+        ],
+        "requirement_weights": {
+            "dexterity": 0,
+            "intelligence": 0,
+            "strength": 100
+        },
+        "tags": [
+            "attack",
+            "melee",
+            "grants_active_skill"
+        ]
+    },
+    "Metadata/Items/Gem/SupportGemSyntheticBoost": {
+        "base_item": {
+            "display_name": "Synthetic Boost",
+            "id": "Metadata/Items/Gem/SupportGemSyntheticBoost",
+            "release_state": "released"
+        },
+        "color": "b",
+        "crafting_level": 2,
+        "gem_type": "support",
+        "grants_skills": [
+            "SupportSyntheticBoost"
+        ],
+        "is_lineage": false,
+        "requirement_weights": {
+            "dexterity": 0,
+            "intelligence": 100,
+            "strength": 0
+        },
+        "support_text": "Supports [Melee] Attack Skills you use yourself. Cannot Support [Channelling] Skills.",
+        "tags": [
+            "support",
+            "melee"
+        ]
+    },
+    "Metadata/Items/Gem/SkillGemSyntheticAura": {
+        "base_item": {
+            "display_name": "Synthetic Aura",
+            "id": "Metadata/Items/Gem/SkillGemSyntheticAura",
+            "release_state": "released"
+        },
+        "color": "g",
+        "crafting_level": 0,
+        "gem_type": "spirit",
+        "grants_skills": [
+            "SyntheticAura"
+        ],
+        "recommended_supports": [],
+        "requirement_weights": {
+            "dexterity": 100,
+            "intelligence": 0,
+            "strength": 0
+        },
+        "tags": [
+            "persistent",
+            "buff"
+        ]
+    },
+    "Metadata/Items/Gem/SupportGemDntPlaceholder": {
+        "base_item": {
+            "display_name": "DNT Description",
+            "id": "Metadata/Items/Gem/SupportGemDntPlaceholder",
+            "release_state": "unreleased"
+        },
+        "color": "b",
+        "crafting_level": 0,
+        "gem_type": "support",
+        "grants_skills": [],
+        "requirement_weights": {
+            "dexterity": 0,
+            "intelligence": 0,
+            "strength": 0
+        },
+        "support_text": "DNT Description",
+        "tags": [
+            "support"
+        ]
+    },
+    "Metadata/Items/Gem/SupportGemBracketPlaceholder": {
+        "base_item": {
+            "display_name": "[DNT-UNUSED] Synthetic Leftover",
+            "id": "Metadata/Items/Gem/SupportGemBracketPlaceholder",
+            "release_state": "released"
+        },
+        "color": "b",
+        "crafting_level": 0,
+        "gem_type": "support",
+        "grants_skills": [],
+        "requirement_weights": {
+            "dexterity": 0,
+            "intelligence": 0,
+            "strength": 0
+        },
+        "tags": [
+            "support"
+        ]
+    }
+}
