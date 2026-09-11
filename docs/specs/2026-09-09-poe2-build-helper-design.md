@@ -775,10 +775,20 @@ no mapping layer needed for passives or gems; the `Inventories` IDs have no
 upstream source and become a curated map; support requirements come from a
 parser over `support_text` plus a curated override file.
 
-**Iteration 1 — round trip.** Symfony skeleton, module `Build`, module
-`Interchange`, upload and paste, storage, unchanged download, share slug and edit
-token, read-only view. No catalog, no rules, no editor. Acceptance is not a green
-test but this: a file produced by the tool is read by PoE2.
+**Iteration 1 — round trip. Built 2026-09-11.** Symfony skeleton, upload and
+paste, storage, unchanged download, share slug and edit token, read-only view.
+No catalog, no rules, no editor.
+
+Status: **provisionally accepted.** Fourteen game-exported files round-trip
+byte-exact, and a build exported through the app into the game's BuildPlanner
+directory is byte-identical to the file the game wrote. The full acceptance
+condition — PoE2 actually reading a file the tool produced — is still open and
+will be checked later. Until it is, "the game accepts our output" remains an
+inference from byte equality, not an observation.
+
+The layout follows Symfony conventions (`src/Entity`, `src/Repository`,
+`src/Controller`) rather than a directory per module; the five modules of part 1
+survive as namespaces and as the dependency rule, not as folders.
 
 **Iteration 2 — catalog.** Sync commands, normaliser, tables, the `catalog_sync`
 log, `CatalogPort`, search and browse view. From here on builds show names and
