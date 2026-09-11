@@ -1,9 +1,11 @@
 # PoE2 Build Helper — Design
 
 Status: 2026-09-11. Part 1 (architecture, data flow) and part 2 (data model,
-rules engine, testing, iteration plan) are both discussed and confirmed.
-What remains open is the list of proofs and the joint walkthrough of warnings
-and hints — see "Open points".
+rules engine, testing, iteration plan) are both discussed and confirmed, and
+step 0 of the iteration plan — the key mapping spike — has been run; its results
+are in "Step 0 findings" and have already been folded into the data model and
+the rules engine. What remains open is the list of proofs and the joint
+walkthrough of warnings and hints — see "Open points".
 
 Project language is English throughout: prose, identifiers, file names, code
 comments and commit messages. (This document was originally written in German
@@ -74,8 +76,10 @@ the E2E tests run on Playwright.
 
 `mods` 8.7 MB · `ascendancies` 3.9 MB · `base_items` 3.1 MB ·
 `skill_gems` 957 KB · `uniques` 115 KB · `tags` 25 KB.
-`stat_translations` and `passive_skill_trees` return 404 under this path — the
-correct path still has to be found.
+`stat_translations` and `passive_skill_trees` are directories, not files — that
+was the 404 (resolved 2026-09-11, see "Step 0 findings"). `passive_skill_trees`
+holds `Default.json`, `Atlas.json`, `EndgameMap.json`, `Royale.json` and
+`BrequelTree.json`; `stat_translations` holds 54 files.
 `mods` is not needed for the MVP (no rare crafting).
 
 ## Licensing and rights (settled 2026-09-09)
@@ -245,7 +249,8 @@ Addable later without touching what exists: `Meta` (ladder aggregates), `Assist`
 (LLM).
 
 Load-bearing decision: `Advice` receives catalog data through an interface, not
-through Doctrine. Signature `(BuildSketch, CatalogPort) -> Finding[]`. That makes
+through Doctrine. Signature `(BuildSketch, CatalogPort) -> Finding[]`, extended
+in part 2 to `(BuildSketch, CatalogPort, KnowledgePort) -> Finding[]`. That makes
 the rules engine fully unit-testable against a fake catalog — the part that gets
 readjusted with every PoE2 patch.
 
@@ -313,6 +318,79 @@ durable statement, only "true for version X". Rules and curated entries
 therefore carry validity ranges (see the rules engine), and proofs carry a
 version stamp.
 
+## Step 0 findings — key mapping spike (2026-09-11)
+
+Run against the live upstream sources; nothing was committed. RePoE labelled the
+data "PoE2 version 4.5.5.1.6", the internal build matching 0.5.5.
+
+**The headline risk from part 1 is cleared. `Catalog` needs no mapping layer.**
+Both key spaces referenced by `.build` match their sources exactly.
+
+- Passive tree: the export keys nodes by a numeric skill id, but each node
+  carries a string `id` field, and that field is the `.build` key space.
+  `strength89` — the example from GGG's documentation — is present verbatim
+  (node 35426, "Attribute"). 4912 ids, no duplicates.
+- Gems: `Metadata/Items/Gems/SkillGemEarthquake` and
+  `Metadata/Items/Gems/SupportGemFastForward`, both documentation examples, are
+  present verbatim as RePoE keys, and `base_item.id` always equals the key.
+
+### Traps that constrain the implementation
+
+- **Three path prefixes coexist in `skill_gems`:** `Metadata/Items/Gem/` (595),
+  `Metadata/Items/Gems/` (594) and `Metadata/items/Gems/` (2). No leaf name
+  collides across them. Paths are therefore stored verbatim and never
+  normalised; a "tidy-up" of the prefix would break export into the game.
+- **527 passive ids end in an underscore** (`strength65_`). Likewise verbatim.
+- **240 tree nodes carry `id: null`** — unnamed ascendancy filler. They are not
+  referenceable from `.build` and must not reach the catalog as allocatable
+  nodes.
+- **22 support gems are `DNT` placeholders** ("DNT Description", "DNT-UNUSED
+  Ezomyte Four"). Sync filters them out, or they surface in search as real gems.
+- **Unique names are not unique.** 449 uniques, 441 distinct names;
+  `Grand Spectrum`, `Grip of Kulemak` and `Guiding Palm` each occur more than
+  once. Since `.build` identifies uniques by `unique_name`, those three are
+  ambiguous on import and need a disambiguation decision.
+- **No inventories data exists anywhere.** Nothing maps `.build`'s
+  `inventory_id` (`Weapon1`). `item_classes` lists 118 classes and each unique
+  carries an `item_class`, so slot validation is reachable — but only through a
+  hand-maintained map.
+
+### Support requirements: prose, not fields
+
+There is no `allowed_tags` or `excluded_tags` field. What exists is
+`support_text`, and it is more machine-readable than prose usually is: bracket
+markup references canonical terms (`[Curse]`, `[CriticalDamageBonus|Critical
+Damage Bonus]`), 180 distinct terms across the corpus, led by `Hit` (217),
+`Attack` (145), `Minion` (115), `Projectile` (85), `Spell` (54), `Totem` (49),
+`Melee` (47), `Channelling` (34).
+
+Measured coverage:
+
+- 608 of 630 supports (97%) open with a `Supports X` clause; the 22 exceptions
+  are the `DNT` entries.
+- Only 62% of those clauses contain a word from the 59-value gem `tags`
+  vocabulary. The rest state requirements tags cannot express: "skills which can
+  cause damaging hits", "skills you use yourself", "skills that have cooldowns",
+  "offering skills".
+- Only 32 supports carry an explicit `Cannot Support` clause. The positive
+  clause is the real constraint for nearly everything else.
+- Compound clauses need care: "Cannot Support Channelled Skills **and does not
+  modify Skills used by Minions**" is one restriction plus one behaviour note,
+  and a naive parser reads two restrictions.
+
+Consequence: support compatibility is derivable, but only against the 180-term
+bracket vocabulary and never at full coverage. It therefore may not produce hard
+errors — see the rules engine.
+
+### A better source for suggestions
+
+`recommended_supports` is present on 379 of 505 active gems and on all 44 spirit
+gems: the game's own skill-to-support pairing, already machine-readable. It
+replaces tag inference as the basis for `support.suggestion`.
+
+`gem_type` has three values, not two: `active` (505), `support` (642) and
+`spirit` (44). The third confirms a data basis for spirit handling.
+
 ## Data model (part 2, confirmed)
 
 ### Catalog
@@ -325,16 +403,24 @@ index arrays usefully.
 |---|---|---|
 | `catalog_gem` | `id` (PK, `Metadata/Items/Gems/…`), `kind` (`active`\|`support`), `name`, `primary_attribute`, `required_level` | stats, description, icon reference |
 | `catalog_gem_tag` | `gem_id`, `tag` | — |
-| `catalog_gem_tag_requirement` | `support_id`, `tag`, `mode` (`requires`\|`excludes`) | — |
+| `catalog_gem_requirement` | `support_id`, `term` (bracket vocabulary), `mode` (`requires`\|`excludes`), `origin` (`parsed`\|`curated`) | parsed clause for review |
+| `catalog_gem_recommended_support` | `gem_id`, `support_id`, `rank` | — |
 | `catalog_passive` | `id` (`strength89`), `name`, `kind` (`small`\|`notable`\|`keystone`\|`ascendancy`), `ascendancy_key?`, `pos_x`, `pos_y` | stats, neighbours |
 | `catalog_passive_edge` | `from_id`, `to_id` | — |
 | `catalog_base_item` | `id`, `name`, `item_class`, `inventory_id` | requirements, implicit |
 | `catalog_unique` | `id`, `name`, `base_item_id` | mods as text |
 | `catalog_sync` | `source`, `ran_at`, `upstream_last_modified`, `game_version`, `status`, `count` | error text |
 
-Exactly two of these tables are load-bearing for the rules engine:
-`catalog_passive_edge` for tree connectivity and `catalog_gem_tag_requirement`
-for support compatibility. Everything else serves display.
+Three of these tables are load-bearing for the rules engine:
+`catalog_passive_edge` for tree connectivity, `catalog_gem_requirement` for
+support compatibility, and `catalog_gem_recommended_support` for suggestions.
+Everything else serves display.
+
+`catalog_gem_requirement` is filled by a parser over `support_text` during sync,
+keyed on the 180-term bracket vocabulary rather than on the 59 gem tags, with
+`origin` recording whether a row was parsed or curated. The parsed clause is
+kept in JSON so a wrong extraction can be reviewed rather than guessed at.
+Sync drops `DNT` entries and tree nodes with `id: null` before writing.
 
 ### Build
 
@@ -364,11 +450,16 @@ Not in the database, but version-controlled in the repository under
 committed — unlike catalog snapshots.
 
 ```
-archetypes.yaml    key, name, since, until, expected building blocks
-                   (tag patterns, stat keywords, mandatory keystones)
-interactions.yaml  key, since, until, unique?, skill?/tag?,
-                   kind (enables|modifies|forbids|synergy),
-                   severity, text, source
+archetypes.yaml          key, name, since, until, expected building blocks
+                         (term patterns, stat keywords, mandatory keystones)
+interactions.yaml        key, since, until, unique?, skill?/term?,
+                         kind (enables|modifies|forbids|synergy),
+                         severity, text, source
+support_requirements.yaml  support_id, since, until, requires[], excludes[],
+                         severity — overrides and completes what the
+                         support_text parser cannot express
+inventory_slots.yaml     inventory_id ("Weapon1"), allowed item classes —
+                         the map no upstream source provides
 ```
 
 Interactions between uniques and skills are their own entry type alongside
@@ -439,10 +530,12 @@ Errors — mechanically broken:
 - `ascendancy.mismatch` — ascendancy node without an ascendancy, or from a
   different one
 - `ascendancy.budget_exceeded`
-- `support.tag_mismatch` — the support requires a tag the skill does not carry,
-  or excludes one it does
+- `support.requirement_unmet` (curated only) — the support's requirement is
+  contradicted by the skill, per `support_requirements.yaml`. The parsed variant
+  of this check is a warning, not an error; see below
 - `support.socket_limit` — more supports than sockets
-- `unique.slot_mismatch` — the unique does not fit this inventory slot
+- `unique.slot_mismatch` — the unique does not fit this inventory slot, judged
+  against `inventory_slots.yaml` and the unique's `item_class`
 - `level_interval.invalid` — end before start, or outside 1–100
 - `support.used_twice_in_build` — up to 0.2 only, see version binding
 
@@ -459,13 +552,19 @@ Warnings — gaps and uncertainty:
 - `weapon_set.*` — the format carries `weapon_set` 0..2 because PoE2 allows
   weapon-set-specific passive allocation. Checks for invalid or unused set
   assignment
+- `support.requirement_unmet` (parsed) — the same check driven by the
+  `support_text` parser. A warning rather than an error, because coverage is
+  partial by measurement: 97% of supports yield a clause, but the clause is not
+  always expressible as a term comparison
+- `unique.name_ambiguous` — the imported `unique_name` matches more than one
+  unique (`Grand Spectrum`, `Grip of Kulemak`, `Guiding Palm` as of 0.5.5)
 - `archetype.missing_block` — curated, active only when an archetype is set
 - `interaction.forbidden` — curated, `kind: forbids`
 
 Hints — suggestions:
 
-- `support.suggestion` — derived: supports whose tag requirements the skill
-  satisfies and which are still free
+- `support.suggestion` — derived from `recommended_supports`, filtered to those
+  not yet socketed
 - `passive.suggestion` — derived: nodes a short tree distance away carrying a
   wanted stat keyword
 - `interaction.synergy` — curated: unique ↔ skill, `kind: enables|modifies|synergy`
@@ -567,12 +666,10 @@ possible.
 
 ### Phase EA (September–December 2026, against 0.5.5, website not yet launched)
 
-**Step 0 — key mapping spike.** Time-boxed, and its output is an answer rather
-than code. Do the skill tree export and RePoE carry exactly the keys `.build`
-references — `strength89`, `Metadata/Items/Gems/…`, the `Inventories` IDs? On
-the way, resolve the 404 paths for `stat_translations` and
-`passive_skill_trees`. The outcome decides whether `Catalog` needs a mapping
-layer.
+**Step 0 — key mapping spike. Done 2026-09-11, see "Step 0 findings".** Outcome:
+no mapping layer needed for passives or gems; the `Inventories` IDs have no
+upstream source and become a curated map; support requirements come from a
+parser over `support_text` plus a curated override file.
 
 **Iteration 1 — round trip.** Symfony skeleton, module `Build`, module
 `Interchange`, upload and paste, storage, unchanged download, share slug and edit
@@ -627,8 +724,16 @@ patch.
 4. Spirit sources: how much sits on the tree, how much only on gear
 5. Weapon binding of skills: whether RePoE models it as a tag or a requirement
 6. `weapon_set` semantics in the `.build` format: what 0, 1 and 2 mean exactly
+7. Which of the 12 classes the tree export lists (Marauder, Witch, Ranger,
+   Duelist, Shadow, Templar, Warrior, Sorceress, Huntress, Mercenary, Monk,
+   Druid) are actually selectable in 0.5.5, before class-to-start-node logic
+   relies on the list
+8. Which spelling of `unique_name` the game accepts for the three ambiguous
+   uniques, and whether `.build` offers any disambiguation at all
 
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
+Settled: the `.build` key spaces for passives and gems match their sources
+exactly (step 0).
 
 ### Notes for the later rule walkthrough
 
@@ -641,9 +746,11 @@ Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0
 
 ### Technically open
 
-- The RePoE paths for `stat_translations` and `passive_skill_trees` return 404;
-  the correct path is still to be found (part of step 0).
 - Whether `.build` survives the 1.0 jump format-stable is unknown.
+- The `support_text` parser needs an accuracy measurement against a
+  hand-checked sample before its findings are shown, and a report of every
+  clause it could not extract, so the curated override file can be kept
+  honest.
 
 ### Before the website launch (January 2027)
 
