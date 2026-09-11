@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { color: var(--text); text-decoration: underline; }
+    button { font: inherit; cursor: pointer; }
+    .app {
+      --bg: oklch(0.978 0.004 85); --surface: oklch(1 0 0); --surface-2: oklch(0.965 0.005 85);
+      --border: oklch(0.905 0.006 85); --border-strong: oklch(0.84 0.008 85);
+      --text: oklch(0.27 0.012 75); --muted: oklch(0.53 0.012 75);
+      --primary: oklch(0.48 0.12 258); --primary-soft: oklch(0.95 0.03 258);
+      --error: oklch(0.50 0.16 28); --error-soft: oklch(0.95 0.035 28);
+      --warning: oklch(0.52 0.10 72); --warning-soft: oklch(0.955 0.045 80);
+      --hint: oklch(0.50 0.08 195); --hint-soft: oklch(0.955 0.03 195);
+    }
+    .app[data-theme="dark"] {
+      --bg: oklch(0.20 0.006 75); --surface: oklch(0.245 0.007 75); --surface-2: oklch(0.285 0.008 75);
+      --border: oklch(0.345 0.008 75); --border-strong: oklch(0.44 0.009 75);
+      --text: oklch(0.93 0.006 80); --muted: oklch(0.70 0.010 80);
+      --primary: oklch(0.76 0.10 258); --primary-soft: oklch(0.33 0.055 258);
+      --error: oklch(0.76 0.12 30); --error-soft: oklch(0.32 0.06 30);
+      --warning: oklch(0.80 0.10 78); --warning-soft: oklch(0.33 0.05 78);
+      --hint: oklch(0.80 0.08 195); --hint-soft: oklch(0.31 0.04 195);
+    }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .serif { font-family: "Newsreader", Georgia, serif; }
+  </style>
+</helmet>
+
+<div class="app" data-theme="{{theme}}" style="width: 1440px; min-height: 900px; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;">
+
+  <div style="display: flex; align-items: center; gap: 20px; padding: 0 24px; height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);">
+    <div style="display: flex; align-items: baseline; gap: 8px;">
+      <span class="serif" style="font-size: 21px; letter-spacing: -0.01em;">Build Helper</span>
+      <span class="mono" style="font-size: 11px; color: var(--muted);">poe2</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <button onClick="{{toggleTheme}}" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      <span>{{themeLabel}}</span>
+    </button>
+    <button style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path></svg>
+      <span>Copy into my own build</span>
+    </button>
+    <button style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; background: var(--primary); color: var(--surface); border: 1px solid var(--primary); border-radius: 6px; font-weight: 500;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"></path></svg>
+      <span>Export .build</span>
+    </button>
+  </div>
+
+  <!-- read-only banner -->
+  <div style="display: flex; align-items: center; gap: 10px; padding: 11px 24px; background: var(--surface-2); border-bottom: 1px solid var(--border); color: var(--muted);">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+    <span>You are looking at a shared link. Nothing here can be changed — copy it to get your own editable build.</span>
+  </div>
+
+  <div style="display: flex; gap: 24px; padding: 24px; align-items: flex-start;">
+
+    <div style="display: flex; flex-direction: column; gap: 16px; flex-grow: 1; min-width: 0;">
+
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: baseline; gap: 12px;">
+          <h1 class="serif" style="margin: 0; font-size: 27px; font-weight: 400; letter-spacing: -0.01em;">Titan Earthquake Slam</h1>
+          <span class="mono" style="font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;">0.5.5</span>
+        </div>
+        <p style="margin: 0; color: var(--muted); max-width: 640px; line-height: 1.55;">A slow, heavy slam build that leans on attribute stacking. Levelling order is in the node intervals — take the strength cluster before Kindling or the tree breaks apart.</p>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding-top: 4px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Class</span>
+            <span style="font-size: 15px; font-weight: 500;">Warrior · Titan</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Target level</span>
+            <span style="font-size: 15px; font-weight: 500;">90</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Passives</span>
+            <span style="font-size: 15px; font-weight: 500;">87 allocated</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Uniques</span>
+            <span style="font-size: 15px; font-weight: 500;">3 planned</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+          <div style="padding: 13px 18px; border-bottom: 1px solid var(--border); font-weight: 600;">Skills</div>
+          <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 14px;">
+            <sc-for list="{{skills}}" as="sk" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: baseline; gap: 9px;">
+                  <span style="font-weight: 500;">{{sk.name}}</span>
+                  <span style="font-size: 12px; color: var(--muted);">{{sk.from}}</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <sc-for list="{{sk.supports}}" as="s" hint-placeholder-count="3">
+                    <span style="display: flex; align-items: center; height: 26px; padding: 0 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 13px; font-size: 12px;">{{s.name}}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+          <div style="padding: 13px 18px; border-bottom: 1px solid var(--border); font-weight: 600;">Uniques</div>
+          <div style="display: flex; flex-direction: column;">
+            <sc-for list="{{uniques}}" as="u" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border);">
+                <span class="mono" style="font-size: 12px; color: var(--muted); width: 74px; flex-shrink: 0;">{{u.slot}}</span>
+                <span style="font-weight: 500; flex-grow: 1;">{{u.name}}</span>
+                <span style="font-size: 12px; color: var(--muted);">{{u.cls}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+        <div style="padding: 13px 18px; border-bottom: 1px solid var(--border); font-weight: 600;">Levelling order</div>
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{steps}}" as="st" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 14px; padding: 11px 18px; border-bottom: 1px solid var(--border);">
+              <span class="mono" style="font-size: 12px; color: var(--primary); width: 84px; flex-shrink: 0;">{{st.range}}</span>
+              <span style="flex-grow: 1;">{{st.what}}</span>
+              <span class="mono" style="font-size: 11px; color: var(--muted);">{{st.id}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- findings, read only -->
+    <div style="width: 372px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border);">
+        <span style="font-size: 15px; font-weight: 600;">Findings</span>
+        <span style="display: flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; color: var(--muted);">3</span>
+        <div style="flex-grow: 1;"></div>
+        <span class="mono" style="font-size: 11px; color: var(--muted);">catalog 4.5.5.1.6</span>
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <sc-for list="{{findings}}" as="fd" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 7px; padding: 14px 16px; border-bottom: 1px solid var(--border); border-left: 3px solid {{fd.color}};">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: {{fd.color}}; background: {{fd.soft}}; border-radius: 3px; padding: 2px 6px;">{{fd.severity}}</span>
+              <span class="mono" style="font-size: 11px; color: var(--muted);">{{fd.rule}}</span>
+            </div>
+            <span style="line-height: 1.45;">{{fd.message}}</span>
+            <span class="mono" style="font-size: 11px; color: var(--primary);">{{fd.target}}</span>
+            <span style="font-size: 11px; color: var(--muted);">{{fd.origin}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: 14px 16px; color: var(--muted); font-size: 12px; line-height: 1.5;">
+        Checks ran against catalog 4.5.5.1.6. The build declares 0.5.5, so the two agree.
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; padding: 18px 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px;">
+    <span>This product isn&#39;t affiliated with or endorsed by Grinding Gear Games in any way.</span>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { theme: null };
+  }
+  renderVals() {
+    var self = this;
+    var dark = (this.state.theme || this.props.theme || 'light') === 'dark';
+    // Severity colours live in the stylesheet so light and dark stay in one place.
+    var t = {
+      warning: 'var(--warning)', warningSoft: 'var(--warning-soft)',
+      hint: 'var(--hint)', hintSoft: 'var(--hint-soft)'
+    };
+    return {
+      theme: dark ? 'dark' : 'light',
+      themeLabel: dark ? 'Light' : 'Dark',
+      toggleTheme: function () { self.setState({ theme: dark ? 'light' : 'dark' }); },
+      skills: [
+        { name: 'Earthquake', from: 'from level 12', supports: [{ name: 'Martial Tempo' }, { name: 'Concentrated Effect' }, { name: 'Brutality' }] },
+        { name: 'Hateful Focus', from: 'from level 34', supports: [{ name: 'Martial Tempo' }] }
+      ],
+      uniques: [
+        { slot: 'Amulet', name: 'Astramentis', cls: 'Amulet' },
+        { slot: 'Ring1', name: "Kalandra's Touch", cls: 'Ring' },
+        { slot: 'Ring2', name: 'Grand Spectrum', cls: 'Ring' }
+      ],
+      steps: [
+        { range: '1 – 12', what: 'Strength cluster first, it carries every later node', id: 'strength89' },
+        { range: '12 – 34', what: 'Earthquake online, Martial Tempo as the first support', id: 'SkillGemEarthquake' },
+        { range: '34 – 60', what: 'Brutal Blows and the slam notables', id: 'melee22_' },
+        { range: '60 – 90', what: 'Attribute nodes to pay for Astramentis scaling', id: 'attributes70' }
+      ],
+      findings: [
+        { severity: 'warning', color: t.warning, soft: t.warningSoft, rule: 'weapon.mismatch', target: 'slot:Weapon1', message: 'Earthquake is a mace skill, and no weapon is planned in Weapon1.', origin: 'derived from gem tags' },
+        { severity: 'warning', color: t.warning, soft: t.warningSoft, rule: 'unique.name_ambiguous', target: 'slot:Ring2', message: 'Grand Spectrum names more than one unique in 0.5.5.', origin: 'derived from catalog_unique' },
+        { severity: 'hint', color: t.hint, soft: t.hintSoft, rule: 'interaction.synergy', target: 'slot:Amulet', message: 'Astramentis feeds every attribute-scaled node on this tree.', origin: 'curated — interactions.yaml' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { color: var(--text); text-decoration: underline; }
+    button { font: inherit; cursor: pointer; }
+    .app {
+      --bg: oklch(0.978 0.004 85); --surface: oklch(1 0 0); --surface-2: oklch(0.965 0.005 85);
+      --border: oklch(0.905 0.006 85); --border-strong: oklch(0.84 0.008 85);
+      --text: oklch(0.27 0.012 75); --muted: oklch(0.53 0.012 75);
+      --primary: oklch(0.48 0.12 258); --primary-soft: oklch(0.95 0.03 258);
+      --support: oklch(0.50 0.08 195); --spirit: oklch(0.52 0.10 72); --unique: oklch(0.50 0.16 28);
+    }
+    .app[data-theme="dark"] {
+      --bg: oklch(0.20 0.006 75); --surface: oklch(0.245 0.007 75); --surface-2: oklch(0.285 0.008 75);
+      --border: oklch(0.345 0.008 75); --border-strong: oklch(0.44 0.009 75);
+      --text: oklch(0.93 0.006 80); --muted: oklch(0.70 0.010 80);
+      --primary: oklch(0.76 0.10 258); --primary-soft: oklch(0.33 0.055 258);
+      --support: oklch(0.80 0.08 195); --spirit: oklch(0.80 0.10 78); --unique: oklch(0.76 0.12 30);
+    }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .serif { font-family: "Newsreader", Georgia, serif; }
+  </style>
+</helmet>
+
+<div class="app" data-theme="{{theme}}" style="width: 1440px; min-height: 900px; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;">
+
+  <div style="display: flex; align-items: center; gap: 20px; padding: 0 24px; height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);">
+    <div style="display: flex; align-items: baseline; gap: 8px;">
+      <span class="serif" style="font-size: 21px; letter-spacing: -0.01em;">Build Helper</span>
+      <span class="mono" style="font-size: 11px; color: var(--muted);">poe2</span>
+    </div>
+    <span style="font-size: 15px; font-weight: 500;">Catalog</span>
+    <div style="flex-grow: 1;"></div>
+    <span class="mono" style="font-size: 11px; color: var(--muted);">synced 2026-09-11 · 4.5.5.1.6</span>
+    <button onClick="{{toggleTheme}}" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      <span>{{themeLabel}}</span>
+    </button>
+  </div>
+
+  <div style="display: flex; gap: 24px; padding: 24px; align-items: flex-start;">
+
+    <!-- filter rail -->
+    <div style="width: 232px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px;">
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Kind</span>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <sc-for list="{{kinds}}" as="k" hint-placeholder-count="5">
+            <button onClick="{{k.pick}}" style="display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 10px; background: {{k.bg}}; color: {{k.fg}}; border: 1px solid {{k.border}}; border-radius: 7px; text-align: left;">
+              <span style="flex-grow: 1;">{{k.label}}</span>
+              <span style="font-size: 12px; opacity: 0.75;">{{k.count}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: var(--border);"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Tag</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <sc-for list="{{tags}}" as="tg" hint-placeholder-count="7">
+            <button onClick="{{tg.pick}}" style="height: 26px; padding: 0 10px; background: {{tg.bg}}; color: {{tg.fg}}; border: 1px solid {{tg.border}}; border-radius: 13px; font-size: 12px;">{{tg.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: var(--border);"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 7px;">
+        <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Catalog state</span>
+        <span style="font-size: 12px; color: var(--muted); line-height: 1.45;">1191 gems, 449 uniques, 4912 passive nodes. Placeholder entries are filtered out.</span>
+      </div>
+    </div>
+
+    <!-- results -->
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 9px; height: 40px; padding: 0 13px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; flex-grow: 1;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="color: var(--muted);"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path></svg>
+          <span style="color: {{queryColor}};">{{queryLabel}}</span>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <sc-for list="{{queries}}" as="q" hint-placeholder-count="3">
+            <button onClick="{{q.pick}}" style="height: 40px; padding: 0 13px; background: {{q.bg}}; color: {{q.fg}}; border: 1px solid {{q.border}}; border-radius: 8px; font-size: 13px;">{{q.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display: flex; align-items: center; gap: 14px; padding: 11px 18px; border-bottom: 1px solid var(--border); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">
+          <span style="width: 210px; flex-shrink: 0;">Name</span>
+          <span style="flex-grow: 1;">Identifier</span>
+          <span style="width: 260px; flex-shrink: 0;">Tags</span>
+          <span style="width: 62px; flex-shrink: 0; text-align: right;">Attr</span>
+          <span style="width: 68px; flex-shrink: 0;"></span>
+        </div>
+
+        <sc-for list="{{rows}}" as="row" hint-placeholder-count="8">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--border);">
+            <div style="width: 210px; flex-shrink: 0; display: flex; align-items: center; gap: 9px;">
+              <span style="width: 7px; height: 7px; border-radius: 4px; background: {{row.dot}}; flex-shrink: 0;"></span>
+              <span style="font-weight: 500;">{{row.name}}</span>
+            </div>
+            <span class="mono" style="flex-grow: 1; font-size: 12px; color: var(--muted); overflow: hidden;">{{row.id}}</span>
+            <span style="width: 260px; flex-shrink: 0; font-size: 12px; color: var(--muted);">{{row.tags}}</span>
+            <span style="width: 62px; flex-shrink: 0; text-align: right; font-size: 12px; color: var(--muted);">{{row.attr}}</span>
+            <div style="width: 68px; flex-shrink: 0; display: flex; justify-content: flex-end;">
+              <button style="height: 27px; padding: 0 10px; background: transparent; color: var(--primary); border: 1px solid var(--border); border-radius: 6px; font-size: 12px;">Add</button>
+            </div>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 40px 18px; text-align: center; color: var(--muted);">Nothing matches this filter.</div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { theme: null, kind: 'all', tag: null, query: 'slam' };
+  }
+
+  data() {
+    return [
+      { name: 'Earthquake', id: 'Metadata/Items/Gems/SkillGemEarthquake', kind: 'active', tags: ['attack', 'melee', 'slam', 'area'], attr: 'STR' },
+      { name: 'Hateful Focus', id: 'Metadata/Items/Gem/SkillGemHatefulFocus', kind: 'active', tags: ['attack', 'melee', 'physical'], attr: 'STR' },
+      { name: 'Sunder', id: 'Metadata/Items/Gems/SkillGemSunder', kind: 'active', tags: ['attack', 'melee', 'slam', 'area'], attr: 'STR' },
+      { name: 'Concentrated Effect', id: 'Metadata/Items/Gems/SupportGemConcentratedEffect', kind: 'support', tags: ['support', 'area'], attr: 'INT' },
+      { name: 'Martial Tempo', id: 'Metadata/Items/Gem/SupportGemMartialTempo', kind: 'support', tags: ['support', 'attack'], attr: 'DEX' },
+      { name: 'Abiding Hex', id: 'Metadata/Items/Gem/SupportGemAbidingHex', kind: 'support', tags: ['support', 'curse'], attr: 'INT' },
+      { name: 'Fast Forward', id: 'Metadata/Items/Gems/SupportGemFastForward', kind: 'support', tags: ['support', 'duration'], attr: 'DEX' },
+      { name: 'Archmage', id: 'Metadata/Items/Gem/SkillGemArchmage', kind: 'spirit', tags: ['persistent', 'buff', 'lightning'], attr: 'INT' },
+      { name: 'Astramentis', id: 'Amulet · attribute stacking', kind: 'unique', tags: ['unique', 'amulet'], attr: '—' },
+      { name: "Kalandra's Touch", id: 'Ring · mirrors the other ring', kind: 'unique', tags: ['unique', 'ring'], attr: '—' }
+    ];
+  }
+
+  renderVals() {
+    var self = this;
+    var dark = (this.state.theme || this.props.theme || 'light') === 'dark';
+    var all = this.data();
+
+    // Kind colours live in the stylesheet so light and dark stay in one place.
+    var dots = {
+      active: 'var(--primary)',
+      support: 'var(--support)',
+      spirit: 'var(--spirit)',
+      unique: 'var(--unique)'
+    };
+
+    var kinds = [
+      { key: 'all', label: 'Everything' },
+      { key: 'active', label: 'Skill gems' },
+      { key: 'support', label: 'Supports' },
+      { key: 'spirit', label: 'Spirit gems' },
+      { key: 'unique', label: 'Uniques' }
+    ].map(function (k) {
+      var on = self.state.kind === k.key;
+      var count = k.key === 'all' ? all.length : all.filter(function (r) { return r.kind === k.key; }).length;
+      return {
+        label: k.label, count: count,
+        bg: on ? 'var(--primary-soft)' : 'transparent',
+        fg: on ? 'var(--primary)' : 'var(--text)',
+        border: on ? 'var(--primary)' : 'transparent',
+        pick: function () { self.setState({ kind: k.key }); }
+      };
+    });
+
+    var tagNames = ['melee', 'slam', 'area', 'attack', 'curse', 'persistent', 'unique'];
+    var tags = tagNames.map(function (t) {
+      var on = self.state.tag === t;
+      return {
+        label: t,
+        bg: on ? 'var(--primary-soft)' : 'transparent',
+        fg: on ? 'var(--primary)' : 'var(--muted)',
+        border: on ? 'var(--primary)' : 'var(--border)',
+        pick: function () { self.setState({ tag: on ? null : t }); }
+      };
+    });
+
+    var queries = [
+      { key: 'slam', label: 'slam' },
+      { key: 'support', label: 'support' },
+      { key: '', label: 'clear' }
+    ].map(function (q) {
+      var on = self.state.query === q.key;
+      return {
+        label: q.label,
+        bg: on ? 'var(--primary-soft)' : 'var(--surface)',
+        fg: on ? 'var(--primary)' : 'var(--muted)',
+        border: on ? 'var(--primary)' : 'var(--border)',
+        pick: function () { self.setState({ query: q.key }); }
+      };
+    });
+
+    var q = (this.state.query || '').toLowerCase();
+    var rows = all.filter(function (r) {
+      if (self.state.kind !== 'all' && r.kind !== self.state.kind) { return false; }
+      if (self.state.tag && r.tags.indexOf(self.state.tag) === -1) { return false; }
+      if (q && (r.name + ' ' + r.id + ' ' + r.tags.join(' ')).toLowerCase().indexOf(q) === -1) { return false; }
+      return true;
+    }).map(function (r) {
+      return { name: r.name, id: r.id, tags: r.tags.join(', '), attr: r.attr, dot: dots[r.kind] };
+    });
+
+    return {
+      theme: dark ? 'dark' : 'light',
+      themeLabel: dark ? 'Light' : 'Dark',
+      toggleTheme: function () { self.setState({ theme: dark ? 'light' : 'dark' }); },
+      kinds: kinds,
+      tags: tags,
+      queries: queries,
+      queryLabel: this.state.query ? this.state.query : 'Search gems, supports, uniques and nodes',
+      queryColor: this.state.query ? 'var(--text)' : 'var(--muted)',
+      rows: rows,
+      isEmpty: rows.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

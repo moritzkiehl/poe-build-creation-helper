@@ -1,0 +1,458 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { color: var(--text); text-decoration: underline; }
+    button { font: inherit; cursor: pointer; }
+    .app {
+      --bg: oklch(0.978 0.004 85);
+      --surface: oklch(1 0 0);
+      --surface-2: oklch(0.965 0.005 85);
+      --border: oklch(0.905 0.006 85);
+      --border-strong: oklch(0.84 0.008 85);
+      --text: oklch(0.27 0.012 75);
+      --muted: oklch(0.53 0.012 75);
+      --primary: oklch(0.48 0.12 258);
+      --primary-soft: oklch(0.95 0.03 258);
+      --error: oklch(0.50 0.16 28);
+      --error-soft: oklch(0.95 0.035 28);
+      --warning: oklch(0.52 0.10 72);
+      --warning-soft: oklch(0.955 0.045 80);
+      --hint: oklch(0.50 0.08 195);
+      --hint-soft: oklch(0.955 0.03 195);
+    }
+    .app[data-theme="dark"] {
+      --bg: oklch(0.20 0.006 75);
+      --surface: oklch(0.245 0.007 75);
+      --surface-2: oklch(0.285 0.008 75);
+      --border: oklch(0.345 0.008 75);
+      --border-strong: oklch(0.44 0.009 75);
+      --text: oklch(0.93 0.006 80);
+      --muted: oklch(0.70 0.010 80);
+      --primary: oklch(0.76 0.10 258);
+      --primary-soft: oklch(0.33 0.055 258);
+      --error: oklch(0.76 0.12 30);
+      --error-soft: oklch(0.32 0.06 30);
+      --warning: oklch(0.80 0.10 78);
+      --warning-soft: oklch(0.33 0.05 78);
+      --hint: oklch(0.80 0.08 195);
+      --hint-soft: oklch(0.31 0.04 195);
+    }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .serif { font-family: "Newsreader", Georgia, serif; }
+  </style>
+</helmet>
+
+<div class="app" data-theme="{{theme}}" style="width: 1440px; min-height: 980px; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;">
+
+  <!-- top bar -->
+  <div style="display: flex; align-items: center; gap: 20px; padding: 0 24px; height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);">
+    <div style="display: flex; align-items: baseline; gap: 8px;">
+      <span class="serif" style="font-size: 21px; letter-spacing: -0.01em;">Build Helper</span>
+      <span class="mono" style="font-size: 11px; color: var(--muted);">poe2</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1;">
+      <span style="font-size: 15px; font-weight: 500;">Titan Earthquake Slam</span>
+      <span class="mono" style="font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;">0.5.5</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button onClick="{{toggleTheme}}" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span>{{themeLabel}}</span>
+      </button>
+      <button style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg>
+        <span>Share</span>
+      </button>
+      <button style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; background: var(--primary); color: var(--surface); border: 1px solid var(--primary); border-radius: 6px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"></path></svg>
+        <span>Export .build</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- body -->
+  <div style="display: flex; gap: 24px; padding: 24px; align-items: flex-start;">
+
+    <!-- main column -->
+    <div style="display: flex; flex-direction: column; gap: 16px; flex-grow: 1; min-width: 0;">
+
+      <!-- header card -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px;">
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Class</span>
+            <span style="font-size: 15px; font-weight: 500;">Warrior</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Ascendancy</span>
+            <span style="font-size: 15px; font-weight: 500;">Titan</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Target level</span>
+            <span style="font-size: 15px; font-weight: 500;">90</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Game version</span>
+            <span class="mono" style="font-size: 14px;">0.5.5</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <span style="font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);">Archetype</span>
+            <span style="font-size: 15px; font-weight: 500; color: var(--primary);">Slam Titan</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- passives -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border);">
+          <span style="font-size: 15px; font-weight: 600;">Passive tree</span>
+          <span style="font-size: 13px; color: var(--muted);">{{pointsUsed}} of {{pointsBudget}} points</span>
+          <div style="flex-grow: 1;"></div>
+          <div style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; width: 260px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="color: var(--muted);"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path></svg>
+            <span style="color: var(--muted);">Search nodes</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{nodes}}" as="node" hint-placeholder-count="5">
+            <div onClick="{{node.toggle}}" style="display: flex; align-items: center; gap: 14px; padding: 11px 20px; border-bottom: 1px solid var(--border); cursor: pointer; background: {{node.rowBg}};">
+              <span style="width: 18px; height: 18px; border-radius: 5px; border: 1px solid {{node.markBorder}}; background: {{node.markBg}}; flex-shrink: 0;"></span>
+              <span class="mono" style="font-size: 12px; color: var(--muted); width: 120px; flex-shrink: 0;">{{node.id}}</span>
+              <span style="font-weight: 500; width: 150px; flex-shrink: 0;">{{node.name}}</span>
+              <span style="color: var(--muted); flex-grow: 1;">{{node.stat}}</span>
+              <span style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);">{{node.kind}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- skills -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border);">
+          <span style="font-size: 15px; font-weight: 600;">Skills</span>
+          <div style="flex-grow: 1;"></div>
+          <button style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; background: transparent; color: var(--primary); border: 1px solid var(--border); border-radius: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+            <span>Add skill</span>
+          </button>
+        </div>
+
+        <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: baseline; gap: 10px;">
+              <span style="font-size: 15px; font-weight: 500;">Earthquake</span>
+              <span class="mono" style="font-size: 11px; color: var(--muted);">Metadata/Items/Gems/SkillGemEarthquake</span>
+              <div style="flex-grow: 1;"></div>
+              <span style="font-size: 12px; color: var(--muted);">from level 12</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <sc-for list="{{supports}}" as="sup" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 11px; background: {{sup.bg}}; border: 1px solid {{sup.border}}; border-radius: 15px;">
+                  <span style="font-size: 13px; color: {{sup.fg}};">{{sup.name}}</span>
+                  <button onClick="{{sup.remove}}" style="display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; background: transparent; border: none; color: {{sup.fg}}; opacity: 0.65;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                  </button>
+                </div>
+              </sc-for>
+              <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border: 1px dashed var(--border-strong); border-radius: 15px; color: var(--muted); font-size: 13px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                <span>{{socketsFree}} sockets free</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="height: 1px; background: var(--border);"></div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: baseline; gap: 10px;">
+              <span style="font-size: 15px; font-weight: 500;">Hateful Focus</span>
+              <span class="mono" style="font-size: 11px; color: var(--muted);">Metadata/Items/Gem/SkillGemHatefulFocus</span>
+              <div style="flex-grow: 1;"></div>
+              <span style="font-size: 12px; color: var(--muted);">from level 34</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; height: 30px; padding: 0 11px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 15px; font-size: 13px;">Martial Tempo</div>
+              <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border: 1px dashed var(--border-strong); border-radius: 15px; color: var(--muted); font-size: 13px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                <span>4 sockets free</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- equipment -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border);">
+          <span style="font-size: 15px; font-weight: 600;">Equipment slots</span>
+          <span style="font-size: 13px; color: var(--muted);">uniques only — the format carries no rares</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;">
+          <sc-for list="{{slots}}" as="slot" hint-placeholder-count="10">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border);">
+              <span class="mono" style="font-size: 12px; color: var(--muted); width: 96px; flex-shrink: 0;">{{slot.id}}</span>
+              <span style="color: {{slot.fg}}; flex-grow: 1;">{{slot.item}}</span>
+              <span style="font-size: 12px; color: var(--muted);">{{slot.cls}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- findings sidebar -->
+    <div style="width: 372px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; position: sticky; top: 24px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border);">
+        <span style="font-size: 15px; font-weight: 600;">Findings</span>
+        <span style="display: flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; color: var(--muted);">{{findingCount}}</span>
+        <div style="flex-grow: 1;"></div>
+        <span class="mono" style="font-size: 11px; color: var(--muted);">catalog 4.5.5.1.6</span>
+      </div>
+
+      <div style="display: flex; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border);">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+          <button onClick="{{f.pick}}" style="height: 28px; padding: 0 10px; background: {{f.bg}}; color: {{f.fg}}; border: 1px solid {{f.border}}; border-radius: 14px; font-size: 12px;">{{f.label}}</button>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column;">
+        <sc-for list="{{findings}}" as="fd" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 7px; padding: 14px 16px; border-bottom: 1px solid var(--border); border-left: 3px solid {{fd.color}};">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: {{fd.color}}; background: {{fd.soft}}; border-radius: 3px; padding: 2px 6px;">{{fd.severity}}</span>
+              <span class="mono" style="font-size: 11px; color: var(--muted);">{{fd.rule}}</span>
+            </div>
+            <span style="line-height: 1.45;">{{fd.message}}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="mono" style="font-size: 11px; color: var(--primary);">{{fd.target}}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 11px; color: var(--muted);">{{fd.origin}}</span>
+              <div style="flex-grow: 1;"></div>
+              <sc-if value="{{fd.canApply}}" hint-placeholder-val="{{true}}">
+                <button onClick="{{fd.apply}}" style="height: 26px; padding: 0 10px; background: var(--primary-soft); color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; font-size: 12px; font-weight: 500;">Apply</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 28px 16px; text-align: center; color: var(--muted);">Nothing to report at this filter.</div>
+        </sc-if>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      theme: null,
+      alloc: { strength89: true, fire40: true, melee22_: true, attributes70: false, criticals12: false },
+      supports: ['Martial Tempo', 'Abiding Hex'],
+      filter: 'all'
+    };
+  }
+
+  theme() {
+    return this.state.theme || this.props.theme || 'light';
+  }
+
+  tokens() {
+    // Severity colours live in the stylesheet so light and dark stay in one place.
+    return {
+      error: 'var(--error)', errorSoft: 'var(--error-soft)',
+      warning: 'var(--warning)', warningSoft: 'var(--warning-soft)',
+      hint: 'var(--hint)', hintSoft: 'var(--hint-soft)'
+    };
+  }
+
+  nodeList() {
+    return [
+      { id: 'strength89', name: 'Attribute', stat: '+5 to Strength', kind: 'small' },
+      { id: 'fire40', name: 'Kindling', stat: '12% increased Fire Damage', kind: 'small' },
+      { id: 'melee22_', name: 'Brutal Blows', stat: '15% increased Melee Damage', kind: 'notable' },
+      { id: 'attributes70', name: 'Attribute', stat: '+5 to all Attributes', kind: 'small' },
+      { id: 'criticals12', name: 'Precision', stat: '20% increased Critical Hit Chance', kind: 'notable' }
+    ];
+  }
+
+  computeFindings() {
+    var t = this.tokens();
+    var a = this.state.alloc;
+    var sups = this.state.supports;
+    var out = [];
+
+    if (a.fire40 && !a.strength89) {
+      out.push({
+        key: 'disc', severity: 'error', color: t.error, soft: t.errorSoft,
+        rule: 'passive.disconnected', target: 'passive:fire40',
+        message: 'Kindling is not connected to the Warrior start. Its only path runs through strength89, which is not allocated.',
+        origin: 'derived from catalog_passive_edge'
+      });
+    }
+
+    out.push({
+      key: 'weapon', severity: 'warning', color: t.warning, soft: t.warningSoft,
+      rule: 'weapon.mismatch', target: 'slot:Weapon1',
+      message: 'Earthquake is a mace skill, and no weapon is planned in Weapon1.',
+      origin: 'derived from gem tags'
+    });
+
+    if (sups.indexOf('Abiding Hex') !== -1) {
+      out.push({
+        key: 'req', severity: 'warning', color: t.warning, soft: t.warningSoft,
+        rule: 'support.requirement_unmet', target: 'support:0.1',
+        message: 'Abiding Hex supports Curse skills. Earthquake carries no curse tag.',
+        origin: 'parsed from support_text — coverage is partial'
+      });
+    }
+
+    out.push({
+      key: 'ambig', severity: 'warning', color: t.warning, soft: t.warningSoft,
+      rule: 'unique.name_ambiguous', target: 'slot:Ring2',
+      message: 'Grand Spectrum names more than one unique in 0.5.5. The export cannot say which one you mean.',
+      origin: 'derived from catalog_unique'
+    });
+
+    if (sups.indexOf('Concentrated Effect') === -1) {
+      out.push({
+        key: 'sugg', severity: 'hint', color: t.hint, soft: t.hintSoft,
+        rule: 'support.suggestion', target: 'skill:0',
+        message: 'Concentrated Effect is on the recommended list for Earthquake and is not socketed.',
+        origin: 'derived from recommended_supports',
+        canApply: true
+      });
+    }
+
+    out.push({
+      key: 'syn', severity: 'hint', color: t.hint, soft: t.hintSoft,
+      rule: 'interaction.synergy', target: 'slot:Amulet',
+      message: 'Astramentis feeds every attribute-scaled node on this tree. Worth pairing with attributes70.',
+      origin: 'curated — interactions.yaml'
+    });
+
+    return out;
+  }
+
+  renderVals() {
+    var self = this;
+    var dark = this.theme() === 'dark';
+    var a = this.state.alloc;
+    var t = this.tokens();
+
+    var nodes = this.nodeList().map(function (n) {
+      var on = !!a[n.id];
+      return {
+        id: n.id, name: n.name, stat: n.stat, kind: n.kind,
+        rowBg: on ? 'var(--surface-2)' : 'transparent',
+        markBg: on ? 'var(--primary)' : 'transparent',
+        markBorder: on ? 'var(--primary)' : 'var(--border-strong)',
+        toggle: function () {
+          var next = Object.assign({}, self.state.alloc);
+          next[n.id] = !next[n.id];
+          self.setState({ alloc: next });
+        }
+      };
+    });
+
+    var supports = this.state.supports.map(function (name, i) {
+      var bad = name === 'Abiding Hex';
+      return {
+        name: name,
+        bg: bad ? t.warningSoft : 'var(--surface-2)',
+        border: bad ? t.warning : 'var(--border)',
+        fg: bad ? t.warning : 'var(--text)',
+        remove: function () {
+          self.setState({ supports: self.state.supports.filter(function (s) { return s !== name; }) });
+        }
+      };
+    });
+
+    var all = this.computeFindings();
+    var counts = {
+      all: all.length,
+      error: all.filter(function (f) { return f.severity === 'error'; }).length,
+      warning: all.filter(function (f) { return f.severity === 'warning'; }).length,
+      hint: all.filter(function (f) { return f.severity === 'hint'; }).length
+    };
+
+    var filters = [
+      { key: 'all', label: 'All ' + counts.all },
+      { key: 'error', label: 'Errors ' + counts.error },
+      { key: 'warning', label: 'Warnings ' + counts.warning },
+      { key: 'hint', label: 'Hints ' + counts.hint }
+    ].map(function (f) {
+      var on = self.state.filter === f.key;
+      return {
+        label: f.label,
+        bg: on ? 'var(--primary-soft)' : 'transparent',
+        fg: on ? 'var(--primary)' : 'var(--muted)',
+        border: on ? 'var(--primary)' : 'var(--border)',
+        pick: function () { self.setState({ filter: f.key }); }
+      };
+    });
+
+    var shown = all.filter(function (f) {
+      return self.state.filter === 'all' || f.severity === self.state.filter;
+    }).map(function (f) {
+      return Object.assign({}, f, {
+        canApply: !!f.canApply,
+        apply: function () {
+          self.setState({ supports: self.state.supports.concat(['Concentrated Effect']) });
+        }
+      });
+    });
+
+    var slots = [
+      { id: 'Weapon1', item: 'not planned', cls: 'Mace', empty: true },
+      { id: 'Helmet', item: 'not planned', cls: 'Helmet', empty: true },
+      { id: 'Weapon2', item: 'not planned', cls: 'Shield', empty: true },
+      { id: 'BodyArmour', item: 'not planned', cls: 'Body Armour', empty: true },
+      { id: 'Amulet', item: 'Astramentis', cls: 'Amulet', empty: false },
+      { id: 'Gloves', item: 'not planned', cls: 'Gloves', empty: true },
+      { id: 'Ring1', item: "Kalandra's Touch", cls: 'Ring', empty: false },
+      { id: 'Boots', item: 'not planned', cls: 'Boots', empty: true },
+      { id: 'Ring2', item: 'Grand Spectrum', cls: 'Ring', empty: false },
+      { id: 'Belt', item: 'not planned', cls: 'Belt', empty: true }
+    ].map(function (s) {
+      return { id: s.id, item: s.item, cls: s.cls, fg: s.empty ? 'var(--muted)' : 'var(--text)' };
+    });
+
+    var used = Object.keys(a).filter(function (k) { return a[k]; }).length;
+
+    return {
+      theme: this.theme(),
+      themeLabel: dark ? 'Light' : 'Dark',
+      toggleTheme: function () { self.setState({ theme: dark ? 'light' : 'dark' }); },
+      nodes: nodes,
+      pointsUsed: used + 84,
+      pointsBudget: 112,
+      supports: supports,
+      socketsFree: 5 - this.state.supports.length,
+      slots: slots,
+      filters: filters,
+      findings: shown,
+      findingCount: counts.all,
+      isEmpty: shown.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
