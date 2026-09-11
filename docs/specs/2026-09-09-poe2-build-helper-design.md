@@ -891,7 +891,8 @@ the primary way nodes are allocated. Revised 2026-09-11: the tree was originally
 deferred to iteration 8 as a later nicety. It is the main interaction of the
 editor, so a searchable node list alone would not be a usable editor. The list
 survives beside the tree, because findings target node ids and those ids have to
-stay readable.
+stay readable. Design brainstormed and confirmed 2026-09-11, see "Iteration 3
+design — editor".
 
 **Iteration 4 — rules engine, derived part.** `Advice`, `Rule` with version
 filters, the error and warning rules, the findings list, jump-to-target,
@@ -919,6 +920,192 @@ node positions wholesale.
 Not included and not planned for this arc: LLM, ladder meta, prices, rares and
 crafting, login.
 
+## Iteration 3 design — editor (2026-09-11)
+
+Brainstormed and confirmed with the user 2026-09-11, architectural path (a new
+subsystem: canvas tree renderer, custom hit-testing, Stimulus, the first
+client/server editing flow — nothing like it exists yet; `edit.html.twig` so
+far is only the iteration-1 whole-file replace form, and no `assets/` directory
+exists).
+
+### Scope
+
+Five areas on the editor page: **Header**, **Passive tree** (canvas + accessible
+node list), **Skills**, **Equipment slots**, and an **empty findings
+placeholder** (a Turbo Frame iteration 4 fills; nothing here renders real
+findings yet). A sixth area, **History**, is new versus the original user
+journey: a per-build timeline of edits with revert and named snapshots — added
+because autosave-per-action means nothing is ever explicitly "saved," so
+undoing a mistake needs its own mechanism. Catalog browsing and share/export
+links are already built (iterations 1–2) and are untouched.
+
+Out of scope here: Advice findings content (iteration 4), suggestions/apply
+button (iteration 5), curved-arc edge rendering for the tree (deferred as a
+visual nicety, see "Passive tree rendering" below).
+
+### Spike: class start nodes (settles proof #7, retires proof #6)
+
+Run against the live `poe2-skilltree-export` data, 2026-09-11, nothing
+committed — same method as step 0.
+
+- All 12 classes are present in the export's `classes[]` array (`Marauder,
+  Witch, Ranger, Duelist, Shadow, Templar, Warrior, Sorceress, Huntress,
+  Mercenary, Monk, Druid`), each with `base_str`/`base_dex`/`base_int` and an
+  `ascendancies[]` list (id, name, flavour text).
+- They share only **6 physical start positions** on the tree. Each start node
+  (a child of the synthetic `root` node) carries `classStartIndex: [a, b]`, a
+  pair of indices into `classes[]` — e.g. node `witch595` has
+  `classStartIndex: [1, 7]`, serving both `Witch` (index 1) and `Sorceress`
+  (index 7).
+- Ascendancy start nodes are separately flagged `isAscendancyStart: true` on
+  ascendancy-tagged nodes (669 nodes carry `ascendancyId`). Not currently
+  captured by `PassiveTreeNormalizer`/`CatalogPassive`.
+- Every one of the 4912 real nodes (root and the 240 `id: null` filler nodes
+  excluded, matching the normalizer's existing exclusions) carries absolute
+  `x`/`y`, confirmed non-null for all of them, spanning roughly
+  ±22.6k/±19k world units. This is what retires proof #6: nothing needs to be
+  derived from orbit radii when every node already has a measured position.
+
+### Data model additions
+
+None of these touch the existing `document` JSON column or `BuildDocument` —
+the byte-exact round trip proven in iteration 1 stays untouched.
+
+- **`build` table gains app-only columns**: `class_key`, `target_level` (int,
+  nullable), `note` (text, nullable), `archetype_key` (nullable). Planning
+  metadata the `.build` format has no room for; never enters `document` or
+  `BuildDocument`.
+- **New `catalog_class` table**, 12 rows, synced alongside the passive tree
+  from the same `classes[]` array: `key`/`name`, `base_str`/`dex`/`int`,
+  `ascendancies` (JSON: id + name pairs), `start_node_id` — resolved at sync
+  time from `classStartIndex` (both `Witch` and `Sorceress` rows get
+  `start_node_id: witch595`). Read by the `Ui` layer directly (like
+  `CatalogSearch`), not through `CatalogPort` — `CatalogPort` stays scoped to
+  what `Advice` asks.
+- **New `build_event` table**: `id`, `build_id`, `created_at`, `action`
+  (string), `payload` (JSON, the command as received), `document_after` (JSON,
+  full snapshot of `.build` document + header columns together — a revert
+  restores everything editable at once), `is_named_snapshot` (bool),
+  `snapshot_name` (nullable). Snapshotting full state per event is a deliberate
+  simplification over event-sourced replay: the `.build` document is small, so
+  storing it whole is cheap, and it avoids building a replay engine to answer
+  "what did build state look like at event N."
+
+### History and revert
+
+Persisted timeline, not a session-local undo stack — the edit-token model
+means the tab can close anytime and reopening the edit link must still show
+full history. A scheduled prune (a console command, run manually like
+`catalog:sync` — no cron infrastructure exists) deletes `build_event` rows
+older than 30 days where `is_named_snapshot = false`; named snapshots are kept
+indefinitely. **Revert appends a new event** (`action = 'revert'`, payload
+names the target event, `document_after` copies that event's snapshot) rather
+than truncating forward history — nothing is ever deleted by reverting, and
+the log stays a complete audit trail.
+
+### Command flow
+
+One route, `POST /build/{slug}/{token}/act`, body `{action, payload}`. The
+controller resolves `Build` via the existing slug+token check, maps `action` to
+a small Command DTO via a `match` (a dozen cases doesn't earn a registry:
+`AllocatePassive`, `DeallocatePassive`, `SetPassiveLevelInterval`, `AddSkill`,
+`RemoveSkill`, `SetSkillField`, `AddSupport`, `RemoveSupport`,
+`SetInventorySlot`, `ClearInventorySlot`, `SetHeaderField`, `CreateSnapshot`,
+`Revert`), and dispatches it on **symfony/messenger**'s default synchronous
+bus (no transport — every command is handled in the same request). Decided
+over a hand-rolled dispatcher because the project now has a standing rule
+(see the project's `CLAUDE.md`) to prefer PSR-compliant, already-installed
+Symfony packages over inventing project-specific equivalents.
+
+Each handler loads `Build`, computes the new state (`toDocument()`/
+`applyDocument()` for `.build`-format changes, a direct setter for the app-only
+header columns), persists, and appends a `BuildEvent` row.
+
+The controller always responds with a Turbo Stream
+(`text/vnd.turbo-stream.html`) containing: the updated allocated-node-list
+frame, the updated history frame, and a re-rendered
+`<script type="application/json" data-editor-target="state">` tag carrying the
+current allocated-node-id set and header summary. That script tag is the one
+bridge from server-rendered HTML to the canvas's non-DOM state — the Stimulus
+tree controller watches it via a target-connected callback and resyncs +
+redraws whenever Turbo replaces it, regardless of whether the change came from
+a canvas click, a node-list button, or a history revert. One response shape
+for every command, rather than a second parallel client-state sync path.
+
+### Passive tree rendering
+
+- **Tree data delivery**: a new cacheable `GET /catalog/tree.json`, a compact
+  array format (not object-keyed, to save bytes over 4912 nodes) of
+  `{id, name, kind, ascendancy_key, pos_x, pos_y}` per node, `{from, to}`
+  edges, and the 12 `catalog_class` rows. HTTP-cached with an
+  `ETag`/`Last-Modified` derived from the latest `catalog_sync` timestamp for
+  `passive_tree`, so it refetches only after a re-sync.
+- **Rendering**: a Stimulus `tree` controller owns a `<canvas>` 2D context,
+  loads `/catalog/tree.json` once, and draws edges as straight lines between
+  node centers — curved arcs matching the in-game renderer are a visual
+  nicety, explicitly deferred, not a gap — and nodes as circles/icons colored
+  by `kind` and allocation state. Pan/zoom is a plain affine transform
+  (translate + scale) applied before drawing. Only nodes with
+  `ascendancy_key === null` or matching the build's selected ascendancy are
+  drawn; other ascendancies' nodes are filtered out client-side.
+- **Hit-testing**: a uniform spatial grid (bucket every node by
+  `floor(x/cellSize), floor(y/cellSize)`, cell size picked from measured
+  typical inter-node spacing), built once from the loaded data. A click
+  converts screen → world coordinates through the inverse pan/zoom transform,
+  checks the containing cell and its 8 neighbors, and picks the nearest node
+  within a small threshold — never a full 4912-node scan. Plain project JS,
+  not a library; a quadtree would be over-engineering for a static,
+  one-time-loaded point set this size.
+- **Class start nodes**: the node matching the build's selected class's
+  `start_node_id` is drawn distinctly, always-allocated and not
+  clickable/toggleable, and used to center the initial camera position.
+- **Accessible node list**: a normal server-rendered Turbo Frame with two
+  parts, matching the "search and a list of allocated nodes" the confirmed
+  user journey asks for. A search box queries `catalog_passive` by name/id
+  (server-side, over all 4912 nodes) and lists matches with an allocate
+  button; below it, a `<ul>` of currently-allocated nodes has remove buttons.
+  Both post to the same `/act` endpoint as the canvas. Zero custom JS; the
+  same Hotwire form-in-a-frame pattern as Header/Skills/Slots. This is the
+  load-bearing accessible path: nothing in the canvas is reachable by
+  keyboard or a screen reader on its own, and findings target node ids that
+  must stay readable somewhere in the DOM.
+
+### Skills, equipment slots, header forms
+
+Plain Turbo Frame forms posting to `/act`, no custom JS:
+
+- **Header**: name, class (dropdown from `catalog_class`), ascendancy
+  (dropdown filtered to the selected class's `ascendancies`), target level,
+  `game_version`, note, archetype.
+- **Skills**: a repeatable list of skill rows, each an autocomplete over
+  `catalog_gem` (iteration 2's `CatalogSearch`) for the main gem, a
+  `level_interval` pair, and a nested repeatable list of supports (same
+  autocomplete, filtered to support-type gems) each with its own
+  `level_interval`. **Correction to the "User journey" section above**: it
+  says skills carry "free additional text," but the measured corpus in "The
+  `.build` format as the pivot" states `additional_text` is never present on
+  skills — only on passives and slots. Going with the measured fact; the
+  skills form has no additional-text field.
+- **Equipment slots**: the fixed 14-slot vocabulary from
+  `inventory_slots.yaml`, each an optional autocomplete over `catalog_unique`
+  by name, plus `level_interval` and `additional_text`. No slot-fit validation
+  yet — that is `unique.slot_mismatch`, iteration 4.
+
+### Testing
+
+- `PassiveTreeNormalizer`/`CatalogClass` sync: unit tests against a fixture
+  extended with `classStartIndex`/`isAscendancyStart`, mirroring the existing
+  `tree-shape.json` pattern.
+- Each command handler: a unit test (apply → assert `Build` state + the
+  resulting `BuildEvent` row).
+- The `/act` endpoint: a functional test per command type, plus one for
+  revert and one for the 30-day prune command.
+- The hit-test grid is the one algorithmic piece of client code and the one
+  part not covered by PHPUnit. A minimal JS test setup (e.g. vitest) is added
+  for pure-logic modules like this — no DOM/browser automation needed, since
+  the screen→world/grid-lookup/nearest-node math is itself DOM-free. First use
+  of a JS test runner in this project.
+
 ## Open points
 
 ### Proofs, to be stamped per game version
@@ -932,13 +1119,7 @@ patch.
 3. Support sockets per skill gem: what the number depends on
 4. Spirit sources: how much sits on the tree, how much only on gear
 5. Weapon binding of skills: whether RePoE models it as a tag or a requirement
-6. Orbit radii and slot counts for the tree renderer, measured above on 0.5.5
-   rather than taken from any documentation
-7. Which of the 12 classes the tree export lists (Marauder, Witch, Ranger,
-   Duelist, Shadow, Templar, Warrior, Sorceress, Huntress, Mercenary, Monk,
-   Druid) are actually selectable in 0.5.5, before class-to-start-node logic
-   relies on the list
-8. Which spelling of `unique_name` the game accepts for the three ambiguous
+6. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
@@ -946,6 +1127,15 @@ Settled: the `.build` key spaces for passives and gems match their sources
 exactly (step 0).
 Settled: `weapon_set` is 1 or 2, naming the numbered slot halves
 `Weapon1`/`Offhand1` and `Weapon2`/`Offhand2` (real-file corpus, 0.5.5).
+Settled 2026-09-11: all 12 classes are selectable in 0.5.5 and share only 6
+physical start positions in pairs, keyed by each start node's
+`classStartIndex`; see "Iteration 3 design — editor" for the measurement and
+the resulting `catalog_class` table.
+Retired 2026-09-11: orbit radii and slot counts for the tree renderer are not
+needed. Every one of the 4912 real nodes already carries absolute `x`/`y` in
+the export (confirmed non-null for all of them), so placement and hit-testing
+work directly from measured coordinates — nothing is derived from orbit
+geometry. What was proof #6 is dropped rather than stamped.
 
 ### Notes for the later rule walkthrough
 
