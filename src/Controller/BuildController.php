@@ -24,6 +24,7 @@ final class BuildController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly BuildDocumentReader $reader,
         private readonly BuildDocumentWriter $writer,
+        private readonly EditorContext $context,
         #[Autowire('%app.default_game_version%')]
         private readonly string $defaultGameVersion,
     ) {
@@ -86,7 +87,7 @@ final class BuildController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        return $this->render('build/edit.html.twig', ['build' => $build, 'token' => $token]);
+        return $this->render('build/edit.html.twig', $this->context->of($build, $token));
     }
 
     #[Route('/b/{slug}/edit/{token}/update', name: 'app_build_update', requirements: ['slug' => '[0-9a-zA-Z]{22}', 'token' => '[0-9a-f]{64}'], methods: ['POST'])]
@@ -101,13 +102,13 @@ final class BuildController extends AbstractController
         $json = $this->submittedJson($request);
 
         if (null === $json) {
-            return $this->render('build/edit.html.twig', ['build' => $build, 'token' => $token, 'error' => 'Choose a .build file or paste its JSON.'], new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY));
+            return $this->render('build/edit.html.twig', $this->context->of($build, $token, 'Choose a .build file or paste its JSON.'), new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY));
         }
 
         try {
             $build->applyDocument($this->reader->read($json));
         } catch (InvalidBuildDocument $e) {
-            return $this->render('build/edit.html.twig', ['build' => $build, 'token' => $token, 'error' => $e->getMessage()], new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY));
+            return $this->render('build/edit.html.twig', $this->context->of($build, $token, $e->getMessage()), new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY));
         }
 
         $this->entityManager->flush();

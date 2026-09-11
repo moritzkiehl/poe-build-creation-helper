@@ -3,28 +3,40 @@
 {% block title %}{{ build.name }}{% endblock %}
 
 {% block body %}
-    {{ include('build/_summary.html.twig') }}
+    {{ include('build/_error.html.twig') }}
 
-    <h2>Your two links</h2>
-    <p>
-        Share this one — it is read only:
-        <a href="{{ url('app_build_show', {slug: build.shareSlug}) }}">{{ url('app_build_show', {slug: build.shareSlug}) }}</a>
-    </p>
-    <p>
-        Keep this one. It is the only way back in to change the build, and it is not recoverable:
-        <a href="{{ url('app_build_edit', {slug: build.shareSlug, token: token}) }}">{{ url('app_build_edit', {slug: build.shareSlug, token: token}) }}</a>
-    </p>
+    <div class="editor">
+        {{ include('build/_header.html.twig') }}
+        {{ include('build/_tree.html.twig') }}
+        {{ include('build/_nodes.html.twig') }}
+        {{ include('build/_skills.html.twig') }}
+        {{ include('build/_slots.html.twig') }}
+        {{ include('build/_history.html.twig') }}
+        {{ include('build/_findings.html.twig') }}
+    </div>
 
-    <h2>Replace the stored file</h2>
-    <form action="{{ path('app_build_update', {slug: build.shareSlug, token: token}) }}" method="post" enctype="multipart/form-data">
+    <section class="full">
+        <h2>Your two links</h2>
         <p>
-            <label for="build">A newer .build file</label>
-            <input type="file" id="build" name="build" accept=".build,application/json">
+            Share this one — it is read only:
+            <a href="{{ url('app_build_show', {slug: build.shareSlug}) }}">{{ url('app_build_show', {slug: build.shareSlug}) }}</a>
         </p>
         <p>
-            <label for="json">…or paste its JSON</label>
-            <textarea id="json" name="json" rows="8" cols="60"></textarea>
+            Keep this one. It is the only way back in to change the build, and it is not recoverable:
+            <a href="{{ url('app_build_edit', {slug: build.shareSlug, token: token}) }}">{{ url('app_build_edit', {slug: build.shareSlug, token: token}) }}</a>
         </p>
-        <button type="submit">Replace</button>
-    </form>
+
+        <h2>Replace the stored file</h2>
+        <form action="{{ path('app_build_update', {slug: build.shareSlug, token: token}) }}" method="post" enctype="multipart/form-data">
+            <p>
+                <label for="build">A newer .build file</label>
+                <input type="file" id="build" name="build" accept=".build,application/json">
+            </p>
+            <p>
+                <label for="json">…or paste its JSON</label>
+                <textarea id="json" name="json" rows="8" cols="60"></textarea>
+            </p>
+            <button type="submit">Replace</button>
+        </form>
+    </section>
 {% endblock %}

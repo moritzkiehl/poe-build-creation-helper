@@ -1,0 +1,8 @@
+{% set allocated = document.passives|map(p => p.id)|filter(id => id is not null) %}
+<script type="application/json" id="build-state" data-tree-target="state">
+    {{ {
+        allocated: allocated|merge([]),
+        ascendancy: build.ascendancyKey,
+        classKey: build.classKey,
+    }|json_encode|raw }}
+</script>
