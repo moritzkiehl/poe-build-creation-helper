@@ -1,0 +1,21 @@
+# The `Inventories` vocabulary, 14 values.
+#
+# No upstream source provides this list: step 0 looked, and RePoE does not
+# carry it. These ids were read out of fourteen .build files the game exported
+# at 0.5.5 and are therefore measured, not documented. If a patch adds a slot,
+# this file is where it is added — by hand, against a real exported file.
+inventory_slots:
+    - { id: Weapon1,    label: 'Weapon (set 1)' }
+    - { id: Offhand1,   label: 'Offhand (set 1)' }
+    - { id: Weapon2,    label: 'Weapon (set 2)' }
+    - { id: Offhand2,   label: 'Offhand (set 2)' }
+    - { id: Helm1,      label: 'Helmet' }
+    - { id: BodyArmour1, label: 'Body armour' }
+    - { id: Gloves1,    label: 'Gloves' }
+    - { id: Boots1,     label: 'Boots' }
+    - { id: Belt1,      label: 'Belt' }
+    - { id: Amulet1,    label: 'Amulet' }
+    - { id: Ring1,      label: 'Ring (left)' }
+    - { id: Ring2,      label: 'Ring (right)' }
+    - { id: Trinket1,   label: 'Trinket' }
+    - { id: Flask1,     label: 'Flask' }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Build\Edit;
 
+use App\Build\InventorySlots;
 use App\Interchange\BuildDocument;
 
 /**
@@ -21,6 +22,10 @@ final class DocumentEditor
 {
     private const int MIN_LEVEL = 0;
     private const int MAX_LEVEL = 100;
+
+    public function __construct(private readonly InventorySlots $slots)
+    {
+    }
 
     public function allocatePassive(BuildDocument $document, string $id): BuildDocument
     {
@@ -137,6 +142,50 @@ final class DocumentEditor
         return $this->withSkills($document, $skills);
     }
 
+    public function setInventorySlot(BuildDocument $document, string $inventoryId, ?string $uniqueName, int $from, int $to, string $additionalText): BuildDocument
+    {
+        if (!$this->slots->isKnown($inventoryId)) {
+            throw InvalidEditCommand::noSuchEntry('equipment slot "'.$inventoryId.'"');
+        }
+
+        $entry = [
+            'inventory_id' => $inventoryId,
+            'slot_x' => 0,
+            'slot_y' => 0,
+            'level_interval' => $this->levelInterval($from, $to),
+            'additional_text' => $additionalText,
+        ];
+
+        if (null !== $uniqueName && '' !== $uniqueName) {
+            $entry['unique_name'] = $uniqueName;
+        }
+
+        $slots = $document->inventorySlots;
+        $index = $this->indexOfSlot($document, $inventoryId);
+
+        if (null === $index) {
+            $slots[] = $entry;
+        } else {
+            $slots[$index] = $entry;
+        }
+
+        return $this->withSlots($document, $slots);
+    }
+
+    public function clearInventorySlot(BuildDocument $document, string $inventoryId): BuildDocument
+    {
+        $index = $this->indexOfSlot($document, $inventoryId);
+
+        if (null === $index) {
+            return $document;
+        }
+
+        $slots = $document->inventorySlots;
+        unset($slots[$index]);
+
+        return $this->withSlots($document, array_values($slots));
+    }
+
     /**
      * @return array{int, int}
      */
@@ -147,6 +196,34 @@ final class DocumentEditor
         }
 
         return [$from, $to];
+    }
+
+    private function indexOfSlot(BuildDocument $document, string $inventoryId): ?int
+    {
+        foreach ($document->inventorySlots as $index => $slot) {
+            if (($slot['inventory_id'] ?? null) === $inventoryId) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $slots
+     */
+    private function withSlots(BuildDocument $document, array $slots): BuildDocument
+    {
+        return new BuildDocument(
+            name: $document->name,
+            author: $document->author,
+            link: $document->link,
+            description: $document->description,
+            ascendancy: $document->ascendancy,
+            passives: $document->passives,
+            skills: $document->skills,
+            inventorySlots: $slots,
+        );
     }
 
     private function indexOfPassive(BuildDocument $document, string $id): ?int

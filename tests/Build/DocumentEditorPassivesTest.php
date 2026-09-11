@@ -6,6 +6,7 @@ namespace App\Tests\Build;
 
 use App\Build\Edit\DocumentEditor;
 use App\Build\Edit\InvalidEditCommand;
+use App\Build\InventorySlots;
 use App\Interchange\BuildDocument;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +16,7 @@ final class DocumentEditorPassivesTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->editor = new DocumentEditor();
+        $this->editor = new DocumentEditor(new InventorySlots(__DIR__.'/../../config/inventory_slots.yaml'));
     }
 
     public function testAllocatingAPassiveAddsItWithTheDefaultsTheCorpusShows(): void

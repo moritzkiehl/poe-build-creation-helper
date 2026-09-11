@@ -46,6 +46,15 @@ services:
             $snapshotDir: '%app.catalog.snapshot_dir%'
             $userAgent: '%app.catalog.user_agent%'
 
+    # No controller reaches InventorySlots yet, so nothing keeps it referenced
+    # and Symfony prunes it from the compiled container like it would
+    # EditHistory above. The test suite fetches it directly, so it has to
+    # stay reachable, and the file path is a scalar autowiring cannot guess.
+    App\Build\InventorySlots:
+        public: true
+        arguments:
+            $file: '%kernel.project_dir%/config/inventory_slots.yaml'
+
     # No controller reaches EditHistory yet (that wiring is a later task), so
     # nothing keeps it referenced and Symfony prunes unused private services
     # from the compiled container. The test suite calls it directly, so it
