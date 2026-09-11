@@ -1,0 +1,13 @@
+# Keep line endings LF everywhere. The project is developed on Linux and inside
+# WSL, and a CRLF checkout breaks shell scripts and shows up as whole-file diffs.
+* text=auto eol=lf
+
+# Binary, never touched.
+*.png binary
+*.jpg binary
+*.dds binary
+*.pdf binary
+
+# Generated; keep them out of diffs and language statistics.
+composer.lock -diff linguist-generated
+symfony.lock -diff linguist-generated

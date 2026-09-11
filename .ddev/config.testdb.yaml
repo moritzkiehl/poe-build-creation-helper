@@ -1,0 +1,11 @@
+# PHPUnit runs against real MariaDB rather than SQLite, because JSON and
+# generated columns behave differently. Doctrine points the test environment at
+# the same server with a "_test" suffix, and ddev's "db" user may only touch its
+# own database — so the test database has to be created once by root.
+#
+# This lives in its own file on purpose: `ddev config` rewrites config.yaml and
+# would drop the hook, which is exactly how it went missing once already.
+hooks:
+  post-start:
+    - exec: 'mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS db_test; GRANT ALL ON db_test.* TO ''db''@''%''; FLUSH PRIVILEGES;"'
+      service: db

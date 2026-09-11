@@ -6,6 +6,20 @@ leaves the tool as an official `.build` file for the game's build planner.
 
 Not a DPS or EHP simulator — that stays with Path of Building 2.
 
+## Getting started
+
+Everything runs in DDEV; only Docker, DDEV and git are installed on the host.
+
+```bash
+ddev start
+ddev composer install
+ddev composer db:migrate
+ddev composer gate          # coding standard, PHPStan, tests
+```
+
+Then <https://poe-build-helper.ddev.site>. Full instructions, including Windows
+and WSL2, are in [`docs/setup.md`](docs/setup.md).
+
 ## Status
 
 Design stage. There is no code yet, only the design under

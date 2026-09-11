@@ -71,6 +71,10 @@
             "@cs",
             "@stan",
             "@test"
+        ],
+        "db:migrate": [
+            "php bin/console doctrine:migrations:migrate --no-interaction",
+            "APP_ENV=test php bin/console doctrine:migrations:migrate --no-interaction"
         ]
     },
     "conflict": {
@@ -94,6 +98,7 @@
         "symfony/maker-bundle": "^1.67"
     },
     "scripts-descriptions": {
-        "gate": "The quality gate: coding standard, PHPStan at max, the whole test suite."
+        "gate": "The quality gate: coding standard, PHPStan at max, the whole test suite.",
+        "db:migrate": "Bring both the development and the test database up to date."
     }
 }

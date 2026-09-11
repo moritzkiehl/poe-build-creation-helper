@@ -967,7 +967,8 @@ Settled: `weapon_set` is 1 or 2, naming the numbered slot halves
 ### Before the website launch (January 2027)
 
 Secret scan across the whole repository, `LICENSE` and `NOTICE` present, footer
-notice visible, `paid_credits` switched off.
+notice visible, `paid_credits` switched off, and a production `APP_SECRET` set
+through the environment rather than the development one committed in `.env.dev`.
 
 Note that the repository itself is already public, so the licensing measures and
 the secret checkpoint apply from today rather than from the launch date.
