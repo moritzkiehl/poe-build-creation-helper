@@ -19,18 +19,34 @@ use PHPUnit\Framework\TestCase;
 final class RealBuildCorpusTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{string|null}>
      */
     public static function realBuildFiles(): iterable
     {
-        foreach (glob(__DIR__.'/../../var/sample/*.build') ?: [] as $file) {
+        $files = glob(__DIR__.'/../../var/sample/*.build') ?: [];
+
+        // PHPUnit fails a test whose provider yields nothing, and on a fresh
+        // clone this directory is empty by design. So the absent corpus
+        // announces itself with one case that skips, rather than turning the
+        // gate red on every machine that has no sample builds.
+        if ([] === $files) {
+            yield 'no sample builds' => [null];
+
+            return;
+        }
+
+        foreach ($files as $file) {
             yield basename($file) => [$file];
         }
     }
 
     #[DataProvider('realBuildFiles')]
-    public function testAGameWrittenFileSurvivesTheRoundTripUnchanged(string $file): void
+    public function testAGameWrittenFileSurvivesTheRoundTripUnchanged(?string $file): void
     {
+        if (null === $file) {
+            self::markTestSkipped('No sample builds in var/sample — the corpus is optional.');
+        }
+
         $json = file_get_contents($file);
         self::assertIsString($json);
 
