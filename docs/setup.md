@@ -58,6 +58,27 @@ Coding standard, PHPStan at its highest level, and the whole test suite. This is
 the same command CI runs, and it should be green on a fresh clone before you
 change anything.
 
+## Frontend assets
+
+There is no bundler and no Node runtime: Symfony's AssetMapper serves
+`assets/` as-is, versioned by content hash, with Stimulus and Turbo pulled in
+through `importmap.php` rather than `npm install`. After a fresh checkout, run
+
+```bash
+ddev php bin/console importmap:install
+```
+
+to download the pinned third-party entries (`@hotwired/stimulus`,
+`@hotwired/turbo`, …) into `assets/vendor/`, which is gitignored. Before
+deploying, run
+
+```bash
+ddev php bin/console asset-map:compile
+```
+
+to write the versioned files to `public/assets/` for production to serve
+directly.
+
 ## Game data
 
 The catalog is empty until it is fetched, and the application is meant to work

@@ -1,0 +1,13 @@
+:root { --gap: 1rem; --line: #d5d5d5; }
+
+body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 0 auto; max-width: 72rem; padding: var(--gap); }
+
+.editor { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); }
+.editor > section { border: 1px solid var(--line); padding: var(--gap); }
+.editor > section.full { grid-column: 1 / -1; }
+
+.tree-canvas { background: #101014; display: block; height: 32rem; touch-action: none; width: 100%; }
+
+.error:not(:empty) { background: #fdeaea; border: 1px solid #c00; margin-bottom: var(--gap); padding: 0.5rem; }
+
+@media (max-width: 48rem) { .editor { grid-template-columns: minmax(0, 1fr); } }
