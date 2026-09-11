@@ -233,17 +233,23 @@ passives, skills with supports, and unique hints per inventory slot.
 `level_interval` makes the levelling order machine-readable.
 
 ```
-Build:              name, author?, link?, description?, ascendancy?,
+Build:              name, author, link, description, ascendancy,
                     passives[], skills[], inventory_slots[]
-BuildPassive:       id ("strength89", PassiveSkills table), level_interval?,
-                    weapon_set? (0..2), additional_text?
+BuildPassive:       id ("strength89", PassiveSkills table), level_interval,
+                    additional_text, weapon_set? (1 or 2)
 BuildSkill:         id ("Metadata/Items/Gems/SkillGemEarthquake", BaseItemTypes),
-                    level_interval?, additional_text?, support_skills[]
+                    level_interval, support_skills[]?
 BuildSupport:       id ("Metadata/Items/Gems/SupportGemFastForward"),
-                    level_interval?, additional_text?
-BuildInventorySlot: inventory_id ("Weapon1", Inventories table), slot_x?,
-                    slot_y?, level_interval?, unique_name? ("Kalandra's Touch"),
-                    additional_text?
+                    level_interval
+BuildInventorySlot: inventory_id ("Weapon1", Inventories table), slot_x, slot_y,
+                    level_interval, additional_text, unique_name? ("Astramentis")
+
+Measured against fourteen files exported by the game at 0.5.5 (2026-09-11):
+all eight top-level fields are always present; `level_interval` is a
+**two-element array `[from, to]`**, never an object, and is present on every
+passive, skill, support and slot; `additional_text` is always present on
+passives and slots and never on skills; `weapon_set` appears on 312 of 1705
+passives and is only ever 1 or 2.
 ```
 
 `additional_text` allows markup: type `<r> <b> <i> <u> <s> <m> <l>`, colours
@@ -428,6 +434,38 @@ Consequence: support compatibility is derivable, but only against the 180-term
 bracket vocabulary and never at full coverage. It therefore may not produce hard
 errors — see the rules engine.
 
+### Confirmed against real build files (2026-09-11)
+
+Fourteen `.build` files exported by the game at 0.5.5 were read. They are not
+committed — they are someone's build documents, they carry GGG identifiers, and
+the repository is public — but an optional test suite picks them up from
+`var/sample` when they are present.
+
+All fourteen are read by `Interchange` and round-trip byte-exact, which
+validates carrying the three collections as decoded data rather than modelling
+them.
+
+What the corpus settles:
+
+- **`level_interval` is `[from, to]`**, a two-element array. The design
+  deliberately had no shape for it; guessing an object would have produced
+  exports the game rejects.
+- **`weapon_set` is 1 or 2**, not 0..2, and names the numbered slot halves.
+- **The `Inventories` vocabulary, 14 values:** `Weapon1`, `Weapon2`, `Offhand1`,
+  `Offhand2`, `Helm1`, `BodyArmour1`, `Gloves1`, `Boots1`, `Belt1`, `Amulet1`,
+  `Ring1`, `Ring2`, `Trinket1`, `Flask1`. This is what `inventory_slots.yaml`
+  needs, and no upstream source provided it.
+- **`ascendancy` is an identifier like `Sorceress3`, `Druid1`, `Mercenary1`** —
+  the same key space as the tree export's `ascendancyId`, so no mapping layer is
+  needed there either.
+- **Both gem path prefixes occur in real game files**, `Metadata/Items/Gems`
+  491 times and `Metadata/Items/Gem` 301. The dual prefix is genuine game data
+  rather than a RePoE artefact, so storing paths verbatim is proven, not merely
+  prudent.
+- **Level values run 0 to 100**, not 1 to 100.
+- The documented markup is real: `<b>{<m>{Allocation Step #1}}` with CRLF line
+  breaks.
+
 ### A better source for suggestions
 
 `recommended_supports` is present on 379 of 505 active gems and on all 44 spirit
@@ -582,7 +620,8 @@ Errors — mechanically broken:
 - `support.socket_limit` — more supports than sockets
 - `unique.slot_mismatch` — the unique does not fit this inventory slot, judged
   against `inventory_slots.yaml` and the unique's `item_class`
-- `level_interval.invalid` — end before start, or outside 1–100
+- `level_interval.invalid` — end before start, or outside 0–100 (the corpus
+  contains intervals starting at 0)
 - `support.used_twice_in_build` — up to 0.2 only, see version binding
 
 Warnings — gaps and uncertainty:
@@ -675,7 +714,11 @@ sketch, two `game_version` values, different sets of findings.
 **Unit, `Interchange`.** Pure mapping tests document ↔ aggregate, no database.
 
 **Contract tests for `.build`.** A corpus of hand-written files under
-`tests/fixtures/build/`, valid and broken. Guaranteed property: import → export →
+`tests/fixtures/build/`, valid and broken, shaped after the real files (see
+"Confirmed against real build files"). Alongside them an optional suite reads
+whatever real exports lie in the ignored `var/sample`: real files never enter
+the repository, but when they are present the reader is checked against reality
+instead of against a fixture we wrote ourselves. Guaranteed property: import → export →
 import is stable from the second pass on. Failure cases — broken JSON, missing
 required fields, wrong types, unknown fields — produce typed errors, never
 escaping exceptions. Plus a test that the output contains only fields the GGG
@@ -774,19 +817,20 @@ patch.
 3. Support sockets per skill gem: what the number depends on
 4. Spirit sources: how much sits on the tree, how much only on gear
 5. Weapon binding of skills: whether RePoE models it as a tag or a requirement
-6. `weapon_set` semantics in the `.build` format: what 0, 1 and 2 mean exactly
-7. Orbit radii and slot counts for the tree renderer, measured above on 0.5.5
+6. Orbit radii and slot counts for the tree renderer, measured above on 0.5.5
    rather than taken from any documentation
-8. Which of the 12 classes the tree export lists (Marauder, Witch, Ranger,
+7. Which of the 12 classes the tree export lists (Marauder, Witch, Ranger,
    Duelist, Shadow, Templar, Warrior, Sorceress, Huntress, Mercenary, Monk,
    Druid) are actually selectable in 0.5.5, before class-to-start-node logic
    relies on the list
-9. Which spelling of `unique_name` the game accepts for the three ambiguous
+8. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
 Settled: the `.build` key spaces for passives and gems match their sources
 exactly (step 0).
+Settled: `weapon_set` is 1 or 2, naming the numbered slot halves
+`Weapon1`/`Offhand1` and `Weapon2`/`Offhand2` (real-file corpus, 0.5.5).
 
 ### Notes for the later rule walkthrough
 

@@ -231,7 +231,7 @@
           <span style="font-size: 13px; color: var(--muted);">uniques only — the format carries no rares</span>
         </div>
         <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;">
-          <sc-for list="{{slots}}" as="slot" hint-placeholder-count="10">
+          <sc-for list="{{slots}}" as="slot" hint-placeholder-count="12">
             <div style="display: flex; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border);">
               <span class="mono" style="font-size: 12px; color: var(--muted); width: 96px; flex-shrink: 0;">{{slot.id}}</span>
               <span style="color: {{slot.fg}}; flex-grow: 1;">{{slot.item}}</span>
@@ -506,17 +506,21 @@ class Component extends DCLogic {
       });
     });
 
+    // Slot ids are the real Inventories vocabulary, read off game-exported
+    // .build files: numbered, and paired by weapon set.
     var slots = [
       { id: 'Weapon1', item: 'not planned', cls: 'Mace', empty: true },
-      { id: 'Helmet', item: 'not planned', cls: 'Helmet', empty: true },
-      { id: 'Weapon2', item: 'not planned', cls: 'Shield', empty: true },
-      { id: 'BodyArmour', item: 'not planned', cls: 'Body Armour', empty: true },
-      { id: 'Amulet', item: 'Astramentis', cls: 'Amulet', empty: false },
-      { id: 'Gloves', item: 'not planned', cls: 'Gloves', empty: true },
+      { id: 'Helm1', item: 'not planned', cls: 'Helmet', empty: true },
+      { id: 'Offhand1', item: 'not planned', cls: 'Shield', empty: true },
+      { id: 'BodyArmour1', item: 'not planned', cls: 'Body Armour', empty: true },
+      { id: 'Amulet1', item: 'Astramentis', cls: 'Amulet', empty: false },
+      { id: 'Gloves1', item: 'not planned', cls: 'Gloves', empty: true },
       { id: 'Ring1', item: "Kalandra's Touch", cls: 'Ring', empty: false },
-      { id: 'Boots', item: 'not planned', cls: 'Boots', empty: true },
+      { id: 'Boots1', item: 'not planned', cls: 'Boots', empty: true },
       { id: 'Ring2', item: 'Grand Spectrum', cls: 'Ring', empty: false },
-      { id: 'Belt', item: 'not planned', cls: 'Belt', empty: true }
+      { id: 'Belt1', item: 'not planned', cls: 'Belt', empty: true },
+      { id: 'Trinket1', item: 'not planned', cls: 'Charm', empty: true },
+      { id: 'Flask1', item: 'not planned', cls: 'Flask', empty: true }
     ].map(function (s) {
       return { id: s.id, item: s.item, cls: s.cls, fg: s.empty ? 'var(--muted)' : 'var(--text)' };
     });

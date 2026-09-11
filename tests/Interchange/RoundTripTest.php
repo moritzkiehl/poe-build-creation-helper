@@ -24,4 +24,23 @@ final class RoundTripTest extends TestCase
 
         self::assertSame(json_decode($json, true), json_decode($written, true));
     }
+
+    /**
+     * The shapes below are not guesses: they were read off fourteen build files
+     * exported by Path of Exile 2 at 0.5.5. A `level_interval` is a two-element
+     * array, not an object, and `weapon_set` is 1 or 2 — the numbered halves of
+     * the Weapon1/Offhand1 and Weapon2/Offhand2 slots.
+     */
+    public function testTheShapesTheGameActuallyWritesSurviveUntouched(): void
+    {
+        $json = file_get_contents(__DIR__.'/../fixtures/build/valid-full.build');
+        self::assertIsString($json);
+
+        $document = new BuildDocumentReader()->read($json);
+
+        self::assertSame([34, 60], $document->passives[1]['level_interval']);
+        self::assertSame(1, $document->passives[1]['weapon_set']);
+        self::assertSame([12, 100], $document->skills[0]['level_interval']);
+        self::assertSame('Amulet1', $document->inventorySlots[0]['inventory_id']);
+    }
 }

@@ -198,7 +198,7 @@ class Component extends DCLogic {
         { name: 'Hateful Focus', from: 'from level 34', supports: [{ name: 'Martial Tempo' }] }
       ],
       uniques: [
-        { slot: 'Amulet', name: 'Astramentis', cls: 'Amulet' },
+        { slot: 'Amulet1', name: 'Astramentis', cls: 'Amulet' },
         { slot: 'Ring1', name: "Kalandra's Touch", cls: 'Ring' },
         { slot: 'Ring2', name: 'Grand Spectrum', cls: 'Ring' }
       ],
@@ -211,7 +211,7 @@ class Component extends DCLogic {
       findings: [
         { severity: 'warning', color: t.warning, soft: t.warningSoft, rule: 'weapon.mismatch', target: 'slot:Weapon1', message: 'Earthquake is a mace skill, and no weapon is planned in Weapon1.', origin: 'derived from gem tags' },
         { severity: 'warning', color: t.warning, soft: t.warningSoft, rule: 'unique.name_ambiguous', target: 'slot:Ring2', message: 'Grand Spectrum names more than one unique in 0.5.5.', origin: 'derived from catalog_unique' },
-        { severity: 'hint', color: t.hint, soft: t.hintSoft, rule: 'interaction.synergy', target: 'slot:Amulet', message: 'Astramentis feeds every attribute-scaled node on this tree.', origin: 'curated — interactions.yaml' }
+        { severity: 'hint', color: t.hint, soft: t.hintSoft, rule: 'interaction.synergy', target: 'slot:Amulet1', message: 'Astramentis feeds every attribute-scaled node on this tree.', origin: 'curated — interactions.yaml' }
       ]
     };
   }

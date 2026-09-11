@@ -3,23 +3,26 @@
     "author": "moritz",
     "link": "https://example.test/b/abcdef",
     "description": "A slow, heavy slam build that leans on attribute stacking.",
-    "ascendancy": "Titan",
+    "ascendancy": "Warrior2",
     "passives": [
-        {"id": "strength89"},
-        {"id": "melee22_", "level_interval": {"from": 34, "to": 60}, "weapon_set": 1, "additional_text": "<b>take this early</b>"}
+        {"id": "strength89", "level_interval": [1, 100], "additional_text": ""},
+        {"id": "melee22_", "level_interval": [34, 60], "additional_text": "<b>{<m>{Allocation Step #1}}", "weapon_set": 1},
+        {"id": "attributes70", "level_interval": [0, 100], "additional_text": "", "weapon_set": 2}
     ],
     "skills": [
         {
             "id": "Metadata/Items/Gems/SkillGemEarthquake",
-            "level_interval": {"from": 12},
+            "level_interval": [12, 100],
             "support_skills": [
-                {"id": "Metadata/Items/Gems/SupportGemFastForward"},
-                {"id": "Metadata/Items/Gem/SupportGemMartialTempo", "additional_text": "swap later"}
+                {"id": "Metadata/Items/Gems/SupportGemFastForward", "level_interval": [12, 100]},
+                {"id": "Metadata/Items/Gem/SupportGemMartialTempo", "level_interval": [34, 100]}
             ]
-        }
+        },
+        {"id": "Metadata/Items/Gem/SkillGemHatefulFocus", "level_interval": [34, 100]}
     ],
     "inventory_slots": [
-        {"inventory_id": "Amulet", "unique_name": "Astramentis"},
-        {"inventory_id": "Weapon1", "slot_x": 0, "slot_y": 0}
+        {"inventory_id": "Amulet1", "slot_x": 0, "slot_y": 0, "level_interval": [1, 100], "additional_text": "", "unique_name": "Astramentis"},
+        {"inventory_id": "Weapon1", "slot_x": 0, "slot_y": 0, "level_interval": [1, 100], "additional_text": ""},
+        {"inventory_id": "Trinket1", "slot_x": 2, "slot_y": 0, "level_interval": [1, 100], "additional_text": ""}
     ]
 }
