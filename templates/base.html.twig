@@ -12,6 +12,12 @@
             <a href="{{ path('app_home') }}">Build Helper</a>
         </header>
 
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="{{ label }}" role="alert" aria-live="polite">{{ message }}</div>
+            {% endfor %}
+        {% endfor %}
+
         <main>
             {% block body %}{% endblock %}
         </main>

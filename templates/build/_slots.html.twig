@@ -16,7 +16,6 @@
                     <input type="hidden" name="inventory_id" value="{{ slot.id }}">
 
                     <label for="slot-name-{{ slot.id }}">{{ slot.label }}</label>
-                    {% if current.unique_name is defined %}<strong>{{ current.unique_name }}</strong>{% endif %}
                     <input type="text" id="slot-name-{{ slot.id }}" name="unique_name" value="{{ current.unique_name|default('') }}" placeholder="a unique's name, or leave empty">
 
                     <label for="slot-from-{{ slot.id }}">From</label>

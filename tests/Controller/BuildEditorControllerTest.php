@@ -110,11 +110,11 @@ final class BuildEditorControllerTest extends WebTestCase
 
         $this->client->request('POST', $edit.'/act', ['action' => 'slot.set', 'inventory_id' => 'Ring1', 'unique_name' => 'Kalandra\'s Touch', 'from' => '1', 'to' => '100', 'additional_text' => '']);
         $this->client->followRedirect();
-        self::assertSelectorTextContains('#build-slots', "Kalandra's Touch");
+        self::assertSelectorExists('#slot-name-Ring1[value="Kalandra\'s Touch"]');
 
         $this->client->request('POST', $edit.'/act', ['action' => 'slot.clear', 'inventory_id' => 'Ring1']);
         $this->client->followRedirect();
-        self::assertSelectorTextNotContains('#build-slots', "Kalandra's Touch");
+        self::assertSelectorNotExists('#slot-name-Ring1[value="Kalandra\'s Touch"]');
     }
 
     public function testAllFourteenSlotsAreOffered(): void
