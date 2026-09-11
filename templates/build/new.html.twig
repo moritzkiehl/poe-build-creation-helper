@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Start a build{% endblock %}
+
+{% block body %}
+    <h1>Open a build</h1>
+
+    {% if error is defined %}
+        <p role="alert">{{ error }}</p>
+    {% endif %}
+
+    <form action="{{ path('app_build_create') }}" method="post" enctype="multipart/form-data">
+        <p>
+            <label for="build">A .build file exported from Path of Exile 2</label>
+            <input type="file" id="build" name="build" accept=".build,application/json">
+        </p>
+        <p>
+            <label for="json">…or paste its JSON</label>
+            <textarea id="json" name="json" rows="8" cols="60"></textarea>
+        </p>
+        <button type="submit">Open</button>
+    </form>
+{% endblock %}

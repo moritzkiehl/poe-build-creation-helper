@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ build.name }}{% endblock %}
+
+{% block body %}
+    <p>You are looking at a shared link. Nothing here can be changed.</p>
+
+    {{ include('build/_summary.html.twig') }}
+{% endblock %}

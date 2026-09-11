@@ -1,0 +1,12 @@
+<h1>{{ build.name }}</h1>
+
+<dl>
+    <dt>Game version</dt><dd>{{ build.gameVersion }}</dd>
+    <dt>Passives</dt><dd>{{ build.toDocument.passives|length }}</dd>
+    <dt>Skills</dt><dd>{{ build.toDocument.skills|length }}</dd>
+    <dt>Equipment slots</dt><dd>{{ build.toDocument.inventorySlots|length }}</dd>
+</dl>
+
+<p>
+    <a href="{{ path('app_build_export', {slug: build.shareSlug}) }}">Download .build</a>
+</p>

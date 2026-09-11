@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ build.name }}{% endblock %}
+
+{% block body %}
+    {{ include('build/_summary.html.twig') }}
+
+    <h2>Your two links</h2>
+    <p>
+        Share this one — it is read only:
+        <a href="{{ url('app_build_show', {slug: build.shareSlug}) }}">{{ url('app_build_show', {slug: build.shareSlug}) }}</a>
+    </p>
+    <p>
+        Keep this one. It is the only way back in to change the build, and it is not recoverable:
+        <a href="{{ url('app_build_edit', {slug: build.shareSlug, token: token}) }}">{{ url('app_build_edit', {slug: build.shareSlug, token: token}) }}</a>
+    </p>
+
+    <h2>Replace the stored file</h2>
+    <form action="{{ path('app_build_update', {slug: build.shareSlug, token: token}) }}" method="post" enctype="multipart/form-data">
+        <p>
+            <label for="build">A newer .build file</label>
+            <input type="file" id="build" name="build" accept=".build,application/json">
+        </p>
+        <p>
+            <label for="json">…or paste its JSON</label>
+            <textarea id="json" name="json" rows="8" cols="60"></textarea>
+        </p>
+        <button type="submit">Replace</button>
+    </form>
+{% endblock %}
