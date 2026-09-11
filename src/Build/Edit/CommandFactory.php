@@ -8,9 +8,11 @@ use App\Build\Edit\Command\AddSkill;
 use App\Build\Edit\Command\AddSupport;
 use App\Build\Edit\Command\AllocatePassive;
 use App\Build\Edit\Command\ClearSlot;
+use App\Build\Edit\Command\CreateSnapshot;
 use App\Build\Edit\Command\DeallocatePassive;
 use App\Build\Edit\Command\RemoveSkill;
 use App\Build\Edit\Command\RemoveSupport;
+use App\Build\Edit\Command\Revert;
 use App\Build\Edit\Command\SetHeaderField;
 use App\Build\Edit\Command\SetPassiveInterval;
 use App\Build\Edit\Command\SetSkillInterval;
@@ -45,6 +47,8 @@ final class CommandFactory
             'support.interval' => new SetSupportInterval($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id'), $this->int($payload, 'from'), $this->int($payload, 'to')),
             'slot.set' => new SetSlot($buildId, $this->string($payload, 'inventory_id'), $this->optionalString($payload, 'unique_name'), $this->int($payload, 'from'), $this->int($payload, 'to'), $this->string($payload, 'additional_text', required: false)),
             'slot.clear' => new ClearSlot($buildId, $this->string($payload, 'inventory_id')),
+            'snapshot.create' => new CreateSnapshot($buildId, $this->string($payload, 'name')),
+            'history.revert' => new Revert($buildId, $this->int($payload, 'event_id')),
             default => throw InvalidEditCommand::unknownAction($action),
         };
     }
