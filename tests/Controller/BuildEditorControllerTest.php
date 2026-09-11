@@ -133,6 +133,36 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorExists('#build-findings');
     }
 
+    public function testAnEditCanBeRevertedFromTheHistoryPanel(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'first']);
+        $crawler = $this->client->followRedirect();
+        $eventId = $crawler->filter('#build-history button[name="event_id"]')->first()->attr('value');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'second']);
+        $this->client->followRedirect();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'history.revert', 'event_id' => (string) $eventId]);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextContains('#build-nodes', 'first');
+        self::assertSelectorTextNotContains('#build-nodes', 'second');
+        self::assertSelectorTextContains('#build-history', 'Reverted');
+    }
+
+    public function testASnapshotCanBeNamedAndIsMarkedAsKept(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'snapshot.create', 'name' => 'Before the respec']);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextContains('#build-history', 'Before the respec');
+        self::assertSelectorTextContains('#build-history', 'kept');
+    }
+
     /**
      * @return string the edit URL, without a trailing slash
      */

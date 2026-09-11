@@ -1,1 +1,48 @@
-<section id="build-history"><h2>History</h2></section>
+{% set sentences = {
+    'header.set': 'Changed a build detail',
+    'passive.allocate': 'Allocated a passive',
+    'passive.deallocate': 'Removed a passive',
+    'passive.interval': 'Changed when a passive is taken',
+    'skill.add': 'Added a skill',
+    'skill.remove': 'Removed a skill',
+    'skill.interval': 'Changed when a skill is used',
+    'support.add': 'Added a support',
+    'support.remove': 'Removed a support',
+    'support.interval': 'Changed when a support is used',
+    'slot.set': 'Changed an equipment slot',
+    'slot.clear': 'Cleared an equipment slot',
+    'snapshot': 'Named a snapshot',
+    'revert': 'Reverted to an earlier point',
+} %}
+
+<section id="build-history">
+    <h2>History</h2>
+
+    <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+        <input type="hidden" name="action" value="snapshot.create">
+        <label for="snapshot-name">Name this state</label>
+        <input type="text" id="snapshot-name" name="name" placeholder="Before the respec" required>
+        <button type="submit">Save a snapshot</button>
+    </form>
+
+    <p>Ordinary edits are kept for 30 days. Named snapshots are kept for good.</p>
+
+    <ol>
+        {% for event in events %}
+            <li>
+                <time datetime="{{ event.createdAt|date('c') }}">{{ event.createdAt|date('Y-m-d H:i') }}</time>
+                {{ sentences[event.action]|default(event.action) }}
+                {% if event.namedSnapshot %}
+                    — <strong>{{ event.snapshotName }}</strong> (kept)
+                {% endif %}
+
+                <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                    <input type="hidden" name="action" value="history.revert">
+                    <button type="submit" name="event_id" value="{{ event.id }}">Revert to here</button>
+                </form>
+            </li>
+        {% else %}
+            <li>No edits yet.</li>
+        {% endfor %}
+    </ol>
+</section>
