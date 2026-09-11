@@ -61,6 +61,23 @@ class Build
     private string $gameVersion;
 
     /**
+     * Planning fields. The Build Planner format has no room for them, so they
+     * are columns here and never enter `document` or `BuildDocument` — an
+     * export must carry only fields GGG documents for version 1.
+     */
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $classKey = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $targetLevel = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $note = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $archetypeKey = null;
+
+    /**
      * @var array{passives: list<array<string, mixed>>, skills: list<array<string, mixed>>, inventory_slots: list<array<string, mixed>>}
      */
     #[ORM\Column(type: Types::JSON)]
@@ -95,7 +112,7 @@ class Build
             'skills' => $document->skills,
             'inventory_slots' => $document->inventorySlots,
         ];
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->touch();
     }
 
     public function toDocument(): BuildDocument
@@ -153,5 +170,104 @@ class Build
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getAuthor(): ?string
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?string $author): void
+    {
+        $this->author = $author;
+        $this->touch();
+    }
+
+    public function getLink(): ?string
+    {
+        return $this->link;
+    }
+
+    public function setLink(?string $link): void
+    {
+        $this->link = $link;
+        $this->touch();
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): void
+    {
+        $this->description = $description;
+        $this->touch();
+    }
+
+    public function getAscendancyKey(): ?string
+    {
+        return $this->ascendancyKey;
+    }
+
+    public function setAscendancyKey(?string $ascendancyKey): void
+    {
+        $this->ascendancyKey = $ascendancyKey;
+        $this->touch();
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+        $this->touch();
+    }
+
+    public function getClassKey(): ?string
+    {
+        return $this->classKey;
+    }
+
+    public function setClassKey(?string $classKey): void
+    {
+        $this->classKey = $classKey;
+        $this->touch();
+    }
+
+    public function getTargetLevel(): ?int
+    {
+        return $this->targetLevel;
+    }
+
+    public function setTargetLevel(?int $targetLevel): void
+    {
+        $this->targetLevel = $targetLevel;
+        $this->touch();
+    }
+
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    public function setNote(?string $note): void
+    {
+        $this->note = $note;
+        $this->touch();
+    }
+
+    public function getArchetypeKey(): ?string
+    {
+        return $this->archetypeKey;
+    }
+
+    public function setArchetypeKey(?string $archetypeKey): void
+    {
+        $this->archetypeKey = $archetypeKey;
+        $this->touch();
+    }
+
+    private function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 }

@@ -62,4 +62,28 @@ final class BuildPersistenceTest extends KernelTestCase
 
         self::assertNotSame($first->getShareSlug(), $second->getShareSlug());
     }
+
+    public function testPlanningFieldsSurvivePersistenceAndStayOutOfTheExport(): void
+    {
+        $json = file_get_contents(__DIR__.'/../fixtures/build/valid-full.build');
+        self::assertIsString($json);
+        $document = new BuildDocumentReader()->read($json);
+
+        $build = $this->builds->create($document, '0.5.5');
+        $build->setClassKey('Warrior');
+        $build->setTargetLevel(92);
+        $build->setNote('Swap to the second weapon set at 60.');
+        $build->setArchetypeKey('slam');
+        $slug = $build->getShareSlug();
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $reloaded = $this->builds->findOneByShareSlug($slug);
+
+        self::assertNotNull($reloaded);
+        self::assertSame('Warrior', $reloaded->getClassKey());
+        self::assertSame(92, $reloaded->getTargetLevel());
+        self::assertSame('slam', $reloaded->getArchetypeKey());
+        self::assertEquals($document, $reloaded->toDocument(), 'planning fields never reach the exported document');
+    }
 }
