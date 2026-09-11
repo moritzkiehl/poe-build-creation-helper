@@ -1,32 +1,31 @@
 # PoE2 Build Helper
 
-Webapp zum Erstellen, Prüfen, Teilen und Exportieren von Path-of-Exile-2-Builds.
-Eine Build-Skizze entsteht im Browser, ein Regelmotor prüft sie, und das Ergebnis
-verlässt das Werkzeug als offizielle `.build`-Datei für den Build Planner des
-Spiels.
+A web app for creating, checking, sharing and exporting Path of Exile 2 builds.
+You sketch a build in the browser, a rules engine checks it, and the result
+leaves the tool as an official `.build` file for the game's build planner.
 
-Kein DPS- oder EHP-Simulator — das bleibt Path of Building 2.
+Not a DPS or EHP simulator — that stays with Path of Building 2.
 
-## Stand
+## Status
 
-Entwurfsphase. Es existiert noch kein Code, nur der Entwurf unter
-[`docs/specs/`](docs/specs/). Öffentlicher Start ist für Januar 2027 geplant,
-kurz nach dem 1.0-Release von PoE2; entwickelt wird gegen den Early-Access-Stand
-0.5.5.
+Design stage. There is no code yet, only the design under
+[`docs/specs/`](docs/specs/). The public launch is planned for January 2027,
+shortly after the PoE2 1.0 release; development runs against the Early Access
+version 0.5.5.
 
-## Spieldaten
+## Game data
 
-Dieses Repository enthält keine Spieldaten. Passivbaum, Gems, Uniques und
-Base-Items werden zur Laufzeit von den jeweiligen Quellen geholt und in einem
-ignorierten Verzeichnis abgelegt. Sie gehören Grinding Gear Games; Einzelheiten
-in [`NOTICE`](NOTICE).
+This repository contains no game data. Passive tree, gems, uniques and base
+items are fetched from their sources at runtime and stored in an ignored
+directory. They are owned by Grinding Gear Games; see [`NOTICE`](NOTICE) for
+details.
 
-Katalog, Editor, Regelmotor und Export sind und bleiben kostenlos. Kein aus
-GGG-Daten abgeleiteter Inhalt liegt jemals hinter einer Bezahlschranke.
+Catalog, editor, rules engine and export are free and will stay free. No
+GGG-derived content is ever behind a paywall.
 
-## Lizenz
+## License
 
-Eigener Code unter [MIT](LICENSE). Was nicht darunter fällt, steht in
+Our own code is under [MIT](LICENSE). What that does not cover is listed in
 [`NOTICE`](NOTICE).
 
 ---
