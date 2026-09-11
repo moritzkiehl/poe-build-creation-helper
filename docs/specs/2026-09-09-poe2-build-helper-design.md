@@ -876,9 +876,14 @@ The layout follows Symfony conventions (`src/Entity`, `src/Repository`,
 `src/Controller`) rather than a directory per module; the five modules of part 1
 survive as namespaces and as the dependency rule, not as folders.
 
-**Iteration 2 — catalog.** Sync commands, normaliser, tables, the `catalog_sync`
-log, `CatalogPort`, search and browse view. From here on builds show names and
-icons instead of IDs.
+**Iteration 2 — catalog. Built 2026-09-11.** Sync command, normalisers, tables,
+the `catalog_sync` log, `CatalogPort`, search and browse view.
+
+`CatalogPort` carries only the questions the rules engine asks. Browsing goes
+through a separate `CatalogSearch` instead, so paging and filtering never grow
+the port with things no rule needs. Two implementations exist — one backed by
+Doctrine, one in memory — and both are held to the same test contract, because a
+fake that drifts from the real one makes every rule test worthless.
 
 **Iteration 3 — editor.** Editing over Turbo and Stimulus: skills, supports,
 slots, level intervals, planning fields — and the rendered passive tree, which is

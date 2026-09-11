@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Catalog{% endblock %}
+
+{% block body %}
+    <h1>Catalog</h1>
+
+    {% if state is null %}
+        <p>No catalog data yet. Run <code>app:catalog:sync</code> to fetch it.</p>
+        <p>
+            Builds work without it — they open, edit, share and export exactly as they would.
+            What is missing until then is names, icons and checks.
+        </p>
+    {% else %}
+        <p>
+            Synced {{ state.syncedAt|date('Y-m-d') }} against game version {{ state.gameVersion }}.
+        </p>
+
+        <form action="{{ path('app_catalog') }}" method="get">
+            <label for="q">Search</label>
+            <input type="search" id="q" name="q" value="{{ query }}" placeholder="Gems, supports, uniques">
+            <button type="submit">Search</button>
+        </form>
+
+        <nav>
+            {% for k in kinds %}
+                <a href="{{ path('app_catalog', {kind: k, q: query}) }}"{% if k == kind %} aria-current="page"{% endif %}>
+                    {{ k }}{% if counts[k] is defined %} ({{ counts[k] }}){% endif %}
+                </a>
+            {% endfor %}
+        </nav>
+
+        {% if rows is empty %}
+            <p>Nothing matches this filter.</p>
+        {% else %}
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Identifier</th><th>Kind</th><th>Tags</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>
+                                {{ row.name }}
+                                {% if row.ambiguous %}<em>(name shared with another unique)</em>{% endif %}
+                            </td>
+                            <td><code>{{ row.id }}</code></td>
+                            <td>{{ row.kind }}{% if row.detail %} · {{ row.detail }}{% endif %}</td>
+                            <td>{{ row.tags }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+{% endblock %}

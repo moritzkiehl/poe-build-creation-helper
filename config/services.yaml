@@ -35,6 +35,10 @@ services:
     App\:
         resource: '../src/'
 
+    # The rules engine asks for the interface; what it gets is the stored
+    # catalog. Swapping in InMemoryCatalog is how rule tests avoid a database.
+    App\Catalog\CatalogPort: '@App\Catalog\DoctrineCatalog'
+
     # Scalar arguments autowiring cannot guess. Defined after the resource
     # block above, because later definitions replace earlier ones.
     App\Catalog\SourceFetcher:
