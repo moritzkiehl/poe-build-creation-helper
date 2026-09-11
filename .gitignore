@@ -1,0 +1,23 @@
+# IDE
+/.idea/
+
+# Claude Code — local settings only, conventions are versioned
+/.claude/settings.local.json
+
+# Symfony
+/vendor/
+/var/
+/.env.local
+/.env.*.local
+/public/assets/
+/.phpunit.cache/
+/.php-cs-fixer.cache
+
+# Catalog snapshots — game data owned by Grinding Gear Games,
+# fetched at runtime by the sync command, never committed. See NOTICE.
+/var/catalog/
+
+# Playwright (dev/CI tooling only, no Node in backend or asset pipeline)
+/node_modules/
+/test-results/
+/playwright-report/

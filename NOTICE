@@ -1,0 +1,27 @@
+NOTICE
+
+The MIT License in LICENSE covers the source code of this project only.
+It does not cover the following, which are listed here so that the boundary
+is explicit.
+
+Path of Exile 2 game data
+-------------------------
+All Path of Exile and Path of Exile 2 game data — passive skill nodes, skill
+gems, support gems, unique items, base items, tags, icons and names — is owned
+by Grinding Gear Games and is governed by their Terms of Use.
+
+No such data is contained in this repository. The catalog sync command fetches
+it at runtime into an ignored directory; snapshots are never committed and are
+never redistributed by this project.
+
+RePoE
+-----
+Parts of the catalog are read from the RePoE fork (https://github.com/repoe-fork).
+The RePoE code is MIT licensed, Copyright (c) 2016 brather1ng. The data it
+generates is explicitly not: per its LICENSE.md, "Contents of generated files
+(all files in the `data` directory) are owned by Grinding Gear Games and shall
+not be used or published without being in accordance with their terms of use."
+
+Disclaimer
+----------
+This product isn't affiliated with or endorsed by Grinding Gear Games in any way.
