@@ -1,0 +1,25 @@
+{
+    "name": "Titan Earthquake Slam",
+    "author": "moritz",
+    "link": "https://example.test/b/abcdef",
+    "description": "A slow, heavy slam build that leans on attribute stacking.",
+    "ascendancy": "Titan",
+    "passives": [
+        {"id": "strength89"},
+        {"id": "melee22_", "level_interval": {"from": 34, "to": 60}, "weapon_set": 1, "additional_text": "<b>take this early</b>"}
+    ],
+    "skills": [
+        {
+            "id": "Metadata/Items/Gems/SkillGemEarthquake",
+            "level_interval": {"from": 12},
+            "support_skills": [
+                {"id": "Metadata/Items/Gems/SupportGemFastForward"},
+                {"id": "Metadata/Items/Gem/SupportGemMartialTempo", "additional_text": "swap later"}
+            ]
+        }
+    ],
+    "inventory_slots": [
+        {"inventory_id": "Amulet", "unique_name": "Astramentis"},
+        {"inventory_id": "Weapon1", "slot_x": 0, "slot_y": 0}
+    ]
+}
