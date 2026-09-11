@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Catalog\CatalogPort;
 use App\Catalog\CatalogSearch;
+use App\Catalog\TreeExport;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +19,7 @@ final class CatalogController extends AbstractController
     public function __construct(
         private readonly CatalogSearch $search,
         private readonly CatalogPort $catalog,
+        private readonly TreeExport $tree,
     ) {
     }
 
@@ -39,5 +41,32 @@ final class CatalogController extends AbstractController
             'counts' => $this->catalog->isAvailable() ? $this->search->counts() : [],
             'rows' => $this->catalog->isAvailable() ? $this->search->search('' === $query ? null : $query, $kind) : [],
         ]);
+    }
+
+    /**
+     * Cached against the sync rather than a fixed lifetime: the tree changes
+     * when we adopt a patch and at no other time.
+     */
+    #[Route('/catalog/tree.json', name: 'app_catalog_tree', methods: ['GET'])]
+    public function treeData(Request $request): Response
+    {
+        $revision = $this->tree->revision();
+        $response = new Response();
+        $response->setPublic();
+
+        if (null !== $revision) {
+            $response->setLastModified($revision);
+            $response->setEtag(md5($revision->format(\DATE_ATOM)));
+
+            if ($response->isNotModified($request)) {
+                return $response;
+            }
+        }
+
+        $payload = null === $revision ? ['nodes' => [], 'edges' => [], 'classes' => []] : $this->tree->payload();
+        $response->setContent(json_encode($payload, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
     }
 }

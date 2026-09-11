@@ -90,6 +90,15 @@ final class CatalogControllerTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Nothing matches');
     }
 
+    public function testTheTreePayloadIsEmptyButValidWithoutCatalogData(): void
+    {
+        $this->client->request('GET', '/catalog/tree.json');
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame(['nodes' => [], 'edges' => [], 'classes' => []], $payload);
+    }
+
     private function seed(): void
     {
         foreach ([
