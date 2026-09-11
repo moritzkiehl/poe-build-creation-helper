@@ -1,0 +1,8 @@
+framework:
+    messenger:
+        # Edits are handled in the request that made them: the browser is
+        # waiting for the Turbo Stream that shows the result. There is no
+        # transport on purpose — a queue here would buy latency, not safety.
+        default_bus: command.bus
+        buses:
+            command.bus: ~
