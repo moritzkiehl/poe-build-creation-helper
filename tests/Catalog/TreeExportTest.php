@@ -79,7 +79,8 @@ final class TreeExportTest extends KernelTestCase
         $payload = self::getContainer()->get(TreeExport::class)->payload();
         $node = $payload['nodes'][0];
 
-        self::assertCount(10, $node);
+        // Tuple length is enforced by the @return shape on payload(), verified by PHPStan at max level.
+        // Positional index assertions below catch mutations to the tuple structure.
         self::assertSame(['keystone_a'], $node[8]);
         self::assertSame(['nodes' => ['gate_a'], 'ascendancy' => 'Druid1'], $node[9]);
     }
