@@ -26,6 +26,37 @@ final class AllocationRulesTest extends KernelTestCase
         self::assertFalse($rules->mayAllocate($allocation, $this->context(), 'far', WeaponSet::Shared));
     }
 
+    public function testMayAllocateRejectsAnUnknownNodeAndOneAlreadyAllocated(): void
+    {
+        $rules = $this->rulesOver(
+            nodes: [['start', 'small'], ['near', 'small']],
+            edges: [['start', 'near']],
+        );
+        $allocation = new Allocation(['start' => WeaponSet::Shared, 'near' => WeaponSet::Shared]);
+
+        self::assertFalse(
+            $rules->mayAllocate($allocation, $this->context(), 'nowhere', WeaponSet::Shared),
+            'a node absent from the catalog is never allocatable',
+        );
+        self::assertFalse(
+            $rules->mayAllocate($allocation, $this->context(), 'near', WeaponSet::Shared),
+            'a node already allocated is not allocatable a second time',
+        );
+    }
+
+    public function testANeighbourOfTheStartIsAllocatableEvenWhenTheStartIsNotItselfAllocated(): void
+    {
+        $rules = $this->rulesOver(
+            nodes: [['start', 'small'], ['near', 'small']],
+            edges: [['start', 'near']],
+        );
+
+        self::assertTrue(
+            $rules->mayAllocate(new Allocation([]), $this->context(), 'near', WeaponSet::Shared),
+            'the start node seeds the connected component whether or not it is allocated — load-bearing for an empty build',
+        );
+    }
+
     public function testASetOneNodeMayNotRouteThroughSetTwo(): void
     {
         $rules = $this->rulesOver(
@@ -111,6 +142,12 @@ final class AllocationRulesTest extends KernelTestCase
             'Entwined Realities arms the mechanism; the keystone switches on its own neighbourhood',
         );
 
+        $keystoneOnly = new Allocation(['start' => WeaponSet::Shared, 'stone' => WeaponSet::Shared]);
+        self::assertFalse(
+            $rules->mayAllocate($keystoneOnly, $context, 'floating', WeaponSet::Shared),
+            'the keystone alone unlocks nothing until Entwined Realities arms it',
+        );
+
         $both = new Allocation(['start' => WeaponSet::Shared, 'AscendancyDruid1Notable1' => WeaponSet::Shared, 'stone' => WeaponSet::Shared]);
         self::assertTrue($rules->mayAllocate($both, $context, 'floating', WeaponSet::Shared));
     }
@@ -120,14 +157,43 @@ final class AllocationRulesTest extends KernelTestCase
         $rules = $this->rulesOver(
             nodes: [['start', 'small'], ['AscendancyDruid1Notable1', 'notable'], ['stone', 'keystone'], ['other_stone', 'keystone']],
             edges: [['start', 'AscendancyDruid1Notable1']],
-            radius: ['other_stone' => ['stone']],
+            radius: ['stone' => ['stone']],
         );
 
         $both = new Allocation(['start' => WeaponSet::Shared, 'AscendancyDruid1Notable1' => WeaponSet::Shared, 'stone' => WeaponSet::Shared]);
 
         self::assertFalse(
-            $rules->mayAllocate($both, new TreeContext('start', 'Druid1'), 'other_stone', WeaponSet::Shared),
+            $rules->mayAllocate($both, new TreeContext('start', 'Druid1'), 'stone', WeaponSet::Shared),
             'the stat reads "Non-Keystone Passive Skills"',
+        );
+    }
+
+    /**
+     * Pins current behaviour: `has()` inside `unlocked()` and
+     * `excusedByRadius()` is weapon-set blind, so an enabler allocated into
+     * set Two still arms the mechanism and switches on its radius for a set
+     * One node. Whether enablement is scoped per weapon set is unconfirmed
+     * against the game and is recorded as an open proof in the spec. If the
+     * game turns out to scope enablers per set, this is the test to invert.
+     */
+    public function testAnEnablerCountsWhicheverWeaponSetItSitsIn(): void
+    {
+        $rules = $this->rulesOver(
+            nodes: [['start', 'small'], ['AscendancyDruid1Notable1', 'notable'], ['stone', 'keystone'], ['floating', 'small']],
+            edges: [['start', 'AscendancyDruid1Notable1']],
+            radius: ['floating' => ['stone']],
+        );
+        $context = new TreeContext('start', 'Druid1');
+
+        $enablersInSetTwo = new Allocation([
+            'start' => WeaponSet::Shared,
+            'AscendancyDruid1Notable1' => WeaponSet::Two,
+            'stone' => WeaponSet::Two,
+        ]);
+
+        self::assertTrue(
+            $rules->mayAllocate($enablersInSetTwo, $context, 'floating', WeaponSet::One),
+            'enablement is not currently scoped per weapon set',
         );
     }
 
