@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Build\Edit;
 
 use App\Build\InventorySlots;
+use App\Build\Tree\WeaponSet;
 use App\Interchange\BuildDocument;
 
 /**
@@ -27,30 +28,47 @@ final class DocumentEditor
     {
     }
 
-    public function allocatePassive(BuildDocument $document, string $id): BuildDocument
+    public function allocatePassive(BuildDocument $document, string $id, WeaponSet $set = WeaponSet::Shared): BuildDocument
     {
         if (null !== $this->indexOfPassive($document, $id)) {
             return $document;
         }
 
+        $passive = ['id' => $id, 'level_interval' => [1, self::MAX_LEVEL], 'additional_text' => ''];
+        $wire = $set->toWire();
+
+        if (null !== $wire) {
+            $passive['weapon_set'] = $wire;
+        }
+
         $passives = $document->passives;
-        $passives[] = ['id' => $id, 'level_interval' => [1, self::MAX_LEVEL], 'additional_text' => ''];
+        $passives[] = $passive;
 
         return $this->withPassives($document, $passives);
     }
 
     public function deallocatePassive(BuildDocument $document, string $id): BuildDocument
     {
-        $index = $this->indexOfPassive($document, $id);
+        return $this->deallocatePassives($document, [$id]);
+    }
 
-        if (null === $index) {
+    /**
+     * @param list<string> $ids
+     */
+    public function deallocatePassives(BuildDocument $document, array $ids): BuildDocument
+    {
+        if ([] === $ids) {
             return $document;
         }
 
-        $passives = $document->passives;
-        unset($passives[$index]);
+        $drop = array_fill_keys($ids, true);
 
-        return $this->withPassives($document, array_values($passives));
+        $passives = array_values(array_filter(
+            $document->passives,
+            static fn (array $passive): bool => !isset($drop[\is_string($passive['id'] ?? null) ? $passive['id'] : '']),
+        ));
+
+        return $this->withPassives($document, $passives);
     }
 
     public function setPassiveLevelInterval(BuildDocument $document, string $id, int $from, int $to): BuildDocument

@@ -7,6 +7,7 @@ namespace App\Tests\Build;
 use App\Build\Edit\DocumentEditor;
 use App\Build\Edit\InvalidEditCommand;
 use App\Build\InventorySlots;
+use App\Build\Tree\WeaponSet;
 use App\Interchange\BuildDocument;
 use PHPUnit\Framework\TestCase;
 
@@ -102,5 +103,29 @@ final class DocumentEditorPassivesTest extends TestCase
         $this->expectException(InvalidEditCommand::class);
 
         $this->editor->setPassiveLevelInterval(new BuildDocument(name: 'Build'), 'a', 1, 100);
+    }
+
+    public function testAllocatingIntoASetWritesTheKeyAndAllocatingSharedOmitsIt(): void
+    {
+        $document = $this->editor->allocatePassive(new BuildDocument(name: 'Build'), 'shared_one');
+        $document = $this->editor->allocatePassive($document, 'set_one', WeaponSet::One);
+
+        self::assertArrayNotHasKey('weapon_set', $document->passives[0], 'shared is an absent key, never 0');
+        self::assertSame(1, $document->passives[1]['weapon_set']);
+    }
+
+    public function testDeallocatingManyRemovesThemAllAndLeavesTheRestUntouched(): void
+    {
+        $document = new BuildDocument(name: 'test', passives: [
+            ['id' => 'keep', 'level_interval' => [1, 100], 'additional_text' => 'mine'],
+            ['id' => 'drop_a', 'level_interval' => [1, 100]],
+            ['id' => 'drop_b', 'level_interval' => [1, 100], 'weapon_set' => 2],
+        ]);
+
+        $changed = $this->editor->deallocatePassives($document, ['drop_a', 'drop_b']);
+
+        self::assertCount(1, $changed->passives);
+        self::assertSame('keep', $changed->passives[0]['id']);
+        self::assertSame('mine', $changed->passives[0]['additional_text']);
     }
 }
