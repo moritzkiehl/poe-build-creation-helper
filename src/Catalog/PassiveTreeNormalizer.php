@@ -53,7 +53,28 @@ final class PassiveTreeNormalizer
                 'pos_y' => is_numeric($node['y'] ?? null) ? (float) $node['y'] : 0.0,
                 'stats' => array_values(array_filter((array) ($node['stats'] ?? []), is_string(...))),
                 'recipe' => array_values(array_filter((array) ($node['recipe'] ?? []), is_string(...))),
+                'keystones_in_radius' => [],
+                'unlock_constraint' => null,
             ];
+        }
+
+        /**
+         * The reverse of $allocatable, built once so that resolving the legality
+         * fields below is O(1) per node instead of an array_search over all of
+         * $rawNodes for every one of them.
+         *
+         * @var array<string, string|int> $keyById
+         */
+        $keyById = array_flip($allocatable);
+
+        foreach ($nodes as $index => $node) {
+            $raw = $rawNodes[$keyById[$node['id']] ?? ''] ?? null;
+            if (!\is_array($raw)) {
+                continue;
+            }
+
+            $nodes[$index]['keystones_in_radius'] = $this->resolveKeys($raw['keystonesInRadius'] ?? null, $allocatable);
+            $nodes[$index]['unlock_constraint'] = $this->unlockConstraint($raw['unlockConstraint'] ?? null, $allocatable);
         }
 
         return new NormalizedTree(
@@ -190,5 +211,51 @@ final class PassiveTreeNormalizer
         }
 
         return $ascendancies;
+    }
+
+    /**
+     * Resolves a list of upstream tree-keys (integers) to stored passive ids
+     * through the allocatable map. A key that does not resolve to an
+     * allocatable node is dropped rather than kept as a dangling reference.
+     *
+     * @param array<string, string> $allocatable tree-key => stored id
+     *
+     * @return list<string>
+     */
+    private function resolveKeys(mixed $keys, array $allocatable): array
+    {
+        $resolved = [];
+
+        foreach ((array) (\is_array($keys) ? $keys : []) as $key) {
+            $id = $allocatable[(string) (\is_scalar($key) ? $key : '')] ?? null;
+            if (\is_string($id)) {
+                $resolved[] = $id;
+            }
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param array<string, string> $allocatable
+     *
+     * @return array{nodes: list<string>, ascendancy: string|null}|null
+     */
+    private function unlockConstraint(mixed $raw, array $allocatable): ?array
+    {
+        if (!\is_array($raw)) {
+            return null;
+        }
+
+        $nodes = $this->resolveKeys($raw['nodes'] ?? null, $allocatable);
+
+        if ([] === $nodes) {
+            return null;
+        }
+
+        return [
+            'nodes' => $nodes,
+            'ascendancy' => \is_string($raw['ascendancy'] ?? null) ? $raw['ascendancy'] : null,
+        ];
     }
 }

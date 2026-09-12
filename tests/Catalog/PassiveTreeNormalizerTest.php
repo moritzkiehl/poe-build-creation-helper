@@ -97,6 +97,40 @@ final class PassiveTreeNormalizerTest extends TestCase
         self::assertSame([], $byId['synthetic12']['recipe']);
     }
 
+    public function testItResolvesLegalityFieldsFromTreeKeysToStoredIds(): void
+    {
+        $json = json_encode([
+            'nodes' => [
+                'root' => ['id' => 'root'],
+                '100' => ['id' => 'keystone_a', 'name' => 'Keystone A', 'isKeystone' => true, 'x' => 0, 'y' => 0],
+                '200' => ['id' => 'gate_a', 'name' => 'Gate A', 'isNotable' => true, 'x' => 1, 'y' => 1],
+                '300' => [
+                    'id' => 'covered_a',
+                    'name' => 'Covered A',
+                    'x' => 2,
+                    'y' => 2,
+                    'keystonesInRadius' => [100, 999],
+                    'unlockConstraint' => ['nodes' => [200, 999], 'ascendancy' => 'Druid1'],
+                ],
+            ],
+        ], \JSON_THROW_ON_ERROR);
+
+        $tree = new PassiveTreeNormalizer()->normalize($json);
+        $byId = array_column($tree->nodes, null, 'id');
+
+        // 999 is not an allocatable node, so it is dropped rather than carried
+        // through as an unresolvable key.
+        self::assertSame(['keystone_a'], $byId['covered_a']['keystones_in_radius']);
+
+        $unlockConstraint = $byId['covered_a']['unlock_constraint'];
+        self::assertNotNull($unlockConstraint);
+        self::assertSame(['gate_a'], $unlockConstraint['nodes']);
+        self::assertSame('Druid1', $unlockConstraint['ascendancy']);
+
+        self::assertSame([], $byId['keystone_a']['keystones_in_radius']);
+        self::assertNull($byId['keystone_a']['unlock_constraint']);
+    }
+
     private function normalize(): \App\Catalog\NormalizedTree
     {
         $json = file_get_contents(__DIR__.'/../fixtures/catalog/tree-shape.json');
