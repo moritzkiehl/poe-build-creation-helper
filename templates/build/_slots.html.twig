@@ -88,7 +88,7 @@
                                 {% for node in instilledResults %}
                                     <li>
                                         <strong>{{ node.name }}</strong> <code>{{ node.id }}</code>
-                                        {% if node.stats %}<span>{{ node.stats }}</span>{% endif %}
+                                        {% if node.stats %}<span>{{ node.stats|join(', ') }}</span>{% endif %}
                                         {% if node.recipe %}<span>Recipe: {{ node.recipe|join(', ') }}</span>{% endif %}
                                         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                                             <input type="hidden" name="action" value="instilled.add">

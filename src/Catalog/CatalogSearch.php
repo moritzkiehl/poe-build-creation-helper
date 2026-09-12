@@ -41,7 +41,7 @@ final class CatalogSearch
      * names: a finding names a node by id, and the list is where that id is
      * looked up.
      *
-     * @return list<array{id: string, name: string, kind: string, stats: string}>
+     * @return list<array{id: string, name: string, kind: string, stats: list<string>}>
      */
     public function passives(string $query): array
     {
@@ -61,7 +61,7 @@ final class CatalogSearch
                 'id' => Row::str($row, 'id'),
                 'name' => Row::str($row, 'name'),
                 'kind' => Row::str($row, 'kind'),
-                'stats' => implode(', ', Row::jsonStrings($row, 'stats')),
+                'stats' => array_map(StatText::plain(...), Row::jsonStrings($row, 'stats')),
             ];
         }
 
@@ -73,7 +73,7 @@ final class CatalogSearch
      * Distilled Emotion recipe. Searching the other four thousand would offer
      * the player nodes the mechanic cannot reach.
      *
-     * @return list<array{id: string, name: string, kind: string, stats: string, recipe: list<string>}>
+     * @return list<array{id: string, name: string, kind: string, stats: list<string>, recipe: list<string>}>
      */
     public function instillablePassives(string $query): array
     {
@@ -95,7 +95,7 @@ final class CatalogSearch
                 'id' => Row::str($row, 'id'),
                 'name' => Row::str($row, 'name'),
                 'kind' => Row::str($row, 'kind'),
-                'stats' => implode(', ', array_map(StatText::plain(...), Row::jsonStrings($row, 'stats'))),
+                'stats' => array_map(StatText::plain(...), Row::jsonStrings($row, 'stats')),
                 'recipe' => array_map(StatText::emotion(...), Row::jsonStrings($row, 'recipe')),
             ];
         }

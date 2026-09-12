@@ -36,6 +36,14 @@ final class EditorSearches
         $unique = $this->term($request, 'unique');
         $instilled = $this->term($request, 'instilled');
 
+        // Neither view-state override is a search term, but each survives an
+        // edit the same way a search term does — as a query parameter that
+        // wins over a stale hidden field from the request body — so it is
+        // read with the same nullsafe helper rather than inventing a second
+        // idiom for the same problem.
+        $intervalsOverride = $this->term($request, 'intervals');
+        $supportsOverride = $this->term($request, 'supports');
+
         return [
             'passiveQuery' => $passive,
             'passiveResults' => '' !== $passive ? $this->search->passives($passive) : [],
@@ -47,6 +55,8 @@ final class EditorSearches
             'uniqueResults' => '' !== $unique ? $this->search->search($unique, 'unique') : [],
             'instilledQuery' => $instilled,
             'instilledResults' => '' !== $instilled ? $this->search->instillablePassives($instilled) : [],
+            'intervalsOverride' => $intervalsOverride,
+            'supportsOverride' => $supportsOverride,
         ];
     }
 

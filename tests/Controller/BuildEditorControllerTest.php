@@ -91,6 +91,10 @@ final class BuildEditorControllerTest extends WebTestCase
         $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'game_version', 'value' => ''], server: ['HTTP_ACCEPT' => self::STREAM]);
 
         self::assertResponseStatusCodeSame(422);
+        // "This build has no game version to change" would also satisfy a
+        // bare 422 check — it is the wrong message, meant for an unknown
+        // field rather than a missing value, so the text is asserted too.
+        self::assertStringContainsString('game version must be set', (string) $this->client->getResponse()->getContent());
     }
 
     public function testEditingWithoutTheEditTokenIsRefused(): void
@@ -153,7 +157,15 @@ final class BuildEditorControllerTest extends WebTestCase
         try {
             $this->client->request('GET', $edit.'?support=Fast');
 
-            self::assertSelectorExists('#build-skills input[name="support"]');
+            // `input[name="support"]` alone matches both the search box and
+            // the hidden `_search_state` field that every /act form on this
+            // page carries to keep the term alive — neither is specific to a
+            // search actually having found something. The fixture's first
+            // skill already has this same gem as a support, so even
+            // `support_id="...FastForward"` alone is not enough: its
+            // "Remove support" form carries that id too. Only the
+            // "support.add" action, which the search result's own form
+            // produces, proves the search actually found something.
             self::assertSelectorExists('#build-skills form input[name="action"][value="support.add"]');
         } finally {
             $connection->executeStatement("DELETE FROM catalog_gem WHERE id = 'Metadata/Items/Gems/SupportGemFastForward'");
@@ -174,10 +186,17 @@ final class BuildEditorControllerTest extends WebTestCase
     {
         $edit = $this->createBuild();
 
+        // The fixture's two supports start off at different ranges from their
+        // skill ([12,100] and [34,100] against the skill's [12,100]), so
+        // "the skill's own from is 12" is already true before the cascade —
+        // asserting only that would pass without the feature. The rendered
+        // "Follows the skill's range" line names the numbers a support
+        // actually landed on, so it can only appear once the cascade moved
+        // both supports onto the skill's new range.
         $this->client->request('POST', $edit.'/act', ['action' => 'skill.interval_cascade', 'index' => '0', 'from' => '12', 'to' => '90']);
         $this->client->followRedirect();
 
-        self::assertSelectorExists('#build-skills input[name="from"][value="12"]');
+        self::assertSelectorTextContains('#build-skills', "Follows the skill's range (12–90)");
     }
 
     public function testAUniqueCanBeNamedForASlotAndClearedAgain(): void
@@ -242,6 +261,29 @@ final class BuildEditorControllerTest extends WebTestCase
         } finally {
             $this->forgetInstillablePassive('test_instill_frost');
         }
+    }
+
+    public function testAnUnresolvedInstilledIdStaysVisibleAndRemovable(): void
+    {
+        // Declares an id no catalog row backs — a build can outlive a
+        // catalog re-sync. It must not disappear, and it must still be
+        // removable even though nothing is known about it beyond its id.
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'no_such_instilled_id']);
+        $crawler = $this->client->followRedirect();
+
+        self::assertSelectorTextContains('h3#build-instilled + p + ul', 'no_such_instilled_id');
+        $removeForm = $crawler->filter('h3#build-instilled + p + ul form')->reduce(
+            static fn ($form) => 'instilled.remove' === $form->filter('input[name="action"]')->attr('value')
+                && 'no_such_instilled_id' === $form->filter('input[name="id"]')->attr('value'),
+        );
+        self::assertGreaterThan(0, $removeForm->count(), 'an unresolved id must still carry a working Remove control');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'instilled.remove', 'id' => 'no_such_instilled_id']);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextNotContains('h3#build-instilled + p + ul', 'no_such_instilled_id');
     }
 
     public function testTheEditorStillOffersTheWholeFileReplacement(): void
@@ -351,22 +393,109 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testSettingTheTreeWideIntervalTouchesEveryPassive(): void
     {
+        // The fixture build starts staggered ([1,100], [34,60], [0,100]), so
+        // "some input named from has value 12" would also be true if the
+        // action had only touched strength89 and left the rest staggered —
+        // that passive's own per-passive field would still read 12. Only the
+        // whole-tree form renders at all once every passive actually shares
+        // the new range, so its presence is what proves every passive moved.
         $edit = $this->createBuild();
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.interval_all', 'from' => '12', 'to' => '90']);
         $this->client->followRedirect();
 
-        self::assertSelectorExists('#build-nodes input[name="from"][value="12"]');
+        self::assertSelectorExists('#build-nodes form[data-interval="all"] input[name="from"][value="12"]');
+    }
+
+    public function testTheIntervalsQueryParameterOverridesTheDerivedPassiveMode(): void
+    {
+        // A fresh, uniform build derives to the flat, whole-tree mode.
+        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
+        $this->client->followRedirect();
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee22_']);
+        $this->client->followRedirect();
+
+        $this->client->request('GET', $edit);
+        self::assertSelectorExists('#build-nodes form[data-interval="all"]');
+
+        // The derived mode is never stored, so overriding it is a one-way
+        // door only in the sense that no toggle existed at all before — the
+        // query parameter must be able to force per-passive editing on data
+        // that is still, in fact, uniform.
+        $this->client->request('GET', $edit.'?intervals=per-passive');
+        self::assertSelectorExists('#build-nodes form[data-interval="one"]');
+        self::assertSelectorNotExists('#build-nodes form[data-interval="all"]');
+    }
+
+    public function testTheIntervalsOverrideSurvivesAPlainFormPostAndRedirect(): void
+    {
+        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
+        $this->client->followRedirect();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee22_', 'intervals' => 'per-passive']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#build-nodes form[data-interval="one"]');
+    }
+
+    public function testTheSupportsQueryParameterOverridesTheDerivedSupportMode(): void
+    {
+        // The fixture's first skill has two supports at different ranges from
+        // each other and from their skill, so the derived mode lets each be
+        // edited on its own — "Follows the skill's range" does not appear.
+        $edit = $this->createBuild();
+
+        $this->client->request('GET', $edit);
+        self::assertSelectorTextNotContains('#build-skills', "Follows the skill's range");
+
+        $this->client->request('GET', $edit.'?supports=flat');
+        self::assertSelectorTextContains('#build-skills', "Follows the skill's range");
     }
 
     public function testInstilledNodesListSeparatelyFromTheTree(): void
     {
-        $edit = $this->createBuild();
+        $this->seedInstillablePassive('test_instill_apart', 'Test Apart Ward', ['TestLiquidCalm']);
 
-        $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'strength89']);
-        $this->client->followRedirect();
+        try {
+            $edit = $this->createBuild();
 
-        self::assertSelectorExists('#build-instilled');
+            $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'test_instill_apart']);
+            $this->client->followRedirect();
+
+            self::assertSelectorTextContains('h3#build-instilled + p + ul', 'Test Apart Ward');
+        } finally {
+            $this->forgetInstillablePassive('test_instill_apart');
+        }
+    }
+
+    public function testTheHistoryPanelDescribesTheNewestEditActionsRatherThanPrintingTheirKey(): void
+    {
+        $this->seedInstillablePassive('test_instill_history', 'Test History Ward', ['TestLiquidCalm']);
+
+        try {
+            $edit = $this->createBuild();
+
+            $this->client->request('POST', $edit.'/act', ['action' => 'passive.interval_all', 'from' => '12', 'to' => '90']);
+            $this->client->followRedirect();
+            $this->client->request('POST', $edit.'/act', ['action' => 'skill.interval_cascade', 'index' => '0', 'from' => '12', 'to' => '90']);
+            $this->client->followRedirect();
+            $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'test_instill_history']);
+            $this->client->followRedirect();
+            $this->client->request('POST', $edit.'/act', ['action' => 'instilled.remove', 'id' => 'test_instill_history']);
+            $this->client->followRedirect();
+
+            self::assertSelectorTextContains('#build-history', 'Set one range for the whole tree');
+            self::assertSelectorTextContains('#build-history', 'Changed when a skill and its supports are used');
+            self::assertSelectorTextContains('#build-history', 'Declared an Instilled Modifier');
+            self::assertSelectorTextContains('#build-history', 'Removed an Instilled Modifier');
+            foreach (['passive.interval_all', 'skill.interval_cascade', 'instilled.add', 'instilled.remove'] as $rawAction) {
+                self::assertSelectorTextNotContains('#build-history', $rawAction);
+            }
+        } finally {
+            $this->forgetInstillablePassive('test_instill_history');
+        }
     }
 
     public function testASnapshotCanBeNamedAndIsMarkedAsKept(): void

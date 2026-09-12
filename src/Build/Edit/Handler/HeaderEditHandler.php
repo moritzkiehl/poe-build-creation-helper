@@ -42,7 +42,7 @@ final class HeaderEditHandler
                 'archetype_key' => $build->setArchetypeKey($optional),
                 'note' => $build->setNote($optional),
                 'target_level' => $build->setTargetLevel($this->level($value)),
-                'game_version' => $build->setGameVersion('' === $value ? throw InvalidEditCommand::noSuchEntry('game version') : $value),
+                'game_version' => $build->setGameVersion('' === $value ? throw InvalidEditCommand::mustBeSet('The game version', 'rules and catalog data are version-bound') : $value),
                 default => throw InvalidEditCommand::noSuchEntry('header field "'.$command->field.'"'),
             };
         });

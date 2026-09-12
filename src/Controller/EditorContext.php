@@ -59,6 +59,8 @@ final class EditorContext
             }
         }
 
+        $searches = $this->searches->all();
+
         return array_merge([
             'build' => $build,
             'token' => $token,
@@ -69,10 +71,32 @@ final class EditorContext
             'error' => $error,
             'treeSummary' => StatSummary::of($statsById),
             'allocatedByFamily' => $allocatedByFamily,
-            'instilledNodes' => array_values(array_filter(array_map(static fn (string $id): ?array => $detail[$id] ?? null, $instilledIds))),
-            'passivesUniform' => IntervalMode::passivesAreUniform($document),
+            // An id the catalog no longer resolves — the build outlived a
+            // catalog re-sync — stays visible under its bare id rather than
+            // silently vanishing, and keeps a working Remove control: a
+            // player must be able to get rid of an entry they cannot read.
+            'instilledNodes' => array_map(
+                static fn (string $id): array => $detail[$id] ?? ['id' => $id, 'name' => $id, 'kind' => null, 'stats' => [], 'recipe' => []],
+                $instilledIds,
+            ),
+            // Which mode a build opens in is derived from its document and
+            // never stored — a stored mode could disagree with the document
+            // it claims to describe. The `intervals`/`supports` query
+            // parameters let a player override that derived mode for the
+            // current view only; they are never written back, so toggling
+            // never recreates the disagreement the derivation exists to
+            // prevent.
+            'passivesUniform' => match ($searches['intervalsOverride']) {
+                'per-passive' => false,
+                'flat' => true,
+                default => IntervalMode::passivesAreUniform($document),
+            },
             'passiveSpan' => IntervalMode::passiveSpan($document),
-            'supportsFollow' => IntervalMode::supportsFollowTheirSkills($document),
-        ], $this->searches->all());
+            'supportsFollow' => match ($searches['supportsOverride']) {
+                'per-passive' => false,
+                'flat' => true,
+                default => IntervalMode::supportsFollowTheirSkills($document),
+            },
+        ], $searches);
     }
 }

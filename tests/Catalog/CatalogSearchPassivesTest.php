@@ -35,6 +35,17 @@ final class CatalogSearchPassivesTest extends KernelTestCase
         self::assertSame([], $this->search->passives(''));
     }
 
+    public function testPassivesFormatsStatsLikeItsNeighboursRatherThanPrintingRawMarkup(): void
+    {
+        $this->seedPassives([
+            ['id' => 'criticals1', 'name' => 'Critical Damage', 'kind' => 'small', 'stats' => ['15% increased [CriticalDamageBonus|Critical Damage Bonus]']],
+        ]);
+
+        $found = array_column($this->search->passives('Critical'), null, 'id');
+
+        self::assertSame(['15% increased Critical Damage Bonus'], $found['criticals1']['stats']);
+    }
+
     public function testOnlyNodesWithARecipeAreInstillable(): void
     {
         $this->seedPassives([

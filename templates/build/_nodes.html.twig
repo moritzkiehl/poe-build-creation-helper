@@ -13,7 +13,7 @@
             {% for node in passiveResults %}
                 <li>
                     <strong>{{ node.name }}</strong> <code>{{ node.id }}</code>
-                    {% if node.stats %}<span>{{ node.stats }}</span>{% endif %}
+                    {% if node.stats %}<span>{{ node.stats|join(', ') }}</span>{% endif %}
                     {% if node.id in allocatedIds %}
                         <span>allocated</span>
                     {% else %}
@@ -32,6 +32,7 @@
     {% endif %}
 
     <h3>Levels</h3>
+    {% set levelsViewState = {slug: build.shareSlug, token: token, q: passiveQuery, gem: gemQuery, support: supportQuery, unique: uniqueQuery, instilled: instilledQuery, supports: supportsOverride} %}
     {% if passivesUniform %}
         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-interval="all">
             <input type="hidden" name="action" value="passive.interval_all">
@@ -42,9 +43,17 @@
             <input type="number" id="tree-to" name="to" min="0" max="100" value="{{ passiveSpan[1] }}">
             <button type="submit">Set</button>
         </form>
-        <p>Every passive shares one range. Give one of them its own below to plan them separately.</p>
+        <p>
+            Every passive shares one range.
+            <a href="{{ path('app_build_edit', levelsViewState|merge({intervals: 'per-passive'})) }}">Set each passive's range on its own</a>
+            to plan them separately.
+        </p>
     {% else %}
-        <p>These passives have different ranges, so each is set on its own. Give them all the same range to go back to one control.</p>
+        <p>
+            These passives have different ranges, so each is set on its own below.
+            <a href="{{ path('app_build_edit', levelsViewState|merge({intervals: 'flat'})) }}">Use one range for the whole tree</a>
+            to go back to a single control.
+        </p>
     {% endif %}
 
     <h3>What the tree gives ({{ document.passives|length }} passives)</h3>
