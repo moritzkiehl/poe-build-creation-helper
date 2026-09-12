@@ -183,26 +183,46 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testAUniqueCanBeFoundBySearch(): void
     {
-        $this->client->request('GET', $this->createBuild().'?unique=Astra');
+        $this->seedUnique('test_unique_moonshard', 'Test Moonshard Halo');
 
-        self::assertSelectorExists('#build-slots input[name="unique"]');
+        try {
+            $this->client->request('GET', $this->createBuild().'?unique=Moonshard');
+
+            self::assertSelectorTextContains('#build-slots', 'Test Moonshard Halo');
+            self::assertSelectorExists('#build-slots select[name="inventory_id"]');
+        } finally {
+            $this->forgetUnique('test_unique_moonshard');
+        }
     }
 
     public function testTheInstilledFieldSitsWithTheAmulet(): void
     {
-        $this->client->request('GET', $this->createBuild());
+        $this->seedInstillablePassive('test_instill_ember', 'Test Ember Ward', ['TestLiquidAwe', 'TestLiquidGrief', 'TestLiquidJoy']);
 
-        self::assertSelectorExists('#build-slots input[name="instilled"]');
+        try {
+            $this->client->request('GET', $this->createBuild().'?instilled=Ember');
+
+            self::assertSelectorTextContains('#build-slots', 'Test Ember Ward');
+            self::assertSelectorTextContains('#build-slots', 'Test Liquid Awe');
+        } finally {
+            $this->forgetInstillablePassive('test_instill_ember');
+        }
     }
 
     public function testAnInstillableNodeCanBeDeclaredFromTheAmulet(): void
     {
-        $edit = $this->createBuild();
+        $this->seedInstillablePassive('test_instill_frost', 'Test Frost Ward', ['TestLiquidCalm']);
 
-        $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'ignite_mitigation13']);
-        $this->client->followRedirect();
+        try {
+            $edit = $this->createBuild();
 
-        self::assertSelectorTextContains('#build-instilled', 'Instilled');
+            $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'test_instill_frost']);
+            $this->client->followRedirect();
+
+            self::assertSelectorExists('h3#build-instilled + p + ul li:contains("Test Frost Ward")');
+        } finally {
+            $this->forgetInstillablePassive('test_instill_frost');
+        }
     }
 
     public function testTheEditorStillOffersTheWholeFileReplacement(): void
@@ -363,6 +383,51 @@ final class BuildEditorControllerTest extends WebTestCase
         $this->client->request('POST', '/builds', ['json' => $json]);
 
         return (string) $this->client->getResponse()->headers->get('Location');
+    }
+
+    /**
+     * The catalog tables are empty in this test database, like the gem one
+     * `testASupportCanBeFoundBySearchRatherThanTyped` seeds above — a made-up
+     * unique, since real game data must not enter this repository. `id` is
+     * deleted first so a rerun after an aborted test stays idempotent, and
+     * the caller deletes it again in a `finally` once done.
+     */
+    private function seedUnique(string $id, string $name): void
+    {
+        $connection = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+        $connection->executeStatement('DELETE FROM catalog_unique WHERE id = ?', [$id]);
+        $connection->executeStatement(
+            'INSERT INTO catalog_unique (id, name, item_class, inventory_width, inventory_height) VALUES (?, ?, ?, 1, 1)',
+            [$id, $name, 'Amulet'],
+        );
+    }
+
+    private function forgetUnique(string $id): void
+    {
+        self::getContainer()->get(EntityManagerInterface::class)->getConnection()
+            ->executeStatement('DELETE FROM catalog_unique WHERE id = ?', [$id]);
+    }
+
+    /**
+     * A made-up instillable passive — recipe entries are camelCase words so
+     * `StatText::emotion()` splits them into readable emotion names.
+     *
+     * @param list<string> $recipe
+     */
+    private function seedInstillablePassive(string $id, string $name, array $recipe): void
+    {
+        $connection = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+        $connection->executeStatement('DELETE FROM catalog_passive WHERE id = ?', [$id]);
+        $connection->executeStatement(
+            'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, NULL, 0, 0, ?, ?)',
+            [$id, $name, 'notable', json_encode(['Test stat line']), json_encode($recipe)],
+        );
+    }
+
+    private function forgetInstillablePassive(string $id): void
+    {
+        self::getContainer()->get(EntityManagerInterface::class)->getConnection()
+            ->executeStatement('DELETE FROM catalog_passive WHERE id = ?', [$id]);
     }
 
     private function slugOf(string $editUrl): string
