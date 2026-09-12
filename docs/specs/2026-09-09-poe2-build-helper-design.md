@@ -1136,7 +1136,12 @@ only the first slice is built next:
 - **Slice B (later).** The tree edited from the canvas only, with search becoming
   find-and-highlight, and the four allocation-legality rules. That is where
   `keystones_in_radius` and `unlock_constraint` are added and the tuple reaches
-  ten.
+  ten. Scope added 2026-09-12, after the format was re-checked against the
+  documentation and the corpus: deallocation cascades as one event, the declared
+  jewel keystone gets its app-only pseudo-slot, weapon-set passives get their own
+  allocation mode, colours and summary split, and equipment slots stop being
+  keyed by `inventory_id` alone — which is losing charm and flask entries today.
+  See the dated subsections at the end of this section.
 
 The split follows the shape of the risk. Slice A changes what the editor shows;
 slice B changes how it behaves under the cursor, and that is worth judging after
@@ -1268,7 +1273,9 @@ handler — the canvas greys illegal nodes for immediate feedback, but the
 endpoint is what enforces. Four rules, all derivable from data already synced:
 
 1. **Connectivity.** A node must be adjacent to the allocated set, rooted at the
-   class's start node.
+   class's start node — and **per weapon set**: a set 1 node reaches the start
+   through shared or set 1 nodes only, likewise set 2. See "Weapon sets are
+   allocated, coloured and summed separately".
 2. **Unlock constraints.** 200 nodes carry an explicit `unlockConstraint`. 197 of
    them are the `oracle_*` nodes gated behind `AscendancyDruid1Notable2` — *The
    Unseen Path*, "Walk the Paths Not Taken" — and require both the Druid1
@@ -1307,9 +1314,10 @@ it. The jewel is therefore declared by the player, and the interface says plainl
 that socket-radius jewels are not modelled rather than pretending otherwise.
 
 The `.build` format has no jewels at all — its fourteen inventory ids are
-weapons, armour, jewellery and a flask — so none of this can be stored in the
-exported document. The declared keystone is an app-only column, like
-`class_key`.
+weapons, armour, jewellery, flasks and the charm belt — so none of this can be
+stored in the exported document. The declared keystone is an app-only column,
+like `class_key`. Confirmed against the documentation 2026-09-12; see "The
+declared jewel keystone is app-only, and the format says so".
 
 ### Instilled nodes are declared, not inferred
 
@@ -1373,6 +1381,137 @@ terms, and again for the two interval-mode overrides. Both were found by testing
 not by reading. Slice B adds more view state, so it collapses the two lists into
 one declaration that both the template and the controller read.
 
+### Deallocation cascades, as one event
+
+Allocation is refused when illegal; removal is not refused. Deallocating a node
+that others reach the start *through* removes it **and everything that loses its
+connection**, recorded as a single history event that names the count.
+
+The asymmetry is deliberate. Refusing the removal would be the tidier rule, but
+it makes the only way to abandon a path clicking back along it leaf by leaf,
+which is the common case in planning rather than the rare one. Leaving the
+orphans allocated and reporting them is the other alternative, and it is worse
+for a reason of sequencing: `passive.disconnected` is an iteration 4 finding, so
+until the rules engine ships nothing would tell the player anything happened.
+Cascading is safe here specifically because the editor already has a persisted
+history with revert-as-new-event — the undo exists before the destructive
+operation does, which is the order that makes a cascade acceptable.
+
+The cascade is computed **per weapon set**, for the reason given under "Weapon
+sets are allocated, coloured and summed separately": removing a shared node can
+orphan nodes in all three groups, while removing a set 1 node can orphan only
+set 1 nodes.
+
+**Nodes held by an exception are never swept.** An instilled node, a
+jewel-enabled node, an Oracle node — none of them is connected in the first
+place, so "lost its connection" does not describe them. The cascade walks the
+connected component rooted at the class start and removes only what falls out of
+it; every node whose legality came from one of the four rules' exceptions is
+evaluated against that rule instead, and stays unless its own enabling condition
+is what was removed.
+
+### The declared jewel keystone is app-only, and the format says so
+
+Settled by the documentation rather than by inference: the build planner format
+describes `inventory_id` as an *Inventory table identifier* and never enumerates
+the permitted values, and **jewels and jewel sockets are not documented as
+representable at all**. None of the four real exported files carries one. The
+declared keystone therefore cannot round-trip, and is stored in an app-only
+column beside `class_key` and `instilled_passives`, omitted from the exported
+file.
+
+**Its control is a pseudo-slot in the equipment area**, labelled in the interface
+as not exported. That placement is the player's decision, made 2026-09-12, and it
+disagrees with the reasoning that put the Instilled Modifier at `Amulet1` —
+`Amulet1` is where a Distilled Emotion is mechanically applied, whereas a jewel
+pseudo-slot corresponds to nothing the format holds. The label is what keeps that
+honest: a control that looks like the fourteen real slots but never reaches the
+file has to say so where it is read, not in a document.
+
+### The belt is a grid, and one entry per `inventory_id` loses data
+
+Measured against the four real files, 2026-09-12: `Flask1` appears at `slot_x` 0
+and 1 (a life and a mana flask), and `Trinket1` at `slot_x` 2, 3 and 4 — Sapphire,
+Thawing, Golden, Stone and Silver Charms. `Trinket1` is the **charm belt**, and
+both ids share one grid strip rather than naming one slot each. `slot_y` is 0
+everywhere in the corpus, so its meaning stays unmeasured; the documentation
+leaves `slot_x`/`slot_y` undefined.
+
+`DocumentEditor::indexOfSlot()` keys on `inventory_id` alone, so it matches the
+first entry and no other. In all four builds the editor therefore shows one flask
+of two and one charm of three, and `clearInventorySlot` would remove only the
+first. Export stays byte-exact because export does not pass through the editor,
+which is why the round-trip proof never caught it and why no test does today.
+
+The fix, folded into slice B because the slice already opens the equipment area:
+**slots are identified by `(inventory_id, slot_x, slot_y)`**, and an id that can
+hold several entries renders as the container it is. `config/inventory_slots.yaml`
+stays curated and hand-maintained — no upstream source carries this vocabulary —
+but gains, per id, how many positions it may hold. The labels `Trinket` and
+`Flask` are corrected to name what the corpus shows them to be.
+
+### Weapon sets are allocated, coloured and summed separately
+
+`weapon_set` is documented on a passive as an optional index 0-2, and the corpus
+shows it in real use. Measured across the four files, 2026-09-12: three of them
+carry **exactly 24 nodes at `weapon_set: 1` and 24 at `weapon_set: 2`**, against
+about 101 with the key absent; the fourth (Campaign, level 1-51) has none. The
+value `0` never appears — only absence, `1` and `2` — so absence is what "shared"
+looks like on the wire, and the app writes absence rather than `0` for it.
+
+Two further measurements decide the data model. **No id appears twice** in any
+file, and the three groups do not overlap at all: a node carries at most one
+weapon set, so passives stay keyed by id and this is not a second instance of the
+equipment-slot defect above. And the two sets occupy **entirely different
+sub-trees** — set 1 is an `ailments*` branch, set 2 a `cooldowns*`/`duration*`
+branch — rather than the same path allocated twice.
+
+**The canvas colours all three groups differently** and carries an explicit
+three-way mode above it — Shared / Set 1 / Set 2 — saying what a click allocates
+into, defaulting to Shared. The colour legend is that control. A mode is needed
+because nothing in the tree data marks a node as belonging to a weapon set: the
+grouping is the player's decision, not a property of the node.
+
+**Connectivity is per set** (owner-confirmed, 0.5.5): a set 1 node must reach the
+class start through shared or set 1 nodes only, and likewise for set 2. The two
+branches hang independently off the shared trunk, which is what the corpus shows.
+Rule 1 therefore runs three roots over one graph rather than one root over
+everything, and the cascade in "Deallocation cascades" inherits that: removing a
+shared node can orphan nodes in all three groups, while removing a set 1 node can
+orphan only set 1 nodes.
+
+**The stats overview follows the same split**, since a summary that silently
+mixed the three would misstate every build that uses weapon sets. It gains a
+three-way view control: Shared, With set 1, With set 2. The two set views sum
+**shared plus that set**, because that is the question a player is asking — what
+this build gives while that weapon set is equipped — and not what the set's own
+nodes contribute in isolation. The control is view state carried by the same
+query-parameter mechanism as the interval modes and the five searches, never
+persisted.
+
+**One question this opens and does not answer.** `passive.budget_exceeded`
+(iteration 4) counts allocated points against what the target level affords. If
+weapon-set passives draw on a separate pool rather than the same one — the 24/24
+symmetry in the corpus hints that they might — then counting all three groups
+together would misreport every build that uses them. Slice B does not implement
+that rule, so it does not need the answer; iteration 4 does, and must not assume
+one pool without checking. Listed under "Open points".
+
+### Deferred: a design round on how the editor is organised
+
+Raised 2026-09-12 and explicitly postponed. The editor is one long scroll —
+Build, then the tree beside Passives, then Skills, Equipment, History, Findings —
+with five of eight sections spanning both grid columns, every region expanded at
+all times, and the five searches spread across three regions. `#build-history`
+is not `.full` and renders in the wide column with an empty gap beside it, which
+is a plain layout defect rather than a design question.
+
+The one input the round already has: asked what a working session looks like, the
+owner answered **rounds across all areas** — tree, then skills, then gear, then
+back, with no single region dominating. That rules out a tree-first full-screen
+layout and argues for making every region quickly reachable. Visual polish is
+separately deferred by the owner and is not what this round is about.
+
 ## Open points
 
 ### Proofs, to be stamped per game version
@@ -1392,6 +1531,12 @@ patch.
    limit; this proof would only be needed if it ever should.
 7. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
+8. Whether weapon-set passives draw on their own point pool or the shared one.
+   Binds `passive.budget_exceeded`: counting all three groups against one budget
+   misreports every build using weapon sets if the pools are separate. The corpus
+   is suggestive but not decisive — 24 nodes on each set across three files, a
+   symmetry that a shared pool would not require. Slice B does not need this;
+   iteration 4 must not assume an answer
 
 Settled 2026-09-12 (owner, 0.5.5): the two tree-legality exceptions both need
 their enabling node *allocated*. *The Unseen Path* must be allocated before any
@@ -1399,6 +1544,11 @@ their enabling node *allocated*. *The Unseen Path* must be allocated before any
 individual keystone taken before that keystone's neighbourhood opens up. The
 catalog states which nodes are affected but nothing about what switches them on,
 so this is curated.
+Settled 2026-09-12 (owner, 0.5.5): connectivity is evaluated per weapon set — a
+set 1 node reaches the class start through shared or set 1 nodes only, and
+likewise set 2. The corpus agrees (the two sets occupy disjoint sub-trees) but
+cannot prove it, since a build file records what was allocated and never what
+would have been refused. Curated.
 Settled 2026-09-12 (owner, 0.5.5): an Instilled Modifier costs no passive point.
 Curated, not derivable — the catalog carries the Distilled Emotion recipes but
 nothing about their cost. Binds `passive.budget_exceeded` and the stats
