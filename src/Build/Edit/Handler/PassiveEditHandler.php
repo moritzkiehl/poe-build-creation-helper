@@ -7,6 +7,7 @@ namespace App\Build\Edit\Handler;
 use App\Build\Edit\BuildEditor;
 use App\Build\Edit\Command\AllocatePassive;
 use App\Build\Edit\Command\DeallocatePassive;
+use App\Build\Edit\Command\SetAllPassiveIntervals;
 use App\Build\Edit\Command\SetPassiveInterval;
 use App\Build\Edit\DocumentEditor;
 use App\Entity\Build;
@@ -44,6 +45,16 @@ final class PassiveEditHandler
 
         $this->builds->apply($command->buildId, 'passive.interval', $payload, function (Build $build) use ($command): void {
             $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->setPassiveLevelInterval($d, $command->id, $command->from, $command->to));
+        });
+    }
+
+    #[AsMessageHandler]
+    public function setAllIntervals(SetAllPassiveIntervals $command): void
+    {
+        $payload = ['from' => $command->from, 'to' => $command->to];
+
+        $this->builds->apply($command->buildId, 'passive.interval_all', $payload, function (Build $build) use ($command): void {
+            $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->setAllPassiveLevelIntervals($d, $command->from, $command->to));
         });
     }
 }

@@ -10,6 +10,7 @@ use App\Build\Edit\Command\AddSupport;
 use App\Build\Edit\Command\RemoveSkill;
 use App\Build\Edit\Command\RemoveSupport;
 use App\Build\Edit\Command\SetSkillInterval;
+use App\Build\Edit\Command\SetSkillIntervalCascading;
 use App\Build\Edit\Command\SetSupportInterval;
 use App\Build\Edit\DocumentEditor;
 use App\Entity\Build;
@@ -47,6 +48,16 @@ final class SkillEditHandler
 
         $this->builds->apply($command->buildId, 'skill.interval', $payload, function (Build $build) use ($command): void {
             $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->setSkillLevelInterval($d, $command->index, $command->from, $command->to));
+        });
+    }
+
+    #[AsMessageHandler]
+    public function setIntervalCascading(SetSkillIntervalCascading $command): void
+    {
+        $payload = ['index' => $command->index, 'from' => $command->from, 'to' => $command->to];
+
+        $this->builds->apply($command->buildId, 'skill.interval_cascade', $payload, function (Build $build) use ($command): void {
+            $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->setSkillLevelIntervalCascading($d, $command->index, $command->from, $command->to));
         });
     }
 

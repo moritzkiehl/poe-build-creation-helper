@@ -142,6 +142,43 @@ final class DocumentEditor
         return $this->withSkills($document, $skills);
     }
 
+    public function setAllPassiveLevelIntervals(BuildDocument $document, int $from, int $to): BuildDocument
+    {
+        $interval = $this->levelInterval($from, $to);
+        $passives = $document->passives;
+
+        foreach ($passives as $index => $passive) {
+            $passives[$index]['level_interval'] = $interval;
+        }
+
+        return $this->withPassives($document, $passives);
+    }
+
+    /**
+     * Sets a skill's interval and carries its supports with it. A skill setup
+     * comes online together, which is what the flattened mode means; different
+     * skills stay independent of one another.
+     */
+    public function setSkillLevelIntervalCascading(BuildDocument $document, int $index, int $from, int $to): BuildDocument
+    {
+        $skills = $document->skills;
+        $this->mustHaveSkill($skills, $index);
+        $interval = $this->levelInterval($from, $to);
+
+        $skills[$index]['level_interval'] = $interval;
+        $supports = $this->supportsOf($skills[$index]);
+
+        if ([] !== $supports) {
+            foreach ($supports as $position => $support) {
+                $supports[$position]['level_interval'] = $interval;
+            }
+
+            $skills[$index]['support_skills'] = $supports;
+        }
+
+        return $this->withSkills($document, $skills);
+    }
+
     public function setInventorySlot(BuildDocument $document, string $inventoryId, ?string $uniqueName, int $from, int $to, string $additionalText): BuildDocument
     {
         if (!$this->slots->isKnown($inventoryId)) {

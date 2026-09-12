@@ -15,9 +15,11 @@ use App\Build\Edit\Command\RemoveInstilled;
 use App\Build\Edit\Command\RemoveSkill;
 use App\Build\Edit\Command\RemoveSupport;
 use App\Build\Edit\Command\Revert;
+use App\Build\Edit\Command\SetAllPassiveIntervals;
 use App\Build\Edit\Command\SetHeaderField;
 use App\Build\Edit\Command\SetPassiveInterval;
 use App\Build\Edit\Command\SetSkillInterval;
+use App\Build\Edit\Command\SetSkillIntervalCascading;
 use App\Build\Edit\Command\SetSlot;
 use App\Build\Edit\Command\SetSupportInterval;
 use Symfony\Component\HttpFoundation\InputBag;
@@ -41,9 +43,11 @@ final class CommandFactory
             'passive.allocate' => new AllocatePassive($buildId, $this->string($payload, 'id')),
             'passive.deallocate' => new DeallocatePassive($buildId, $this->string($payload, 'id')),
             'passive.interval' => new SetPassiveInterval($buildId, $this->string($payload, 'id'), $this->int($payload, 'from'), $this->int($payload, 'to')),
+            'passive.interval_all' => new SetAllPassiveIntervals($buildId, $this->int($payload, 'from'), $this->int($payload, 'to')),
             'skill.add' => new AddSkill($buildId, $this->string($payload, 'gem_id')),
             'skill.remove' => new RemoveSkill($buildId, $this->int($payload, 'index')),
             'skill.interval' => new SetSkillInterval($buildId, $this->int($payload, 'index'), $this->int($payload, 'from'), $this->int($payload, 'to')),
+            'skill.interval_cascade' => new SetSkillIntervalCascading($buildId, $this->int($payload, 'index'), $this->int($payload, 'from'), $this->int($payload, 'to')),
             'support.add' => new AddSupport($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id')),
             'support.remove' => new RemoveSupport($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id')),
             'support.interval' => new SetSupportInterval($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id'), $this->int($payload, 'from'), $this->int($payload, 'to')),
