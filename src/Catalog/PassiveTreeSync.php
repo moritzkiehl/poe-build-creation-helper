@@ -25,6 +25,14 @@ final class PassiveTreeSync
 {
     private const int BATCH = 500;
 
+    /**
+     * Bumped whenever the shape of a written row changes. The revision check
+     * below skips a re-import when upstream has not moved, which would
+     * otherwise leave a newly added column empty forever on an instance that
+     * had already synced.
+     */
+    public const string SHAPE_REVISION = 'tree-2026-09-12-legality';
+
     public function __construct(
         private readonly SourceFetcher $fetcher,
         private readonly PassiveTreeNormalizer $normalizer,
@@ -46,8 +54,10 @@ final class PassiveTreeSync
         }
 
         // Upstream says nothing moved. Rebuilding five thousand rows to arrive
-        // at the same five thousand rows helps nobody.
-        if (!$fetch->changed && $this->alreadyPopulated()) {
+        // at the same five thousand rows helps nobody — unless the shape of a
+        // stored row has changed since the last import, in which case skipping
+        // would leave a newly added column empty forever.
+        if (!$fetch->changed && $this->alreadyPopulated() && $this->shapeIsCurrent()) {
             return $this->record(new SyncResult(true, 'unchanged', $this->storedCount()), $fetch->revision);
         }
 
@@ -73,10 +83,18 @@ final class PassiveTreeSync
                 $values = [];
                 $params = [];
                 foreach ($chunk as $node) {
-                    $values[] = '(?, ?, ?, ?, ?, ?, ?, ?)';
-                    array_push($params, $node['id'], $node['name'], $node['kind'], $node['ascendancy_key'], $node['pos_x'], $node['pos_y'], json_encode($node['stats'], \JSON_THROW_ON_ERROR), json_encode($node['recipe'], \JSON_THROW_ON_ERROR));
+                    $values[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                    array_push(
+                        $params,
+                        $node['id'], $node['name'], $node['kind'], $node['ascendancy_key'],
+                        $node['pos_x'], $node['pos_y'],
+                        json_encode($node['stats'], \JSON_THROW_ON_ERROR),
+                        json_encode($node['recipe'], \JSON_THROW_ON_ERROR),
+                        json_encode($node['keystones_in_radius'], \JSON_THROW_ON_ERROR),
+                        null === $node['unlock_constraint'] ? null : json_encode($node['unlock_constraint'], \JSON_THROW_ON_ERROR),
+                    );
                 }
-                $db->executeStatement('INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES '.implode(',', $values), $params);
+                $db->executeStatement('INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint) VALUES '.implode(',', $values), $params);
             }
 
             foreach (array_chunk($tree->edges, self::BATCH) as $chunk) {
@@ -112,6 +130,15 @@ final class PassiveTreeSync
         return $this->storedCount() > 0;
     }
 
+    private function shapeIsCurrent(): bool
+    {
+        $value = $this->db->fetchOne(
+            "SELECT shape_revision FROM catalog_sync WHERE source = 'passive_tree' AND status = 'ok' ORDER BY id DESC LIMIT 1"
+        );
+
+        return $value === self::SHAPE_REVISION;
+    }
+
     private function storedCount(): int
     {
         $count = $this->db->fetchOne('SELECT COUNT(*) FROM catalog_passive');
@@ -128,6 +155,7 @@ final class PassiveTreeSync
             upstreamRevision: $upstreamRevision,
             error: $result->error,
             gameVersion: $this->gameVersion,
+            shapeRevision: self::SHAPE_REVISION,
         ));
         $this->entityManager->flush();
 

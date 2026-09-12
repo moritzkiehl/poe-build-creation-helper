@@ -98,6 +98,24 @@ final class PassiveTreeSyncTest extends KernelTestCase
         self::assertSame(2, $this->rowCount('SELECT COUNT(*) FROM catalog_class'));
     }
 
+    public function testItReimportsWhenTheRowShapeChangedEvenThoughUpstreamDidNot(): void
+    {
+        $this->db->executeStatement('DELETE FROM catalog_passive');
+        $this->db->executeStatement('DELETE FROM catalog_sync');
+        $this->db->executeStatement(
+            "INSERT INTO catalog_passive (id, name, kind, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint) VALUES ('stale', 'Stale', 'small', 0, 0, '[]', '[]', '[]', NULL)"
+        );
+        // A previous run at an older shape, with upstream sitting at the same revision.
+        $this->db->executeStatement(
+            "INSERT INTO catalog_sync (source, ran_at, upstream_revision, shape_revision, status, count) VALUES ('passive_tree', NOW(), 'rev-1', 'shape-0', 'ok', 1)"
+        );
+
+        $result = $this->syncWithUnchangedUpstream('rev-1');
+
+        self::assertSame('ok', $result->status, 'a changed row shape must force the re-import the revision check would skip');
+        self::assertSame(0, $this->rowCount("SELECT COUNT(*) FROM catalog_passive WHERE id = 'stale'"));
+    }
+
     private function rowCount(string $sql): int
     {
         $value = $this->db->fetchOne($sql);
@@ -116,10 +134,35 @@ final class PassiveTreeSyncTest extends KernelTestCase
 
     private function fixture(): MockResponse
     {
+        return new MockResponse($this->treeJson(), ['response_headers' => ['ETag' => '"synthetic-etag"']]);
+    }
+
+    private function treeJson(): string
+    {
         $json = file_get_contents(__DIR__.'/../fixtures/catalog/tree-shape.json');
         self::assertIsString($json);
 
-        return new MockResponse($json, ['response_headers' => ['ETag' => '"synthetic-etag"']]);
+        return $json;
+    }
+
+    /**
+     * There is no fetcher interface to substitute a test double against —
+     * `SourceFetcher` is final and every consumer depends on the concrete
+     * class — so "stubbing" it means driving the real one with a
+     * `MockHttpClient` the way every other test in this class does. A 304
+     * response makes it report `changed: false` while still returning the
+     * body cached from an earlier fetch, which is what upstream not having
+     * moved actually looks like from `PassiveTreeSync`'s point of view.
+     */
+    private function syncWithUnchangedUpstream(string $revision): \App\Catalog\SyncResult
+    {
+        $dir = sys_get_temp_dir().'/catalog-test';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0o775, true);
+        }
+        file_put_contents($dir.'/passive_tree.json', $this->treeJson());
+
+        return $this->sync(new MockResponse('', ['http_code' => 304, 'response_headers' => ['ETag' => $revision]]))->run();
     }
 
     private function sync(MockResponse $response): PassiveTreeSync

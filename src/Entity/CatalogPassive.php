@@ -46,6 +46,14 @@ class CatalogPassive
     #[ORM\Column(type: Types::JSON)]
     private array $recipe = [];
 
+    /** @var list<string> */
+    #[ORM\Column(name: 'keystones_in_radius', type: Types::JSON)]
+    private array $keystonesInRadius = [];
+
+    /** @var array{nodes: list<string>, ascendancy: string|null}|null */
+    #[ORM\Column(name: 'unlock_constraint', type: Types::JSON, nullable: true)]
+    private ?array $unlockConstraint = null;
+
     public function getId(): string
     {
         return $this->id;
@@ -86,5 +94,17 @@ class CatalogPassive
     public function getRecipe(): array
     {
         return $this->recipe;
+    }
+
+    /** @return list<string> */
+    public function getKeystonesInRadius(): array
+    {
+        return $this->keystonesInRadius;
+    }
+
+    /** @return array{nodes: list<string>, ascendancy: string|null}|null */
+    public function getUnlockConstraint(): ?array
+    {
+        return $this->unlockConstraint;
     }
 }

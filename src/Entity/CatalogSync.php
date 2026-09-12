@@ -35,6 +35,9 @@ class CatalogSync
     #[ORM\Column(name: 'upstream_revision', length: 255, nullable: true)]
     private ?string $upstreamRevision = null;
 
+    #[ORM\Column(name: 'shape_revision', length: 32, nullable: true)]
+    private ?string $shapeRevision = null;
+
     #[ORM\Column(length: 32, nullable: true)]
     private ?string $gameVersion = null;
 
@@ -48,7 +51,7 @@ class CatalogSync
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $error = null;
 
-    public function __construct(string $source, string $status, int $count = 0, ?string $upstreamRevision = null, ?string $error = null, ?string $gameVersion = null)
+    public function __construct(string $source, string $status, int $count = 0, ?string $upstreamRevision = null, ?string $error = null, ?string $gameVersion = null, ?string $shapeRevision = null)
     {
         $this->source = $source;
         $this->status = $status;
@@ -56,6 +59,7 @@ class CatalogSync
         $this->upstreamRevision = $upstreamRevision;
         $this->error = $error;
         $this->gameVersion = $gameVersion;
+        $this->shapeRevision = $shapeRevision;
         $this->ranAt = new \DateTimeImmutable();
     }
 
@@ -87,6 +91,11 @@ class CatalogSync
     public function getUpstreamRevision(): ?string
     {
         return $this->upstreamRevision;
+    }
+
+    public function getShapeRevision(): ?string
+    {
+        return $this->shapeRevision;
     }
 
     public function getError(): ?string
