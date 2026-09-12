@@ -178,14 +178,13 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertIsArray($two);
 
         // `seedBuildWithTree()` builds from `valid-full.build`, which already
-        // carries its own weapon-set-1 and weapon-set-2 entries
-        // (`melee22_`, `attributes70`) — so set 2 is not asserted empty, only
-        // that this test's own two allocations landed in the groups the
-        // request named.
+        // carries `attributes70` at weapon set 2 — so group 2 is asserted to
+        // be exactly that pre-existing entry, rather than empty, proving both
+        // that this test's own allocations did not land there and that the
+        // pre-existing one did.
         self::assertContains('near', $shared);
         self::assertContains('leaf', $one);
-        self::assertNotContains('near', $two);
-        self::assertNotContains('leaf', $two);
+        self::assertSame(['attributes70'], $two);
         self::assertSame('start', $state['startNodeId']);
     }
 
