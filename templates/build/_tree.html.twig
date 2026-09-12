@@ -4,6 +4,19 @@
          data-tree-act-url-value="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}">
     <h2>Passive tree</h2>
 
+    <fieldset class="weapon-set-mode">
+        <legend>Clicks allocate into</legend>
+        {% for value, label in {'shared': 'Both weapon sets', '1': 'Weapon set 1', '2': 'Weapon set 2'} %}
+            <label>
+                <input type="radio" name="weapon-set-mode" value="{{ value }}"
+                       data-action="change->tree#setWeaponSet"
+                       {{ value == 'shared' ? 'checked' : '' }}>
+                <span class="swatch swatch-{{ value }}" aria-hidden="true"></span>
+                {{ label }}
+            </label>
+        {% endfor %}
+    </fieldset>
+
     {% if build.classKey is null %}
         <p>Choose a class above and the tree will centre on where that class starts.</p>
     {% endif %}

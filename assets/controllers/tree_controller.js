@@ -13,11 +13,13 @@ export default class extends Controller {
 
     async connect() {
         this.camera = createCamera();
-        this.allocated = new Set();
+        this.allocatedBySet = { shared: new Set(), one: new Set(), two: new Set() };
+        this.weaponSet = 'shared';
         this.nodes = new Map();
         this.edges = [];
         this.hovered = null;
         this.startNodeId = null;
+        this.highlighted = new Set();
 
         this.readState();
         await this.loadTree();
@@ -45,8 +47,15 @@ export default class extends Controller {
 
     readState() {
         const state = JSON.parse(this.stateTarget.textContent || '{}');
+        const bySet = state.allocatedBySet ?? { shared: [], 1: [], 2: [] };
 
-        this.allocated = new Set(state.allocated ?? []);
+        this.allocatedBySet = {
+            shared: new Set(bySet.shared ?? []),
+            one: new Set(bySet['1'] ?? []),
+            two: new Set(bySet['2'] ?? []),
+        };
+        this.startNodeId = state.startNodeId ?? null;
+        this.highlighted = new Set(state.highlighted ?? []);
         this.ascendancy = state.ascendancy ?? null;
         this.classKey = state.classKey ?? null;
     }
@@ -55,10 +64,10 @@ export default class extends Controller {
         const response = await fetch(this.treeUrlValue, { headers: { Accept: 'application/json' } });
         const tree = await response.json();
 
-        for (const [id, name, kind, ascendancy, x, y, stats, recipe] of tree.nodes) {
+        for (const [id, name, kind, ascendancyKey, x, y, stats, recipe, keystonesInRadius, unlockConstraint] of tree.nodes) {
             // Another ascendancy's nodes are not reachable by this build and
             // would only be clutter around the part that is.
-            if (ascendancy && ascendancy !== this.ascendancy) {
+            if (ascendancyKey && ascendancyKey !== this.ascendancy) {
                 continue;
             }
 
@@ -88,10 +97,23 @@ export default class extends Controller {
         drawTree(context, {
             nodes: this.nodes,
             edges: this.edges,
-            allocated: this.allocated,
+            allocatedBySet: this.allocatedBySet,
             startNodeId: this.startNodeId,
             hovered: this.hovered,
+            highlighted: this.highlighted,
         }, this.camera);
+    }
+
+    setWeaponSet(event) {
+        this.weaponSet = event.target.value;
+    }
+
+    groupFor(weaponSet) {
+        return weaponSet === '1' ? this.allocatedBySet.one : weaponSet === '2' ? this.allocatedBySet.two : this.allocatedBySet.shared;
+    }
+
+    isAllocated(id) {
+        return this.allocatedBySet.shared.has(id) || this.allocatedBySet.one.has(id) || this.allocatedBySet.two.has(id);
     }
 
     pointerdown(event) {
@@ -216,23 +238,38 @@ export default class extends Controller {
     }
 
     async toggle(id) {
-        const allocating = !this.allocated.has(id);
-        const before = new Set(this.allocated);
+        const allocating = !this.isAllocated(id);
+        const before = {
+            shared: new Set(this.allocatedBySet.shared),
+            one: new Set(this.allocatedBySet.one),
+            two: new Set(this.allocatedBySet.two),
+        };
 
         // Draw the change at once and put it back if the server refuses:
         // waiting a round trip before the node lights up makes the tree feel
         // broken on a slow connection. The rollback below restores this exact
-        // snapshot rather than inverting the toggle, so it is correct even if
-        // something else touched `this.allocated` while the request was in flight.
+        // snapshot (all three groups, not just the one this click touches) so
+        // it is correct even if something else touched `this.allocatedBySet`
+        // while the request was in flight.
         if (allocating) {
-            this.allocated.add(id);
+            this.groupFor(this.weaponSet).add(id);
         } else {
-            this.allocated.delete(id);
+            // The node may belong to a different group than the one
+            // currently selected above the canvas — deallocating removes it
+            // from wherever it actually is, not from `this.weaponSet`'s group.
+            this.allocatedBySet.shared.delete(id);
+            this.allocatedBySet.one.delete(id);
+            this.allocatedBySet.two.delete(id);
         }
 
         this.redraw();
 
         const body = new URLSearchParams({ action: allocating ? 'passive.allocate' : 'passive.deallocate', id });
+        // URLSearchParams already has a `set` method — assigning `body.set = …`
+        // would shadow it with a plain property that fetch's body serialisation
+        // never looks at, silently dropping the field. Calling `.set(...)` is
+        // what actually adds it to the encoded body.
+        body.set('set', this.weaponSet === 'shared' ? '' : this.weaponSet);
 
         let response;
         try {
@@ -244,7 +281,7 @@ export default class extends Controller {
         } catch {
             // Request never reached (or never returned from) the network:
             // there is no response body of any kind to render.
-            this.allocated = before;
+            this.allocatedBySet = before;
             this.redraw();
 
             return;
@@ -260,11 +297,11 @@ export default class extends Controller {
             // Rejected, but the server still renders a full turbo-stream for
             // a 422 — an error message plus a replaced build-state tag — so
             // roll back the optimistic guess first and then render it: the
-            // render is what resyncs `this.allocated` from server truth via
-            // stateTargetConnected(). Do not drop this render "to match the
-            // other failure case" — without it the canvas is left holding
+            // render is what resyncs `this.allocatedBySet` from server truth
+            // via stateTargetConnected(). Do not drop this render "to match
+            // the other failure case" — without it the canvas is left holding
             // the rolled-back guess instead of the server's actual state.
-            this.allocated = before;
+            this.allocatedBySet = before;
             this.redraw();
             Turbo.renderStreamMessage(await response.text());
 
@@ -274,7 +311,7 @@ export default class extends Controller {
         // Anything else (500, etc.): the body is not guaranteed to be a
         // turbo-stream, so roll back and stop rather than hand an arbitrary
         // error page to Turbo.
-        this.allocated = before;
+        this.allocatedBySet = before;
         this.redraw();
     }
 }

@@ -9,6 +9,12 @@ body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 0 auto; max
 #build-tree { position: relative; }
 .tree-canvas { background: #101014; display: block; height: 32rem; touch-action: none; width: 100%; }
 
+.weapon-set-mode { border: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: var(--gap); margin-bottom: 0.5rem; padding: 0.5rem; }
+.swatch { border-radius: 50%; display: inline-block; height: 0.7rem; vertical-align: middle; width: 0.7rem; }
+.swatch-shared { background: #e8c56a; }
+.swatch-1 { background: #6aa9e8; }
+.swatch-2 { background: #7ad67a; }
+
 .tree-tooltip { background: #17171d; border: 1px solid var(--line); color: #e8e8ea; font-size: 0.85rem; max-width: 22rem; padding: 0.5rem 0.6rem; pointer-events: none; position: absolute; z-index: 2; }
 .tree-tooltip h3 { font-size: 0.9rem; margin: 0 0 0.25rem; }
 .tree-tooltip ul { margin: 0; padding-left: 1rem; }

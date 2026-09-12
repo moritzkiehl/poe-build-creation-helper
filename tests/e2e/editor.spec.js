@@ -136,3 +136,38 @@ test('hovering a node shows its effect and instil cost in a tooltip', async ({ p
     await page.mouse.move(box.x - 20, box.y - 20);
     await expect(tooltip).toBeHidden();
 });
+
+test('the weapon set chosen above the canvas is the one a click allocates into', async ({ page }) => {
+    await page.goto(createBuild());
+
+    const canvas = page.locator('canvas.tree-canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvas.scrollIntoViewIfNeeded();
+
+    await page.getByRole('radio', { name: 'Weapon set 1' }).check();
+
+    // Same point the other tests click — the seeded target node, CLICK_OFFSET_PX
+    // right of the start node the camera centres on.
+    const box = await canvas.boundingBox();
+    await page.mouse.click(box.x + box.width / 2 + CLICK_OFFSET_PX, box.y + box.height / 2);
+
+    // The radio survives the Turbo Stream: it lives in the section header,
+    // outside the <turbo-stream> that replaces the canvas's own contents.
+    await expect(page.getByRole('radio', { name: 'Weapon set 1' })).toBeChecked();
+
+    // History renders which weapon set an allocation went into (_history.html.twig),
+    // so this is a real, human-visible confirmation that the click was routed
+    // into set 1 rather than shared.
+    await expect(page.locator('#build-history')).toContainText('weapon set 1');
+
+    // Checking only the DOM text would not be enough on its own — the previous
+    // slice shipped a tooltip whose *text* assertion stayed green while its
+    // *position* was wrong. Here, the group membership is asserted directly
+    // from the state the canvas itself reads to decide what colour to paint:
+    // the target node must be in the "1" group and nowhere else.
+    const state = JSON.parse(await page.locator('#build-state').textContent());
+    expect(state.allocatedBySet['1']).toContain(TARGET_NODE_ID);
+    expect(state.allocatedBySet.shared).not.toContain(TARGET_NODE_ID);
+    expect(state.allocatedBySet['2']).not.toContain(TARGET_NODE_ID);
+});
