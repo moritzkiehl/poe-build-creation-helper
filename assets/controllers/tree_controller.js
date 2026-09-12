@@ -135,6 +135,14 @@ export default class extends Controller {
         this.showTooltip(node, event.offsetX, event.offsetY);
     }
 
+    // Moving off a node without crossing another one still fires pointermove,
+    // which hides the tooltip — but moving straight off the canvas edge does
+    // not fire another pointermove at all, so without this the last tooltip
+    // would stay on screen indefinitely.
+    pointerleave() {
+        this.showTooltip(null);
+    }
+
     pointerup(event) {
         const dragged = (this.dragging?.moved ?? 0) > DRAG_SLOP;
         this.dragging = null;
@@ -184,9 +192,27 @@ export default class extends Controller {
             : '';
 
         tip.innerHTML = `<h3>${escapeHtml(node.name)}</h3><ul>${stats}</ul>${cost}`;
-        tip.style.left = `${offsetX + 14}px`;
-        tip.style.top = `${offsetY + 14}px`;
+
+        // Unhide before measuring: a `hidden` element lays out nowhere, so
+        // offsetWidth/offsetHeight below would read 0.
         tip.hidden = false;
+
+        // event.offsetX/Y are relative to the canvas, but the tooltip's
+        // containing block is #build-tree's padding edge — the canvas sits
+        // canvasTarget.offsetLeft/offsetTop into that box (below the <h2>,
+        // and the "choose a class" paragraph when none is picked yet), so
+        // that offset has to be folded in before the cursor position means
+        // anything in the tooltip's own coordinate space.
+        const canvas = this.canvasTarget;
+        const container = this.element;
+        const left = canvas.offsetLeft + offsetX + 14;
+        const top = canvas.offsetTop + offsetY + 14;
+
+        // Clamp rather than flip: flipping needs symmetric edge detection on
+        // both axes and still fails once the tooltip is wider than the space
+        // on either side. Clamping keeps it inside the section on every edge.
+        tip.style.left = `${Math.max(0, Math.min(left, container.clientWidth - tip.offsetWidth))}px`;
+        tip.style.top = `${Math.max(0, Math.min(top, container.clientHeight - tip.offsetHeight))}px`;
     }
 
     async toggle(id) {

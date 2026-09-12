@@ -102,7 +102,13 @@ final class CreateTestBuildCommand extends Command
             );
             $db->executeStatement(
                 'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [self::TARGET_NODE_ID, 'End-to-end target', 'small', null, self::TARGET_OFFSET_X, 0.0, '["+10 to Strength"]', '["Concentrated Fear","Concentrated Ire","Concentrated Envy"]'],
+                // The recipe ids are stored the way the real catalog stores
+                // them — unspaced, carrying "Liquid" — and TreeExport runs
+                // them through StatText::emotion() on the way out, exactly as
+                // it does for a real Distilled Emotion id. Spacing them here
+                // instead would let the fixture skip the transform the real
+                // pipeline always applies.
+                [self::TARGET_NODE_ID, 'End-to-end target', 'small', null, self::TARGET_OFFSET_X, 0.0, '["+10 to Strength"]', '["ConcentratedLiquidFear","LiquidIre","IsolatedLiquidEnvy"]'],
             );
 
             $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [self::START_NODE_ID, self::TARGET_NODE_ID]);
