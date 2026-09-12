@@ -53,7 +53,7 @@ class BuildEvent
 
     /**
      * @param array<string, scalar|list<string>|null> $payload
-     * @param Snapshot                                 $snapshot
+     * @param Snapshot                                $snapshot
      */
     public function __construct(Build $build, string $action, array $payload, array $snapshot, ?string $snapshotName = null)
     {

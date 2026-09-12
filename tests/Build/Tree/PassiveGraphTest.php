@@ -39,10 +39,10 @@ final class PassiveGraphTest extends KernelTestCase
     }
 
     /**
-     * @param list<array{0: string, 1: string}>                                     $nodes
-     * @param list<array{0: string, 1: string}>                                     $edges
-     * @param array<string, list<string>>                                           $radius
-     * @param array<string, array{nodes: list<string>, ascendancy: string|null}>    $constraints
+     * @param list<array{0: string, 1: string}>                                  $nodes
+     * @param list<array{0: string, 1: string}>                                  $edges
+     * @param array<string, list<string>>                                        $radius
+     * @param array<string, array{nodes: list<string>, ascendancy: string|null}> $constraints
      */
     private function graphOver(array $nodes, array $edges, array $radius = [], array $constraints = []): PassiveGraph
     {

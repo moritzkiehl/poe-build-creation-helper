@@ -24,7 +24,7 @@ final class BuildEditor
 
     /**
      * @param array<string, scalar|list<string>|null> $payload
-     * @param callable(Build): void                    $mutate
+     * @param callable(Build): void                   $mutate
      */
     public function apply(int $buildId, string $action, array $payload, callable $mutate): void
     {

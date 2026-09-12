@@ -86,8 +86,12 @@ final class PassiveTreeSync
                     $values[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
                     array_push(
                         $params,
-                        $node['id'], $node['name'], $node['kind'], $node['ascendancy_key'],
-                        $node['pos_x'], $node['pos_y'],
+                        $node['id'],
+                        $node['name'],
+                        $node['kind'],
+                        $node['ascendancy_key'],
+                        $node['pos_x'],
+                        $node['pos_y'],
                         json_encode($node['stats'], \JSON_THROW_ON_ERROR),
                         json_encode($node['recipe'], \JSON_THROW_ON_ERROR),
                         json_encode($node['keystones_in_radius'], \JSON_THROW_ON_ERROR),
@@ -136,7 +140,7 @@ final class PassiveTreeSync
             "SELECT shape_revision FROM catalog_sync WHERE source = 'passive_tree' AND status = 'ok' ORDER BY id DESC LIMIT 1"
         );
 
-        return $value === self::SHAPE_REVISION;
+        return self::SHAPE_REVISION === $value;
     }
 
     private function storedCount(): int

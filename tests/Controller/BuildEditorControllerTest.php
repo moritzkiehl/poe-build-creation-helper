@@ -615,8 +615,8 @@ final class BuildEditorControllerTest extends WebTestCase
 
     /**
      * @param list<string> $legalPassiveIds ids the caller is about to allocate;
-     *                                       when given, a legal star tree is seeded
-     *                                       for them and assigned to the build
+     *                                      when given, a legal star tree is seeded
+     *                                      for them and assigned to the build
      *
      * @return string the edit URL, without a trailing slash
      */
