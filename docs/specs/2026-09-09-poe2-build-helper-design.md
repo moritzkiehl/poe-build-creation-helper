@@ -321,13 +321,17 @@ Consequences to design for:
   decoration — it is the accessible path to the same actions, and it also carries
   the ids that findings target.
 
-  **Amended 2026-09-12, and narrowed:** the search half survives, so a node can
-  still be found and allocated without a mouse. The per-node list with its remove
-  controls does not — it was replaced by the collective stats overview, and
-  deallocating is now canvas-only. The owner was shown that cost twice and chose
-  it deliberately both times. So the sentence above is no longer true of removal:
-  the editor can be driven one-way from a keyboard, not round-trip. See
-  "Iteration 3 refinements".
+  **Reversed 2026-09-12.** The paragraph above no longer holds. The tree is
+  edited from the canvas and from nowhere else: the allocated list and its remove
+  controls became the stats overview, and the search box lost its allocate
+  buttons too. Search now finds a node and highlights it on the canvas.
+
+  The reason is not indifference to the constraint but a reassessment of it: the
+  passive tree **in the game itself** is not keyboard or screen-reader operable,
+  so building a parallel text path here invents a requirement the medium does not
+  have, and costs UI that a player then has to read past. The rest of the editor —
+  header, skills, supports, equipment, history — stays ordinary forms and keeps
+  working without JavaScript. See "Iteration 3 refinements".
 - A Stimulus controller owns the canvas and redraws on state change; findings
   keep arriving over Turbo as elsewhere.
 - Orbit geometry as measured on 0.5.5: radii `[0, 82, 164, 334, 488, 657, 839,
@@ -1073,8 +1077,9 @@ for every command, rather than a second parallel client-state sync path.
   (server-side, over all 4912 nodes) and lists matches with an allocate
   button; below it, a `<ul>` of currently-allocated nodes has remove buttons.
   (**Superseded 2026-09-12**: the allocated list and its remove buttons became
-  the collective stats overview — see "Iteration 3 refinements". The search
-  half below is unchanged and still server-rendered.)
+  the collective stats overview, and the search box lost its allocate buttons —
+  search now locates and highlights a node on the canvas instead. The tree is
+  edited from the canvas only. See "Iteration 3 refinements".)
   Both post to the same `/act` endpoint as the canvas. Zero custom JS; the
   same Hotwire form-in-a-frame pattern as Header/Skills/Slots. This is the
   load-bearing accessible path: nothing in the canvas is reachable by
@@ -1167,19 +1172,18 @@ The tree export carries a `recipe` field the normaliser currently discards: the
 Liquid Emotions needed to anoint that node. 875 nodes have one, always three
 ingredients, drawn from 13 distinct emotions, and an ingredient may repeat
 within a recipe (*Cold Coat* needs `LiquidEnvy, LiquidDespair, LiquidEnvy`).
-`catalog_passive` gains a `recipe` JSON column.
+`catalog_passive` gains a `recipe` column, one of three added below.
 
 `stats` is already stored and simply was not shipped. The `tree.json` node tuple
-therefore grows from six to eight by **appending**, never reordering:
-`[id, name, kind, ascendancy_key, x, y, stats, recipe]`. Appending keeps the
-canvas controller's existing destructuring working untouched.
+therefore grows from six to ten by **appending**, never reordering:
+`[id, name, kind, ascendancy_key, x, y, stats, recipe, keystones_in_radius,
+unlock_constraint]`. Appending keeps the canvas controller's existing
+destructuring working untouched. The last two carry the legality data the canvas
+needs to grey out nodes it cannot allocate; see "Allocation is checked, not
+merely drawn" for what the server does with the same facts.
 
-Measured, not estimated: the payload goes from 551 KB to 744 KB raw, but the
-endpoint already serves gzip with an ETag bound to the catalog sync, so on the
-wire it is 113 KB to 142 KB — 29 KB more, downloaded once per game patch and
-answered 304 thereafter. That is why the detail ships with the tree rather than
-being fetched per node on hover: hover has to be instant, and a request per node
-never can be.
+The measured cost is under "Catalog and payload" below, kept in one place so the
+two halves of this section cannot drift apart.
 
 Two pure functions, shared by the tooltip and the overview:
 
@@ -1214,11 +1218,93 @@ failures are invisible at the point of use.
 Grouping is by id, so two families that both grant critical chance stay separate;
 there is no build-wide total. That was asked for deliberately.
 
-**What this costs.** The search box and its allocate buttons remain, so a node
-can still be found and allocated from a keyboard. The per-node remove controls
-are gone, in both modes, and deallocating is canvas-only — a mouse-only action.
-The owner was shown this cost twice and chose it deliberately both times. The
-rendering-the-passive-tree section above has been corrected accordingly.
+**Distilled nodes list separately**, above the tree families, because an
+anointment is granted by an amulet rather than paid for with a passive point and
+mixing the two would misstate what the tree itself gives. See "Anointed nodes
+must be declared" below for why this cannot be inferred.
+
+### The tree is edited from the canvas only
+
+The search box keeps its place but loses its allocate buttons: it now finds a
+node and highlights it on the canvas. Nothing in the DOM allocates or
+deallocates a passive any more.
+
+The justification is the medium, not convenience. The passive tree **in the game
+itself** is not keyboard or screen-reader operable, so a parallel text path here
+invents a requirement the game does not meet, at the cost of UI every player has
+to read past. The rest of the editor stays ordinary forms and still works with
+JavaScript disabled.
+
+### Allocation is checked, not merely drawn
+
+Clicking a node no longer simply adds it. Allocation is refused unless the node
+is legal for this build, and the check runs **on the server**, in the command
+handler — the canvas greys illegal nodes for immediate feedback, but the
+endpoint is what enforces. Four rules, all derivable from data already synced:
+
+1. **Connectivity.** A node must be adjacent to the allocated set, rooted at the
+   class's start node.
+2. **Unlock constraints.** 200 nodes carry an explicit `unlockConstraint`. 197 of
+   them are the `oracle_*` nodes gated behind `AscendancyDruid1Notable2` — *The
+   Unseen Path*, "Walk the Paths Not Taken" — and require both the Druid1
+   ascendancy and that notable allocated. The other three are notable chains:
+   *Path of the Renegade* (Mutewind Agility, Brinerot Ferocity, Redblade
+   Discipline), *The Hollowkeeper*, and Huntress's *Sacred Unity*.
+3. **Entwined Realities.** `AscendancyDruid1Notable1` permits non-keystone
+   passives within a radius of an allocated keystone to be allocated
+   disconnected. The radius needs no geometry: 1573 nodes carry
+   `keystonesInRadius`, the precomputed tree-keys of the keystones covering them,
+   across 33 distinct keystones. The exception applies only once that notable is
+   itself allocated.
+4. **A declared jewel.** A build may nominate **one** keystone as jewel-enabled,
+   granting the same radius exception around it.
+
+Rules 3 and 4 differ only in what enables a keystone, so they are one mechanism
+with two sources. That is the seam to extend: a further source adds a case, not a
+rewrite.
+
+**Two things deliberately not supported, because the data cannot back them.**
+Jewels that enable a radius around their own socket are out: nodes carry
+`keystonesInRadius` but nothing equivalent for sockets, and while the 31 socket
+node-keys and their coordinates exist, the radius values do not. And the app
+cannot detect which jewel a player owns: `uniques.json` carries only
+`id`, `name`, `item_class`, `visual_identity` and inventory dimensions — no mod
+text — so although two granting mods exist in `mods.json`
+(`JewelUniqueAllocateDisconnectedPassives` and
+`AllocateDisconnectedPassivesDonut`), nothing links a mod to the unique carrying
+it. The jewel is therefore declared by the player, and the interface says plainly
+that socket-radius jewels are not modelled rather than pretending otherwise.
+
+The `.build` format has no jewels at all — its fourteen inventory ids are
+weapons, armour, jewellery and a flask — so none of this can be stored in the
+exported document. The declared keystone is an app-only column, like
+`class_key`.
+
+### Anointed nodes must be declared
+
+"Distilled separately" cannot be inferred. A disconnected node might be anointed,
+jewel-enabled, Oracle-enabled, or a mistake; an anointed notable might equally be
+sitting connected on the tree. Having a recipe is necessary but far from
+sufficient — 875 nodes have one, against 1192 notables, and no keystone or
+ascendancy node does.
+
+So anointment is recorded explicitly, as an app-only column listing the passive
+ids the player marked as anointed. It never reaches the exported file, which is
+correct: the game reconstructs an anointment from the amulet, not from the tree.
+
+### Catalog and payload
+
+`catalog_passive` gains three columns, all populated at sync from fields the
+normaliser currently discards: `recipe`, `keystones_in_radius` (tree-keys
+resolved to stored string ids through the map the normaliser already builds), and
+`unlock_constraint`.
+
+Measured payload cost, for the node array alone: today 341 KB raw / 82 KB
+gzipped; with stats and recipes 744 KB / 142 KB; with the legality fields as well
+798 KB / 146 KB. The legality data therefore costs about 4 KB on the wire, and
+the whole detail about 64 KB, downloaded once per game patch behind the existing
+ETag. That is why everything ships with the tree instead of being fetched per
+node: hover must be instant, and a request per node never can be.
 
 ## Open points
 
