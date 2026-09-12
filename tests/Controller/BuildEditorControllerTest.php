@@ -74,6 +74,25 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringContainsString('target level', (string) $this->client->getResponse()->getContent());
     }
 
+    public function testTheGameVersionCanBeChanged(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'game_version', 'value' => '0.6.0']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('input[name="value"][value="0.6.0"]');
+    }
+
+    public function testAnEmptyGameVersionIsRefused(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'game_version', 'value' => ''], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
     public function testEditingWithoutTheEditTokenIsRefused(): void
     {
         $slug = $this->slugOf($this->createBuild());

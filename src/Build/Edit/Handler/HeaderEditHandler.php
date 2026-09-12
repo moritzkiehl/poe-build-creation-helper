@@ -11,9 +11,11 @@ use App\Entity\Build;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
- * Header fields come in two kinds. Five of them are part of the Build Planner
- * format and reach the exported file through the entity's columns; four are
- * ours alone and must never leave the database. Nothing else may be set.
+ * Header fields come in three kinds. Five of them are part of the Build
+ * Planner format and reach the exported file through the entity's columns;
+ * four are ours alone and must never leave the database; game_version is
+ * neither — it names which catalog the build is read against and lives on
+ * the entity without entering BuildDocument. Nothing else may be set.
  */
 final class HeaderEditHandler
 {
@@ -40,6 +42,7 @@ final class HeaderEditHandler
                 'archetype_key' => $build->setArchetypeKey($optional),
                 'note' => $build->setNote($optional),
                 'target_level' => $build->setTargetLevel($this->level($value)),
+                'game_version' => $build->setGameVersion('' === $value ? throw InvalidEditCommand::noSuchEntry('game version') : $value),
                 default => throw InvalidEditCommand::noSuchEntry('header field "'.$command->field.'"'),
             };
         });

@@ -50,5 +50,5 @@
         <button type="submit">Save</button>
     </form>
 
-    <p>Game version {{ build.gameVersion }}.</p>
+    {{ header.field(build, token, 'game_version', 'Game version', build.gameVersion, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery) }}
 </section>

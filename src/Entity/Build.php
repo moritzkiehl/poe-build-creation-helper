@@ -173,6 +173,12 @@ class Build
         return $this->gameVersion;
     }
 
+    public function setGameVersion(string $gameVersion): void
+    {
+        $this->gameVersion = $gameVersion;
+        $this->touch();
+    }
+
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
