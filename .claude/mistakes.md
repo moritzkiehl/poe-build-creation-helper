@@ -1,5 +1,11 @@
 # Mistake log
 
+## 2026-09-12 — view-state query key registered in one of two places
+**What:** A query parameter survives an edit only if `_search_state.html.twig` renders it as a hidden field AND `BuildEditorController::searchParams()` lists it for the non-Turbo redirect. Missed the controller list for three of the five search terms, then again for `intervals`/`supports`.
+**Cost:** Two silent drops after a plain form POST, both found by running the app, not by reading. Second one caught inside the final fix wave.
+**How it was detectable:** Adding a key to one list without grepping for the other. `grep -rn "searchParams\|_search_state" src templates` names both sites in one command.
+**Status:** repeated (2) — root fix scheduled in slice B (spec: "Carried into slice B: one place to register view state")
+
 ## 2026-09-12 — every tree node exported at (0,0), past two reviews
 **What:** `TreeExport` read `pos_x`/`pos_y` with `Row::str($row, 'pos_x', '0')`. DBAL returns a native PHP float for a FLOAT column fetched outside the ORM, so `Row::str()` returned its default and every one of 4912 nodes exported at world (0,0). Found only when the first Playwright click ran.
 **Cost:** Shipped through the exporting task's review — which asked about the float round trip specifically and judged it deliberate — and through the canvas task's review. Fixed in task 18 with `Row::float()` plus a regression test.

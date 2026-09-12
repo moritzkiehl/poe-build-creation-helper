@@ -1362,6 +1362,17 @@ the whole detail about 64 KB, downloaded once per game patch behind the existing
 ETag. That is why everything ships with the tree instead of being fetched per
 node: hover must be instant, and a request per node never can be.
 
+### Carried into slice B: one place to register view state
+
+Slice A left a key registered in two places. A query parameter that survives an
+edit has to be rendered as a hidden field by `templates/build/_search_state.html.twig`
+*and* listed in `BuildEditorController::searchParams()`, which forwards it on the
+non-Turbo redirect. Miss the second and the parameter is silently dropped after a
+plain form POST — which happened twice in slice A: for three of the five search
+terms, and again for the two interval-mode overrides. Both were found by testing,
+not by reading. Slice B adds more view state, so it collapses the two lists into
+one declaration that both the template and the controller read.
+
 ## Open points
 
 ### Proofs, to be stamped per game version
