@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalog;
 
+use App\Catalog\View\StatText;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -55,13 +56,46 @@ final class CatalogSearch
         $results = [];
 
         foreach ($rows as $row) {
-            $stats = json_decode(Row::str($row, 'stats', '[]'), true);
-
             $results[] = [
                 'id' => Row::str($row, 'id'),
                 'name' => Row::str($row, 'name'),
                 'kind' => Row::str($row, 'kind'),
-                'stats' => implode(', ', array_filter(\is_array($stats) ? $stats : [], is_string(...))),
+                'stats' => implode(', ', Row::jsonStrings($row, 'stats')),
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * Passives that can carry an Instilled Modifier — the 875 that have a
+     * Distilled Emotion recipe. Searching the other four thousand would offer
+     * the player nodes the mechanic cannot reach.
+     *
+     * @return list<array{id: string, name: string, kind: string, stats: string, recipe: list<string>}>
+     */
+    public function instillablePassives(string $query): array
+    {
+        if ('' === trim($query)) {
+            return [];
+        }
+
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT id, name, kind, stats, recipe FROM catalog_passive
+             WHERE JSON_LENGTH(recipe) > 0 AND (name LIKE ? OR id LIKE ?)
+             ORDER BY name LIMIT 50',
+            ['%'.$query.'%', '%'.$query.'%'],
+        );
+
+        $results = [];
+
+        foreach ($rows as $row) {
+            $results[] = [
+                'id' => Row::str($row, 'id'),
+                'name' => Row::str($row, 'name'),
+                'kind' => Row::str($row, 'kind'),
+                'stats' => implode(', ', array_map(StatText::plain(...), Row::jsonStrings($row, 'stats'))),
+                'recipe' => array_map(StatText::emotion(...), Row::jsonStrings($row, 'recipe')),
             ];
         }
 

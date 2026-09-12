@@ -78,6 +78,17 @@ class Build
     private ?string $archetypeKey = null;
 
     /**
+     * Passives the player declared as carrying an Instilled Modifier. App-only,
+     * like the planning fields above: the `.build` format has no way to say a
+     * passive was granted by an amulet rather than allocated, and the game does
+     * not need telling — it reads the amulet.
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $instilledPassives = [];
+
+    /**
      * @var array{passives: list<array<string, mixed>>, skills: list<array<string, mixed>>, inventory_slots: list<array<string, mixed>>}
      */
     #[ORM\Column(type: Types::JSON)]
@@ -263,6 +274,34 @@ class Build
     public function setArchetypeKey(?string $archetypeKey): void
     {
         $this->archetypeKey = $archetypeKey;
+        $this->touch();
+    }
+
+    /** @return list<string> */
+    public function getInstilledPassives(): array
+    {
+        return $this->instilledPassives;
+    }
+
+    public function addInstilledPassive(string $id): void
+    {
+        if (\in_array($id, $this->instilledPassives, true)) {
+            return;
+        }
+
+        $this->instilledPassives[] = $id;
+        $this->touch();
+    }
+
+    public function removeInstilledPassive(string $id): void
+    {
+        $remaining = array_values(array_filter($this->instilledPassives, static fn (string $each): bool => $each !== $id));
+
+        if ($remaining === $this->instilledPassives) {
+            return;
+        }
+
+        $this->instilledPassives = $remaining;
         $this->touch();
     }
 

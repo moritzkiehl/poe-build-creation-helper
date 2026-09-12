@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Build\Edit;
 
+use App\Build\Edit\Command\AddInstilled;
 use App\Build\Edit\Command\AddSkill;
 use App\Build\Edit\Command\AddSupport;
 use App\Build\Edit\Command\AllocatePassive;
 use App\Build\Edit\Command\ClearSlot;
 use App\Build\Edit\Command\CreateSnapshot;
 use App\Build\Edit\Command\DeallocatePassive;
+use App\Build\Edit\Command\RemoveInstilled;
 use App\Build\Edit\Command\RemoveSkill;
 use App\Build\Edit\Command\RemoveSupport;
 use App\Build\Edit\Command\Revert;
@@ -49,6 +51,8 @@ final class CommandFactory
             'slot.clear' => new ClearSlot($buildId, $this->string($payload, 'inventory_id')),
             'snapshot.create' => new CreateSnapshot($buildId, $this->string($payload, 'name')),
             'history.revert' => new Revert($buildId, $this->int($payload, 'event_id')),
+            'instilled.add' => new AddInstilled($buildId, $this->string($payload, 'id')),
+            'instilled.remove' => new RemoveInstilled($buildId, $this->string($payload, 'id')),
             default => throw InvalidEditCommand::unknownAction($action),
         };
     }

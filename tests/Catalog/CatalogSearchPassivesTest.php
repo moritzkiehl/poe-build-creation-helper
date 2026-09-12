@@ -35,15 +35,33 @@ final class CatalogSearchPassivesTest extends KernelTestCase
         self::assertSame([], $this->search->passives(''));
     }
 
+    public function testOnlyNodesWithARecipeAreInstillable(): void
+    {
+        $this->seedPassives([
+            ['id' => 'ignite_mitigation13', 'name' => 'Self Immolation', 'kind' => 'notable', 'recipe' => ['LiquidA', 'LiquidB', 'LiquidC']],
+            ['id' => 'strength89', 'name' => 'Attribute', 'kind' => 'small', 'recipe' => []],
+        ]);
+
+        $results = $this->search->instillablePassives('a');
+
+        self::assertSame(['ignite_mitigation13'], array_column($results, 'id'), 'a node with no recipe cannot be instilled');
+        self::assertSame(['Liquid A', 'Liquid B', 'Liquid C'], $results[0]['recipe'], 'the cost is readable, like everywhere else');
+    }
+
+    public function testAnEmptyInstillableQueryAnswersNothing(): void
+    {
+        self::assertSame([], $this->search->instillablePassives(''));
+    }
+
     /**
-     * @param list<array{id: string, name: string, kind: string}> $passives
+     * @param list<array{id: string, name: string, kind: string, recipe?: list<string>}> $passives
      */
     private function seedPassives(array $passives): void
     {
         foreach ($passives as $passive) {
             $this->db->executeStatement(
                 'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, NULL, 0, 0, ?, ?)',
-                [$passive['id'], $passive['name'], $passive['kind'], '[]', '[]'],
+                [$passive['id'], $passive['name'], $passive['kind'], '[]', json_encode($passive['recipe'] ?? [])],
             );
         }
     }
