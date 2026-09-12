@@ -37,7 +37,9 @@ describe('drawTree', () => {
             highlighted: new Set(),
         }, camera);
 
-        expect(new Set(context.fills).size).toBe(3);
+        // Pins identity, not just distinctness: this fails if set one and set
+        // two are swapped, or if shared is painted with either set's colour.
+        expect(context.fills).toEqual(['#e8c56a', '#6aa9e8', '#7ad67a']);
     });
 
     it('paints an unallocated node in neither allocation colour', () => {

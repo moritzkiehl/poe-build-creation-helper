@@ -171,3 +171,56 @@ test('the weapon set chosen above the canvas is the one a click allocates into',
     expect(state.allocatedBySet.shared).not.toContain(TARGET_NODE_ID);
     expect(state.allocatedBySet['2']).not.toContain(TARGET_NODE_ID);
 });
+
+test('the chosen weapon set survives back-navigation, and a click after it still uses it', async ({ page }) => {
+    await page.goto(createBuild());
+
+    const canvas = page.locator('canvas.tree-canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvas.scrollIntoViewIfNeeded();
+
+    await page.getByRole('radio', { name: 'Weapon set 1' }).check();
+
+    // Tried page.reload() first, as literally asked: in this Chromium/
+    // Playwright combination it does NOT restore a checked radio — the page
+    // comes back with the server-rendered default ('shared') checked again,
+    // so a reload here cannot exercise "the DOM disagrees with connect()'s
+    // default" at all (confirmed by running it against both the buggy and
+    // the fixed connect() — same outcome either way). Real back-navigation
+    // does restore it: the "Find a node" search is a plain GET, so it is a
+    // full Turbo Drive visit, and Turbo's own page cache restores the exact
+    // DOM — including the live checked radio — when the browser goes back to
+    // it. Confirmed this fails against the pre-fix hardcoded 'shared' (the
+    // click landed in "shared" instead of "1") and passes against the fix.
+    await page.locator('#passive-q').fill('anything');
+    await page.locator('#passive-q').press('Enter');
+    await page.waitForURL(/[?&]q=anything/);
+    await page.goBack();
+    await page.waitForURL((currentUrl) => !currentUrl.toString().includes('q=anything'));
+
+    const canvasAfterBack = page.locator('canvas.tree-canvas');
+    await expect(canvasAfterBack).toBeVisible();
+    await expect.poll(() => canvasAfterBack.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvasAfterBack.scrollIntoViewIfNeeded();
+
+    // Confirms the browser really did restore it, before blaming the
+    // controller for anything.
+    await expect(page.getByRole('radio', { name: 'Weapon set 1' })).toBeChecked();
+
+    const box = await canvasAfterBack.boundingBox();
+    await page.mouse.click(box.x + box.width / 2 + CLICK_OFFSET_PX, box.y + box.height / 2);
+
+    // The allocate request and its Turbo Stream render are asynchronous —
+    // polling (rather than a single synchronous read right after the click)
+    // is what makes this reliable regardless of how long that round trip takes.
+    await expect.poll(async () => {
+        const state = JSON.parse(await page.locator('#build-state').textContent());
+
+        return state.allocatedBySet['1'].includes(TARGET_NODE_ID);
+    }).toBe(true);
+
+    const state = JSON.parse(await page.locator('#build-state').textContent());
+    expect(state.allocatedBySet.shared).not.toContain(TARGET_NODE_ID);
+    expect(state.allocatedBySet['2']).not.toContain(TARGET_NODE_ID);
+});

@@ -14,7 +14,11 @@ export default class extends Controller {
     async connect() {
         this.camera = createCamera();
         this.allocatedBySet = { shared: new Set(), one: new Set(), two: new Set() };
-        this.weaponSet = 'shared';
+        // A browser restores radio state across a soft reload and across
+        // back-navigation, so the checked radio in the DOM can already
+        // disagree with a hardcoded default here — read it rather than
+        // assume 'shared'.
+        this.weaponSet = this.element.querySelector('input[name="weapon-set-mode"]:checked')?.value ?? 'shared';
         this.nodes = new Map();
         this.edges = [];
         this.hovered = null;
