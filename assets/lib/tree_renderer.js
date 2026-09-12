@@ -7,6 +7,8 @@ const COLOURS = {
     notable: '#9a8ad6',
     keystone: '#d67a7a',
     allocated: '#e8c56a',
+    allocatedSetOne: '#6aa9e8',
+    allocatedSetTwo: '#7ad67a',
     start: '#ffffff',
 };
 
@@ -14,8 +16,9 @@ const RADIUS = { small: 4, notable: 7, keystone: 9 };
 
 // Edges are straight lines. In the game they follow the orbit they were laid
 // out on; matching that is a visual nicety and is deliberately not done here.
-export function drawTree(context, { nodes, edges, allocated, startNodeId, hovered }, camera) {
+export function drawTree(context, { nodes, edges, allocatedBySet, startNodeId, hovered, highlighted }, camera) {
     const { width, height } = context.canvas;
+    const isAllocated = (id) => allocatedBySet.shared.has(id) || allocatedBySet.one.has(id) || allocatedBySet.two.has(id);
 
     context.clearRect(0, 0, width, height);
     context.lineWidth = 1.5;
@@ -31,7 +34,7 @@ export function drawTree(context, { nodes, edges, allocated, startNodeId, hovere
         const start = worldToScreen(camera, width, height, a.x, a.y);
         const end = worldToScreen(camera, width, height, b.x, b.y);
 
-        context.strokeStyle = allocated.has(from) && allocated.has(to) ? COLOURS.edgeAllocated : COLOURS.edge;
+        context.strokeStyle = isAllocated(from) && isAllocated(to) ? COLOURS.edgeAllocated : COLOURS.edge;
         context.beginPath();
         context.moveTo(start.x, start.y);
         context.lineTo(end.x, end.y);
@@ -49,7 +52,10 @@ export function drawTree(context, { nodes, edges, allocated, startNodeId, hovere
 
         context.fillStyle = node.id === startNodeId
             ? COLOURS.start
-            : allocated.has(node.id) ? COLOURS.allocated : (COLOURS[node.kind] ?? COLOURS.small);
+            : allocatedBySet.one.has(node.id) ? COLOURS.allocatedSetOne
+            : allocatedBySet.two.has(node.id) ? COLOURS.allocatedSetTwo
+            : allocatedBySet.shared.has(node.id) ? COLOURS.allocated
+            : (COLOURS[node.kind] ?? COLOURS.small);
 
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
@@ -58,6 +64,13 @@ export function drawTree(context, { nodes, edges, allocated, startNodeId, hovere
         if (node.id === hovered) {
             context.strokeStyle = COLOURS.start;
             context.stroke();
+        }
+
+        if (highlighted.has(node.id)) {
+            context.strokeStyle = COLOURS.start;
+            context.lineWidth = 3;
+            context.stroke();
+            context.lineWidth = 1.5;
         }
     }
 }
