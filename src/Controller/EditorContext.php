@@ -7,6 +7,9 @@ namespace App\Controller;
 use App\Build\Edit\IntervalMode;
 use App\Build\InventorySlots;
 use App\Build\StatSummary;
+use App\Build\Tree\Allocation;
+use App\Build\Tree\TreeContextFactory;
+use App\Build\Tree\WeaponSet;
 use App\Catalog\CatalogSearch;
 use App\Entity\Build;
 use App\Entity\CatalogClass;
@@ -28,6 +31,7 @@ final class EditorContext
         private readonly EntityManagerInterface $entityManager,
         private readonly EditorSearches $searches,
         private readonly CatalogSearch $catalog,
+        private readonly TreeContextFactory $treeContexts,
     ) {
     }
 
@@ -42,6 +46,21 @@ final class EditorContext
             if (\is_string($passive['id'] ?? null)) {
                 $allocatedIds[] = $passive['id'];
             }
+        }
+
+        $allocation = Allocation::of($document);
+        $allocationBySet = [
+            'shared' => [],
+            '1' => [],
+            '2' => [],
+        ];
+
+        foreach ($allocation->ids() as $id) {
+            $allocationBySet[match ($allocation->setOf($id)) {
+                WeaponSet::One => '1',
+                WeaponSet::Two => '2',
+                default => 'shared',
+            }][] = $id;
         }
 
         $instilledIds = $build->getInstilledPassives();
@@ -71,6 +90,8 @@ final class EditorContext
             'error' => $error,
             'treeSummary' => StatSummary::of($statsById),
             'allocatedByFamily' => $allocatedByFamily,
+            'allocationBySet' => $allocationBySet,
+            'startNodeId' => $this->treeContexts->of($build)->startNodeId,
             // An id the catalog no longer resolves — the build outlived a
             // catalog re-sync — stays visible under its bare id rather than
             // silently vanishing, and keeps a working Remove control: a

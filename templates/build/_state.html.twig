@@ -2,6 +2,8 @@
 <script type="application/json" id="build-state" data-tree-target="state">
     {{ {
         allocated: allocated|merge([]),
+        allocatedBySet: allocationBySet,
+        startNodeId: startNodeId,
         ascendancy: build.ascendancyKey,
         classKey: build.classKey,
     }|json_encode|raw }}

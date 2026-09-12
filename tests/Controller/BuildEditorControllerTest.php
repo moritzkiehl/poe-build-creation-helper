@@ -157,6 +157,38 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringNotContainsString('far', $crawler->filter('#build-nodes')->text(), 'a refused allocation must not reach the document');
     }
 
+    public function testTheCanvasStateSeparatesTheThreeAllocationGroups(): void
+    {
+        $edit = $this->seedBuildWithTree();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'near']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'leaf', 'set' => '1']);
+
+        $crawler = $this->client->request('GET', $edit);
+        $state = json_decode($crawler->filter('#build-state')->text(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($state);
+
+        $allocatedBySet = $state['allocatedBySet'];
+        self::assertIsArray($allocatedBySet);
+        $shared = $allocatedBySet['shared'];
+        self::assertIsArray($shared);
+        $one = $allocatedBySet['1'];
+        self::assertIsArray($one);
+        $two = $allocatedBySet['2'];
+        self::assertIsArray($two);
+
+        // `seedBuildWithTree()` builds from `valid-full.build`, which already
+        // carries its own weapon-set-1 and weapon-set-2 entries
+        // (`melee22_`, `attributes70`) — so set 2 is not asserted empty, only
+        // that this test's own two allocations landed in the groups the
+        // request named.
+        self::assertContains('near', $shared);
+        self::assertContains('leaf', $one);
+        self::assertNotContains('near', $two);
+        self::assertNotContains('leaf', $two);
+        self::assertSame('start', $state['startNodeId']);
+    }
+
     public function testDeallocatingAJunctionTakesWhatHungOffIt(): void
     {
         $edit = $this->seedBuildWithTree();
