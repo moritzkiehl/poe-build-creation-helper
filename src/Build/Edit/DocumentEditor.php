@@ -148,20 +148,27 @@ final class DocumentEditor
             throw InvalidEditCommand::noSuchEntry('equipment slot "'.$inventoryId.'"');
         }
 
-        $entry = [
+        $slots = $document->inventorySlots;
+        $index = $this->indexOfSlot($document, $inventoryId);
+
+        // An entry the game wrote may carry keys this command does not own —
+        // `weapon_set` only appears on some entries. Update only what this
+        // command changes and leave the rest exactly as it was; `slot_x` and
+        // `slot_y` default to 0 only when the entry does not exist yet.
+        $entry = null !== $index ? $slots[$index] : [
             'inventory_id' => $inventoryId,
             'slot_x' => 0,
             'slot_y' => 0,
-            'level_interval' => $this->levelInterval($from, $to),
-            'additional_text' => $additionalText,
         ];
+
+        $entry['level_interval'] = $this->levelInterval($from, $to);
+        $entry['additional_text'] = $additionalText;
 
         if (null !== $uniqueName && '' !== $uniqueName) {
             $entry['unique_name'] = $uniqueName;
+        } else {
+            unset($entry['unique_name']);
         }
-
-        $slots = $document->inventorySlots;
-        $index = $this->indexOfSlot($document, $inventoryId);
 
         if (null === $index) {
             $slots[] = $entry;

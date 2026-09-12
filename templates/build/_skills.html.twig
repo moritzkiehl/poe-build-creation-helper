@@ -15,6 +15,8 @@
                     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                         <input type="hidden" name="action" value="skill.add">
                         <input type="hidden" name="gem_id" value="{{ gem.id }}">
+                        <input type="hidden" name="q" value="{{ passiveQuery }}">
+                        <input type="hidden" name="gem" value="{{ gemQuery }}">
                         <button type="submit">Add as a skill</button>
                     </form>
                 </li>
@@ -33,6 +35,8 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="skill.interval">
                     <input type="hidden" name="index" value="{{ skillIndex }}">
+                    <input type="hidden" name="q" value="{{ passiveQuery }}">
+                    <input type="hidden" name="gem" value="{{ gemQuery }}">
                     <label for="skill-from-{{ skillIndex }}">From</label>
                     <input type="number" id="skill-from-{{ skillIndex }}" name="from" min="0" max="100" value="{{ skill.level_interval[0] ?? 1 }}">
                     <label for="skill-to-{{ skillIndex }}">to</label>
@@ -48,6 +52,8 @@
                                 <input type="hidden" name="action" value="support.interval">
                                 <input type="hidden" name="skill_index" value="{{ skillIndex }}">
                                 <input type="hidden" name="support_id" value="{{ support.id }}">
+                                <input type="hidden" name="q" value="{{ passiveQuery }}">
+                                <input type="hidden" name="gem" value="{{ gemQuery }}">
                                 <label for="sup-from-{{ skillIndex }}-{{ loop.index0 }}">From</label>
                                 <input type="number" id="sup-from-{{ skillIndex }}-{{ loop.index0 }}" name="from" min="0" max="100" value="{{ support.level_interval[0] ?? 1 }}">
                                 <label for="sup-to-{{ skillIndex }}-{{ loop.index0 }}">to</label>
@@ -58,6 +64,8 @@
                                 <input type="hidden" name="action" value="support.remove">
                                 <input type="hidden" name="skill_index" value="{{ skillIndex }}">
                                 <input type="hidden" name="support_id" value="{{ support.id }}">
+                                <input type="hidden" name="q" value="{{ passiveQuery }}">
+                                <input type="hidden" name="gem" value="{{ gemQuery }}">
                                 <button type="submit">Remove support</button>
                             </form>
                         </li>
@@ -67,6 +75,8 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="support.add">
                     <input type="hidden" name="skill_index" value="{{ skillIndex }}">
+                    <input type="hidden" name="q" value="{{ passiveQuery }}">
+                    <input type="hidden" name="gem" value="{{ gemQuery }}">
                     <label for="support-id-{{ skillIndex }}">Support gem id</label>
                     <input type="text" id="support-id-{{ skillIndex }}" name="support_id" placeholder="Metadata/Items/Gems/SupportGem…">
                     <button type="submit">Add support</button>
@@ -75,6 +85,8 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="skill.remove">
                     <input type="hidden" name="index" value="{{ skillIndex }}">
+                    <input type="hidden" name="q" value="{{ passiveQuery }}">
+                    <input type="hidden" name="gem" value="{{ gemQuery }}">
                     <button type="submit">Remove skill</button>
                 </form>
             </li>

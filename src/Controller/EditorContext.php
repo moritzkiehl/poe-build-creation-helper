@@ -10,6 +10,7 @@ use App\Entity\Build;
 use App\Entity\CatalogClass;
 use App\Repository\BuildEventRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -35,8 +36,9 @@ final class EditorContext
      */
     public function of(Build $build, string $token, ?string $error = null): array
     {
-        $query = trim((string) ($this->requests->getCurrentRequest()?->query->get('q') ?? ''));
-        $gemQuery = trim((string) ($this->requests->getCurrentRequest()?->query->get('gem') ?? ''));
+        $request = $this->requests->getCurrentRequest();
+        $query = $this->term($request, 'q');
+        $gemQuery = $this->term($request, 'gem');
 
         return [
             'build' => $build,
@@ -47,9 +49,32 @@ final class EditorContext
             'events' => $this->events->timeline($build),
             'error' => $error,
             'passiveQuery' => $query,
-            'passiveResults' => $this->search->passives($query),
+            'passiveResults' => '' !== $query ? $this->search->passives($query) : [],
             'gemQuery' => $gemQuery,
-            'gemResults' => $this->search->search($gemQuery ?: null, 'all'),
+            'gemResults' => '' !== $gemQuery ? $this->search->search($gemQuery, 'all') : [],
         ];
+    }
+
+    /**
+     * A search term normally arrives in the query string — the search forms
+     * submit via GET. An edit is a POST carrying neither, so the redirect and
+     * the Turbo response that follow it fall back to the request body, which
+     * the `/act` forms carry the term in as a hidden field. The query string
+     * wins when present, even empty, so clearing the search box still clears
+     * the term instead of resurrecting it from a stale hidden field.
+     */
+    private function term(?Request $request, string $key): string
+    {
+        if (null === $request) {
+            return '';
+        }
+
+        $value = $request->query->get($key);
+
+        if (!\is_string($value)) {
+            $value = $request->request->get($key);
+        }
+
+        return trim(\is_string($value) ? $value : '');
     }
 }

@@ -49,7 +49,7 @@ final class BuildEditorController extends AbstractController
             $command = $this->commands->fromRequest((int) $build->getId(), (string) $request->request->get('action', ''), $request->request);
             $this->bus->dispatch($command);
         } catch (InvalidEditCommand $e) {
-            return $this->refuse($build, $token, $e->getMessage(), $wantsStream);
+            return $this->refuse($build, $token, $e->getMessage(), $wantsStream, $request);
         } catch (HandlerFailedException $e) {
             $cause = $e->getPrevious();
 
@@ -57,27 +57,50 @@ final class BuildEditorController extends AbstractController
                 throw $e;
             }
 
-            return $this->refuse($build, $token, $cause->getMessage(), $wantsStream);
+            return $this->refuse($build, $token, $cause->getMessage(), $wantsStream, $request);
         }
 
         $this->entityManager->refresh($build);
 
         if (!$wantsStream) {
-            return $this->redirectToRoute('app_build_edit', ['slug' => $slug, 'token' => $token], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_build_edit', $this->searchParams($build, $token, $request), Response::HTTP_SEE_OTHER);
         }
 
         return $this->streams($build, $token, null);
     }
 
-    private function refuse(Build $build, string $token, string $message, bool $wantsStream): Response
+    private function refuse(Build $build, string $token, string $message, bool $wantsStream, Request $request): Response
     {
         if (!$wantsStream) {
             $this->addFlash('error', $message);
 
-            return $this->redirectToRoute('app_build_edit', ['slug' => $build->getShareSlug(), 'token' => $token], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_build_edit', $this->searchParams($build, $token, $request), Response::HTTP_SEE_OTHER);
         }
 
         return $this->streams($build, $token, $message, Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * The redirect after a POST lands on a fresh GET request, which has no
+     * body to fall back to — so the search terms the `/act` form carried as
+     * hidden fields have to be carried forward into the redirect's own query
+     * string, or the search the user was looking at goes empty.
+     *
+     * @return array<string, string>
+     */
+    private function searchParams(Build $build, string $token, Request $request): array
+    {
+        $params = ['slug' => $build->getShareSlug(), 'token' => $token];
+
+        foreach (['q', 'gem'] as $key) {
+            $value = $request->request->get($key);
+
+            if (\is_string($value) && '' !== $value) {
+                $params[$key] = $value;
+            }
+        }
+
+        return $params;
     }
 
     private function streams(Build $build, string $token, ?string $error, int $status = Response::HTTP_OK): Response

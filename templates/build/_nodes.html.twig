@@ -21,6 +21,8 @@
                         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                             <input type="hidden" name="action" value="passive.allocate">
                             <input type="hidden" name="id" value="{{ node.id }}">
+                            <input type="hidden" name="q" value="{{ passiveQuery }}">
+                            <input type="hidden" name="gem" value="{{ gemQuery }}">
                             <button type="submit">Allocate</button>
                         </form>
                     {% endif %}
@@ -39,6 +41,8 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="passive.interval">
                     <input type="hidden" name="id" value="{{ passive.id }}">
+                    <input type="hidden" name="q" value="{{ passiveQuery }}">
+                    <input type="hidden" name="gem" value="{{ gemQuery }}">
                     <label for="from-{{ loop.index }}">From</label>
                     <input type="number" id="from-{{ loop.index }}" name="from" min="0" max="100" value="{{ passive.level_interval[0] ?? 1 }}">
                     <label for="to-{{ loop.index }}">to</label>
@@ -48,6 +52,8 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="passive.deallocate">
                     <input type="hidden" name="id" value="{{ passive.id }}">
+                    <input type="hidden" name="q" value="{{ passiveQuery }}">
+                    <input type="hidden" name="gem" value="{{ gemQuery }}">
                     <button type="submit">Remove</button>
                 </form>
             </li>

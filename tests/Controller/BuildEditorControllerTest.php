@@ -36,6 +36,20 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorExists('input[value="Respec at 60"]');
     }
 
+    public function testAHeaderFieldCanBeClearedRatherThanBeingRefused(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'note', 'value' => 'Before']);
+        $this->client->followRedirect();
+        self::assertSelectorExists('input[value="Before"]');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'note', 'value' => '']);
+        self::assertResponseStatusCodeSame(303);
+        $this->client->followRedirect();
+        self::assertSelectorNotExists('input[value="Before"]');
+    }
+
     public function testATurboRequestGetsStreamsInsteadOfARedirect(): void
     {
         $edit = $this->createBuild();
@@ -150,6 +164,31 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorTextContains('#build-nodes', 'first');
         self::assertSelectorTextNotContains('#build-nodes', 'second');
         self::assertSelectorTextContains('#build-history', 'Reverted');
+    }
+
+    public function testANodeSearchSurvivesAPlainFormPostAndRedirect(): void
+    {
+        $edit = $this->createBuild();
+
+        // The search page itself already carries the term forward into its
+        // /act forms as a hidden field — confirm that before relying on it.
+        $this->client->request('GET', $edit.'?q=crit');
+        self::assertSelectorExists('input[name="q"][value="crit"]');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee1_', 'q' => 'crit']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#passive-q[value="crit"]');
+    }
+
+    public function testANodeSearchSurvivesInTheTurboStreamResponse(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee1_', 'q' => 'crit'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('id="passive-q" name="q" value="crit"', (string) $this->client->getResponse()->getContent());
     }
 
     public function testASnapshotCanBeNamedAndIsMarkedAsKept(): void

@@ -35,7 +35,7 @@ final class CommandFactory
     public function fromRequest(int $buildId, string $action, InputBag $payload): EditCommand
     {
         return match ($action) {
-            'header.set' => new SetHeaderField($buildId, $this->string($payload, 'field'), $this->string($payload, 'value')),
+            'header.set' => new SetHeaderField($buildId, $this->string($payload, 'field'), $this->string($payload, 'value', required: false)),
             'passive.allocate' => new AllocatePassive($buildId, $this->string($payload, 'id')),
             'passive.deallocate' => new DeallocatePassive($buildId, $this->string($payload, 'id')),
             'passive.interval' => new SetPassiveInterval($buildId, $this->string($payload, 'id'), $this->int($payload, 'from'), $this->int($payload, 'to')),

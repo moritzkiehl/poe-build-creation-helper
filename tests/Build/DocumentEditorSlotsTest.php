@@ -8,6 +8,7 @@ use App\Build\Edit\DocumentEditor;
 use App\Build\Edit\InvalidEditCommand;
 use App\Build\InventorySlots;
 use App\Interchange\BuildDocument;
+use App\Interchange\BuildDocumentReader;
 use PHPUnit\Framework\TestCase;
 
 final class DocumentEditorSlotsTest extends TestCase
@@ -46,6 +47,30 @@ final class DocumentEditorSlotsTest extends TestCase
         self::assertCount(2, $document->inventorySlots);
         self::assertSame(['Ring1', 'Ring2'], array_column($document->inventorySlots, 'inventory_id'));
         self::assertSame('Replaced', $document->inventorySlots[0]['unique_name']);
+    }
+
+    /**
+     * The regression this iteration's review found: `setInventorySlot()` used
+     * to rebuild the whole entry, which reset `slot_x`/`slot_y` to 0 and
+     * dropped any key the game had written that this command does not own.
+     * `Trinket1` in the fixture carries `slot_x: 2` — an edit must keep it.
+     */
+    public function testEditingAnImportedSlotKeepsItsCoordinates(): void
+    {
+        $json = file_get_contents(__DIR__.'/../fixtures/build/valid-full.build');
+        self::assertIsString($json);
+        $document = new BuildDocumentReader()->read($json);
+
+        $edited = $this->editor->setInventorySlot($document, 'Trinket1', null, 5, 90, 'a new note');
+
+        $index = array_search('Trinket1', array_column($edited->inventorySlots, 'inventory_id'), true);
+        self::assertIsInt($index);
+        $slot = $edited->inventorySlots[$index];
+
+        self::assertSame(2, $slot['slot_x']);
+        self::assertSame(0, $slot['slot_y']);
+        self::assertSame([5, 90], $slot['level_interval']);
+        self::assertSame('a new note', $slot['additional_text']);
     }
 
     public function testClearingASlotRemovesItEntirely(): void

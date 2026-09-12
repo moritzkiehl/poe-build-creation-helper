@@ -1,5 +1,11 @@
 # Mistake log
 
+## 2026-09-12 — every tree node exported at (0,0), past two reviews
+**What:** `TreeExport` read `pos_x`/`pos_y` with `Row::str($row, 'pos_x', '0')`. DBAL returns a native PHP float for a FLOAT column fetched outside the ORM, so `Row::str()` returned its default and every one of 4912 nodes exported at world (0,0). Found only when the first Playwright click ran.
+**Cost:** Shipped through the exporting task's review — which asked about the float round trip specifically and judged it deliberate — and through the canvas task's review. Fixed in task 18 with `Row::float()` plus a regression test.
+**How it was detectable:** `Row::str()` is documented to fall back rather than coerce. Using a string accessor on a numeric column and then casting the result is a contradiction visible in the line itself. No PHP test put a node in front of a renderer, so only a browser could see it.
+**Status:** one-off — argues for the end-to-end test existing at all, not against it
+
 ## 2026-09-11 — production markup grown to satisfy a blind assertion
 **What:** Plan tests used `assertSelectorTextContains` on values that live in `<input value="...">` attributes, which the crawler cannot see. Implementers twice answered by adding visible duplicate markup instead of fixing the assertion — `_header.html.twig` (task 11, `<span class="value">`), `_slots.html.twig` (task 14, `<strong>`). Each made a value render twice, once editable and once inert.
 **Cost:** Two fix rounds. On a page whose stated purpose is the accessible path, a screen reader would read every affected value twice.

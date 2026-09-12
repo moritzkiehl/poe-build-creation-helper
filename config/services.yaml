@@ -13,7 +13,9 @@ parameters:
 
     # Catalog sources. Both are static files on GitHub: no API key, no OAuth.
     # Snapshots are fetched at runtime into an ignored directory and are never
-    # committed or served on — the data belongs to Grinding Gear Games.
+    # committed — the raw data belongs to Grinding Gear Games. Derived node
+    # names and coordinates are served to the app's own front end, though:
+    # /catalog/tree.json publishes them for the canvas to draw.
     app.catalog.passive_tree_url: 'https://raw.githubusercontent.com/grindinggear/poe2-skilltree-export/main/data.json'
     app.catalog.gems_url: 'https://repoe-fork.github.io/poe2/skill_gems.min.json'
     app.catalog.uniques_url: 'https://repoe-fork.github.io/poe2/uniques.min.json'
