@@ -79,6 +79,24 @@ final class PassiveTreeNormalizerTest extends TestCase
         self::assertSame([], $classes['Sorceress']['ascendancies']);
     }
 
+    public function testANodeKeepsTheDistilledEmotionsThatInstilIt(): void
+    {
+        $byId = array_column($this->normalize()->nodes, null, 'id');
+
+        self::assertSame(
+            ['LiquidSyntheticA', 'LiquidSyntheticB', 'LiquidSyntheticA'],
+            $byId['synthetic13_']['recipe'],
+            'a repeated ingredient is real and must survive',
+        );
+    }
+
+    public function testANodeWithNoRecipeGetsAnEmptyList(): void
+    {
+        $byId = array_column($this->normalize()->nodes, null, 'id');
+
+        self::assertSame([], $byId['synthetic12']['recipe']);
+    }
+
     private function normalize(): \App\Catalog\NormalizedTree
     {
         $json = file_get_contents(__DIR__.'/../fixtures/catalog/tree-shape.json');

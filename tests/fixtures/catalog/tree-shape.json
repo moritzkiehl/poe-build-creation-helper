@@ -31,6 +31,7 @@
             "skill": 1002,
             "name": "Synthetic Notable",
             "isNotable": true,
+            "recipe": ["LiquidSyntheticA", "LiquidSyntheticB", "LiquidSyntheticA"],
             "stats": ["15% increased Melee Damage"],
             "group": 1, "orbit": 2, "orbitIndex": 6,
             "x": 264.0, "y": 200.0,

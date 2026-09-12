@@ -73,10 +73,10 @@ final class PassiveTreeSync
                 $values = [];
                 $params = [];
                 foreach ($chunk as $node) {
-                    $values[] = '(?, ?, ?, ?, ?, ?, ?)';
-                    array_push($params, $node['id'], $node['name'], $node['kind'], $node['ascendancy_key'], $node['pos_x'], $node['pos_y'], json_encode($node['stats'], \JSON_THROW_ON_ERROR));
+                    $values[] = '(?, ?, ?, ?, ?, ?, ?, ?)';
+                    array_push($params, $node['id'], $node['name'], $node['kind'], $node['ascendancy_key'], $node['pos_x'], $node['pos_y'], json_encode($node['stats'], \JSON_THROW_ON_ERROR), json_encode($node['recipe'], \JSON_THROW_ON_ERROR));
                 }
-                $db->executeStatement('INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats) VALUES '.implode(',', $values), $params);
+                $db->executeStatement('INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES '.implode(',', $values), $params);
             }
 
             foreach (array_chunk($tree->edges, self::BATCH) as $chunk) {

@@ -42,8 +42,8 @@ final class CatalogSearchPassivesTest extends KernelTestCase
     {
         foreach ($passives as $passive) {
             $this->db->executeStatement(
-                'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats) VALUES (?, ?, ?, NULL, 0, 0, ?)',
-                [$passive['id'], $passive['name'], $passive['kind'], '[]'],
+                'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, NULL, 0, 0, ?, ?)',
+                [$passive['id'], $passive['name'], $passive['kind'], '[]', '[]'],
             );
         }
     }

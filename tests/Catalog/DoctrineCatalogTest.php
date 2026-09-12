@@ -55,8 +55,8 @@ final class DoctrineCatalogTest extends KernelTestCase
         ];
         foreach ($passives as [$id, $name, $kind, $ascendancy]) {
             $this->db->executeStatement(
-                'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats) VALUES (?, ?, ?, ?, 0, 0, ?)',
-                [$id, $name, $kind, $ascendancy, '[]'],
+                'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, ?, 0, 0, ?, ?)',
+                [$id, $name, $kind, $ascendancy, '[]', '[]'],
             );
         }
         $this->db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', ['strength89', 'melee22_']);

@@ -52,6 +52,7 @@ final class PassiveTreeNormalizer
                 'pos_x' => is_numeric($node['x'] ?? null) ? (float) $node['x'] : 0.0,
                 'pos_y' => is_numeric($node['y'] ?? null) ? (float) $node['y'] : 0.0,
                 'stats' => array_values(array_filter((array) ($node['stats'] ?? []), is_string(...))),
+                'recipe' => array_values(array_filter((array) ($node['recipe'] ?? []), is_string(...))),
             ];
         }
 

@@ -34,8 +34,8 @@ final class TreeExportTest extends KernelTestCase
     public function testNodeCoordinatesSurviveTheRoundTripThroughRawDbal(): void
     {
         $this->db->executeStatement(
-            'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            ['n1', 'Node One', 'small', null, 1234.5, -678.0, '[]'],
+            'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            ['n1', 'Node One', 'small', null, 1234.5, -678.0, '[]', '[]'],
         );
 
         $export = new TreeExport($this->db);

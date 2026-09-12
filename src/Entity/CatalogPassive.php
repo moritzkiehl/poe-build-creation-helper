@@ -42,6 +42,10 @@ class CatalogPassive
     #[ORM\Column(type: Types::JSON)]
     private array $stats = [];
 
+    /** @var list<string> */
+    #[ORM\Column(type: Types::JSON)]
+    private array $recipe = [];
+
     public function getId(): string
     {
         return $this->id;
@@ -76,5 +80,11 @@ class CatalogPassive
     public function getStats(): array
     {
         return $this->stats;
+    }
+
+    /** @return list<string> */
+    public function getRecipe(): array
+    {
+        return $this->recipe;
     }
 }
