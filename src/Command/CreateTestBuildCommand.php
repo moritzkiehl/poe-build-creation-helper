@@ -79,16 +79,21 @@ final class CreateTestBuildCommand extends Command
     }
 
     /**
-     * Replaces the two rows this command owns rather than the whole catalog,
-     * so a real `app:catalog:sync` run against the same database (there is no
-     * reason to do one in this environment, but nothing stops it) is not
-     * clobbered by re-running the end-to-end test.
+     * Clears the whole passive catalog before seeding, rather than deleting
+     * only the two rows this command owns. PHPUnit fixtures from earlier
+     * tasks leave stray `catalog_passive` rows behind — several of them at
+     * world (0,0), the same point the seeded start node occupies — and a
+     * leftover row there wins the canvas hit-test at centre before this
+     * command's own start node does. This command runs `#[When(env: 'test')]`
+     * only, so wiping the table never touches a development database, and
+     * the end-to-end suite needs a deterministic two-node tree far more than
+     * it needs to coexist with unrelated fixture data.
      */
     private function seedTree(): void
     {
         $this->db->transactional(static function (Connection $db): void {
-            $db->executeStatement('DELETE FROM catalog_passive_edge WHERE from_id = ? OR to_id = ?', [self::START_NODE_ID, self::START_NODE_ID]);
-            $db->executeStatement('DELETE FROM catalog_passive WHERE id IN (?, ?)', [self::START_NODE_ID, self::TARGET_NODE_ID]);
+            $db->executeStatement('DELETE FROM catalog_passive_edge');
+            $db->executeStatement('DELETE FROM catalog_passive');
             $db->executeStatement('DELETE FROM catalog_class WHERE id = ?', [self::CLASS_ID]);
 
             $db->executeStatement(
