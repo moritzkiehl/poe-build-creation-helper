@@ -1399,8 +1399,15 @@ one declaration that both the template and the controller read.
 ### Deallocation cascades, as one event
 
 Allocation is refused when illegal; removal is not refused. Deallocating a node
-that others reach the start *through* removes it **and everything that loses its
-connection**, recorded as a single history event that names the count.
+that others reach the start *through* removes it **and everything that becomes
+illegal as a result**, recorded as a single history event that names the count.
+
+"Becomes illegal" rather than "loses its connection", because connection is only
+the first of the four rules. Removing *The Unseen Path* leaves its `oracle_*`
+nodes perfectly connected and no longer permitted; removing a keystone closes the
+radius that let its neighbourhood sit disconnected. One rule for the cascade —
+re-check the four rules and remove what now fails — covers all three cases, and
+the alternative leaves a build the editor would refuse to let you build.
 
 The asymmetry is deliberate. Refusing the removal would be the tidier rule, but
 it makes the only way to abandon a path clicking back along it leaf by leaf,
@@ -1546,7 +1553,18 @@ patch.
    limit; this proof would only be needed if it ever should.
 7. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
-8. Whether weapon-set passives draw on their own point pool or the shared one.
+8. Whether the three multi-node `unlockConstraint` chains require **all** their
+   listed gate nodes or **any one**. Measured 2026-09-12: the field is
+   `{nodes: [tree-keys], ascendancy?: string}`; 197 entries list one node
+   (*The Unseen Path*, Druid1), and three list three each — *Path of the
+   Renegade* (Mutewind Agility, Brinerot Ferocity, Redblade Discipline), *The
+   Hollowkeeper* (First Teachings of the Keeper, First Principle of the Hollow —
+   two, not three), and Huntress's *Sacred Unity* (Vivid Stampede, Wild
+   Protector, Primal Bounty). The data cannot distinguish the two readings.
+   B1 implements **all-of** as the conservative reading, since requiring too much
+   refuses a legal build visibly while requiring too little permits an illegal
+   one silently
+9. Whether weapon-set passives draw on their own point pool or the shared one.
    Binds `passive.budget_exceeded`: counting all three groups against one budget
    misreports every build using weapon sets if the pools are separate. The corpus
    is suggestive but not decisive — 24 nodes on each set across three files, a
