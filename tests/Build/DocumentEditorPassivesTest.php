@@ -117,7 +117,7 @@ final class DocumentEditorPassivesTest extends TestCase
     public function testDeallocatingManyRemovesThemAllAndLeavesTheRestUntouched(): void
     {
         $document = new BuildDocument(name: 'test', passives: [
-            ['id' => 'keep', 'level_interval' => [1, 100], 'additional_text' => 'mine'],
+            ['id' => 'keep', 'level_interval' => [1, 100], 'additional_text' => 'mine', 'mystery_field' => 'x'],
             ['id' => 'drop_a', 'level_interval' => [1, 100]],
             ['id' => 'drop_b', 'level_interval' => [1, 100], 'weapon_set' => 2],
         ]);
@@ -126,6 +126,6 @@ final class DocumentEditorPassivesTest extends TestCase
 
         self::assertCount(1, $changed->passives);
         self::assertSame('keep', $changed->passives[0]['id']);
-        self::assertSame('mine', $changed->passives[0]['additional_text']);
+        self::assertSame($document->passives[0], $changed->passives[0]);
     }
 }
