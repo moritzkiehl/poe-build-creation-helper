@@ -57,4 +57,20 @@ final class Row
 
         return is_numeric($value) ? (float) $value : $default;
     }
+
+    /**
+     * A JSON column holding a list of strings. Anything that is not a string —
+     * a malformed row, a schema that moved — is dropped rather than coerced,
+     * matching how the other readers here behave.
+     *
+     * @param array<string, mixed> $row
+     *
+     * @return list<string>
+     */
+    public static function jsonStrings(array $row, string $key): array
+    {
+        $decoded = json_decode(self::str($row, $key, '[]'), true);
+
+        return array_values(array_filter(\is_array($decoded) ? $decoded : [], is_string(...)));
+    }
 }

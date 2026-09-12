@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Catalog;
 
+use App\Catalog\View\StatText;
 use Doctrine\DBAL\Connection;
 
 /**
  * The whole passive tree in one payload, for the canvas renderer.
  *
- * Nodes are tuples rather than objects: five thousand of them with six named
+ * Nodes are tuples rather than objects: five thousand of them with eight named
  * keys each is a payload several times larger than it needs to be, and the
  * only consumer is our own Stimulus controller. The order is fixed by
- * contract: id, name, kind, ascendancy key, x, y.
+ * contract: id, name, kind, ascendancy key, x, y, stats, recipe.
  */
 final class TreeExport
 {
@@ -21,12 +22,12 @@ final class TreeExport
     }
 
     /**
-     * @return array{nodes: list<array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float}>, edges: list<array{0: string, 1: string}>, classes: list<array{id: string, start_node_id: string, ascendancies: list<array{id: string, name: string}>}>}
+     * @return array{nodes: list<array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float, 6: list<string>, 7: list<string>}>, edges: list<array{0: string, 1: string}>, classes: list<array{id: string, start_node_id: string, ascendancies: list<array{id: string, name: string}>}>}
      */
     public function payload(): array
     {
         $nodes = [];
-        foreach ($this->db->fetchAllAssociative('SELECT id, name, kind, ascendancy_key, pos_x, pos_y FROM catalog_passive') as $row) {
+        foreach ($this->db->fetchAllAssociative('SELECT id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe FROM catalog_passive') as $row) {
             $nodes[] = [
                 Row::str($row, 'id'),
                 Row::str($row, 'name'),
@@ -34,6 +35,8 @@ final class TreeExport
                 Row::nullableStr($row, 'ascendancy_key'),
                 Row::float($row, 'pos_x'),
                 Row::float($row, 'pos_y'),
+                array_map(StatText::plain(...), Row::jsonStrings($row, 'stats')),
+                array_map(StatText::emotion(...), Row::jsonStrings($row, 'recipe')),
             ];
         }
 
