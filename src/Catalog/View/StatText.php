@@ -16,9 +16,12 @@ namespace App\Catalog\View;
 final class StatText
 {
     /**
-     * `[Key|Display]` reads as `Display`, `[Key]` as `Key`. Anything that is
-     * not a closed pair is left exactly as it is — a malformed line should look
-     * wrong rather than quietly lose a word.
+     * `[Key|Display]` reads as `Display`, `[Key]` as `Key`. An unclosed
+     * bracket is left exactly as it is — a malformed line should look wrong
+     * rather than quietly lose a word. Nesting is not handled: `[Outer[x]]`
+     * has its inner pair replaced and the outer brackets left stray, so the
+     * result is garbled rather than intact. No such text has turned up in the
+     * real catalog, so this stays unhandled rather than guessed at.
      */
     public static function plain(string $stat): string
     {

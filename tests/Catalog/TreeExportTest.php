@@ -44,13 +44,26 @@ final class TreeExportTest extends KernelTestCase
     {
         $this->seedPassive(
             id: 'e2e_detail',
+            name: 'Detail Node',
+            kind: 'notable',
+            ascendancyKey: 'gemling',
+            posX: 12.5,
+            posY: -34.5,
             stats: ['40% reduced [BuffMagnitude|Magnitude] of [Ignite|Ignite] on you'],
             recipe: ['ConcentratedLiquidSuffering', 'LiquidDespair'],
         );
 
         $node = $this->nodeById('e2e_detail');
 
-        self::assertCount(8, $node, 'the tuple is a contract: id, name, kind, ascendancy, x, y, stats, recipe');
+        // Checked by position, not by count: the tuple is a contract with a
+        // fixed order, and a count check cannot catch two adjacent strings
+        // (name, kind) swapped — only the value at each index can.
+        self::assertSame('e2e_detail', $node[0]);
+        self::assertSame('Detail Node', $node[1]);
+        self::assertSame('notable', $node[2]);
+        self::assertSame('gemling', $node[3]);
+        self::assertSame(12.5, $node[4]);
+        self::assertSame(-34.5, $node[5]);
         self::assertSame(['40% reduced Magnitude of Ignite on you'], $node[6]);
         self::assertSame(['Concentrated Liquid Suffering', 'Liquid Despair'], $node[7]);
     }
@@ -76,12 +89,7 @@ final class TreeExportTest extends KernelTestCase
     }
 
     /**
-     * Untyped on purpose: the node tuple's length is exactly what this test
-     * fixture asserts, and a return type precise enough to describe it would
-     * tell PHPStan the length before the assertion runs, making the assertion
-     * a tautology instead of a check.
-     *
-     * @return list<string|float|list<string>|null>
+     * @return array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float, 6: list<string>, 7: list<string>}
      */
     private function nodeById(string $id): array
     {
