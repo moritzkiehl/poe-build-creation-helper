@@ -1218,10 +1218,15 @@ failures are invisible at the point of use.
 Grouping is by id, so two families that both grant critical chance stay separate;
 there is no build-wide total. That was asked for deliberately.
 
-**Distilled nodes list separately**, above the tree families, because an
-anointment is granted by an amulet rather than paid for with a passive point and
-mixing the two would misstate what the tree itself gives. See "Anointed nodes
-must be declared" below for why this cannot be inferred.
+**Distilled nodes list separately**, above the tree families. The reason is a
+mechanic, not tidiness: **an anointment costs no passive point** — it is granted
+by the amulet — so folding anointed nodes into the tree's own figures would
+misstate both what the tree gives and what it cost. Owner-confirmed for 0.5.5;
+this is not derivable from catalog data, so it is curated knowledge and carries a
+version stamp like every other such claim. The same fact governs
+`passive.budget_exceeded`, which must not count them (see "Notes for the later
+rule walkthrough"). See "Anointed nodes must be declared" below for why this
+cannot be inferred.
 
 ### The tree is edited from the canvas only
 
@@ -1322,6 +1327,9 @@ patch.
 6. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
+Settled 2026-09-12 (owner, 0.5.5): an anointment costs no passive point. Curated,
+not derivable — the catalog carries anointment recipes but nothing about their
+cost. Binds `passive.budget_exceeded` and the stats overview's separate listing.
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
 Settled: the `.build` key spaces for passives and gems match their sources
 exactly (step 0).
@@ -1343,6 +1351,13 @@ geometry. What was proof #6 is dropped rather than stamped.
   league mechanic "Martyr of the First Edict", which grants every player in a
   league an extra point. The rule needs a tolerance or a user field for extra
   points, otherwise it fires on correct builds.
+- **Anointed nodes are not counted by it at all.** An anointment costs no passive
+  point — it is granted by the amulet — so counting the declared anointments
+  towards the budget would make correct builds look over-spent. Owner-confirmed
+  for 0.5.5, not derivable from catalog data; see "Anointed nodes must be
+  declared". This is the practical reason the editor records anointment
+  explicitly rather than guessing: a guess here would feed a wrong number
+  straight into this rule.
 - A full joint walkthrough of warnings and hints, after the first sync and
   against a concrete version.
 
