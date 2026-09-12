@@ -181,6 +181,30 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorCount(14, '#build-slots form[data-slot]');
     }
 
+    public function testAUniqueCanBeFoundBySearch(): void
+    {
+        $this->client->request('GET', $this->createBuild().'?unique=Astra');
+
+        self::assertSelectorExists('#build-slots input[name="unique"]');
+    }
+
+    public function testTheInstilledFieldSitsWithTheAmulet(): void
+    {
+        $this->client->request('GET', $this->createBuild());
+
+        self::assertSelectorExists('#build-slots input[name="instilled"]');
+    }
+
+    public function testAnInstillableNodeCanBeDeclaredFromTheAmulet(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'ignite_mitigation13']);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextContains('#build-instilled', 'Instilled');
+    }
+
     public function testTheEditorStillOffersTheWholeFileReplacement(): void
     {
         $this->client->request('GET', $this->createBuild());

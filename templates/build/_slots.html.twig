@@ -7,6 +7,39 @@
     <h2>Equipment</h2>
     <p>One unique per slot, by name. The format carries no rares and no numbers — this is its whole scope.</p>
 
+    <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
+        <label for="unique-q">Find a unique</label>
+        <input type="search" id="unique-q" name="unique" value="{{ uniqueQuery }}" placeholder="name">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if uniqueQuery is not empty %}
+        <ul>
+            {% for item in uniqueResults %}
+                <li>
+                    <strong>{{ item.name }}</strong> <span>{{ item.detail }}</span>
+                    {% if item.ambiguous %}<span>(more than one unique shares this name)</span>{% endif %}
+                    <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                        <input type="hidden" name="action" value="slot.set">
+                        <input type="hidden" name="unique_name" value="{{ item.name }}">
+                        <input type="hidden" name="from" value="1">
+                        <input type="hidden" name="to" value="100">
+                        {{ include('build/_search_state.html.twig') }}
+                        <label for="unique-result-{{ loop.index0 }}">Into slot</label>
+                        <select id="unique-result-{{ loop.index0 }}" name="inventory_id">
+                            {% for slot in slots %}
+                                <option value="{{ slot.id }}">{{ slot.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Set</button>
+                    </form>
+                </li>
+            {% else %}
+                <li>Nothing matches “{{ uniqueQuery }}”.</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <ul>
         {% for slot in slots %}
             {% set current = filled[slot.id]|default(null) %}
@@ -37,6 +70,39 @@
                         {{ include('build/_search_state.html.twig') }}
                         <button type="submit">Clear</button>
                     </form>
+                {% endif %}
+
+                {% if 'Amulet1' == slot.id %}
+                    <div id="build-instilled-search">
+                        <h3>Instilled Modifier</h3>
+                        <p>Three Distilled Emotions on the amulet grant a passive node's effect without allocating it. Only nodes with a recipe can be instilled.</p>
+
+                        <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
+                            <label for="instilled-q">Find an instillable node</label>
+                            <input type="search" id="instilled-q" name="instilled" value="{{ instilledQuery }}" placeholder="name or id">
+                            <button type="submit">Search</button>
+                        </form>
+
+                        {% if instilledQuery is not empty %}
+                            <ul>
+                                {% for node in instilledResults %}
+                                    <li>
+                                        <strong>{{ node.name }}</strong> <code>{{ node.id }}</code>
+                                        {% if node.stats %}<span>{{ node.stats }}</span>{% endif %}
+                                        {% if node.recipe %}<span>Recipe: {{ node.recipe|join(', ') }}</span>{% endif %}
+                                        <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                                            <input type="hidden" name="action" value="instilled.add">
+                                            <input type="hidden" name="id" value="{{ node.id }}">
+                                            {{ include('build/_search_state.html.twig') }}
+                                            <button type="submit">Declare</button>
+                                        </form>
+                                    </li>
+                                {% else %}
+                                    <li>Nothing matches “{{ instilledQuery }}”.</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </li>
         {% endfor %}

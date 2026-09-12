@@ -31,6 +31,30 @@
         <button type="submit">Search</button>
     </form>
 
+    {% if supportQuery is not empty %}
+        <ul>
+            {% for support in supportResults %}
+                <li>
+                    <strong>{{ support.name }}</strong> <code>{{ support.id }}</code>
+                    <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+                        <input type="hidden" name="action" value="support.add">
+                        <input type="hidden" name="support_id" value="{{ support.id }}">
+                        {{ include('build/_search_state.html.twig') }}
+                        <label for="support-result-skill-{{ loop.index0 }}">On skill</label>
+                        <select id="support-result-skill-{{ loop.index0 }}" name="skill_index">
+                            {% for skill in document.skills %}
+                                <option value="{{ loop.index0 }}">{{ skill.id }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Add support</button>
+                    </form>
+                </li>
+            {% else %}
+                <li>Nothing matches “{{ supportQuery }}”.</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <ol>
         {% for skill in document.skills %}
             {% set skillIndex = loop.index0 %}
@@ -81,25 +105,6 @@
                         </li>
                     {% endfor %}
                 </ul>
-
-                {% if supportQuery is not empty %}
-                    <ul>
-                        {% for support in supportResults %}
-                            <li>
-                                <strong>{{ support.name }}</strong> <code>{{ support.id }}</code>
-                                <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
-                                    <input type="hidden" name="action" value="support.add">
-                                    <input type="hidden" name="skill_index" value="{{ skillIndex }}">
-                                    <input type="hidden" name="support_id" value="{{ support.id }}">
-                                    {{ include('build/_search_state.html.twig') }}
-                                    <button type="submit">Add support</button>
-                                </form>
-                            </li>
-                        {% else %}
-                            <li>Nothing matches “{{ supportQuery }}”.</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
 
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="skill.remove">
