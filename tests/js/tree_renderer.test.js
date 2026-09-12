@@ -3,16 +3,21 @@ import { drawTree } from '../../assets/lib/tree_renderer.js';
 
 function fakeContext() {
     const fills = [];
+    const strokes = [];
     return {
         canvas: { width: 400, height: 300 },
         get fillStyle() { return this._fill; },
         set fillStyle(value) { this._fill = value; },
         fills,
+        strokes,
         clearRect: vi.fn(),
         beginPath: vi.fn(),
         moveTo: vi.fn(),
         lineTo: vi.fn(),
-        stroke: vi.fn(),
+        // Records the style and width in effect at the moment of the call,
+        // the way a real canvas context would apply them — a plain vi.fn()
+        // would only prove stroke() was called, not with what.
+        stroke: vi.fn(function () { strokes.push({ style: this.strokeStyle, width: this.lineWidth }); }),
         arc: vi.fn(),
         fill: vi.fn(function () { fills.push(this._fill); }),
     };
@@ -55,5 +60,23 @@ describe('drawTree', () => {
         }, camera);
 
         expect(context.fills).toEqual(['#6a6a7a']);
+    });
+
+    it('rings a node the search matched, and not one it did not', () => {
+        const context = fakeContext();
+
+        drawTree(context, {
+            nodes: nodesAt(['found', 'not_found']),
+            edges: [],
+            allocatedBySet: { shared: new Set(), one: new Set(), two: new Set() },
+            startNodeId: null,
+            hovered: null,
+            highlighted: new Set(['found']),
+        }, camera);
+
+        // A ring is a wide, white stroke; edges (there are none here) and the
+        // hover ring would otherwise be indistinguishable from it.
+        const rings = context.strokes.filter((stroke) => 3 === stroke.width);
+        expect(rings).toEqual([{ style: '#ffffff', width: 3 }]);
     });
 });

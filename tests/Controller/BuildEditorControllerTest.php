@@ -418,6 +418,20 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorTextContains('#build-history', 'Reverted');
     }
 
+    public function testTheSearchHighlightsInsteadOfOfferingToAllocate(): void
+    {
+        $edit = $this->seedBuildWithTree();
+
+        $crawler = $this->client->request('GET', $edit.'?q=near');
+
+        self::assertCount(0, $crawler->filter('input[value="passive.allocate"]'), 'the tree is canvas-only now');
+        self::assertStringContainsString('near', $crawler->filter('#build-nodes')->text());
+
+        $state = json_decode($crawler->filter('#build-state')->text(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($state);
+        self::assertSame(['near'], $state['highlighted']);
+    }
+
     public function testANodeSearchSurvivesAPlainFormPostAndRedirect(): void
     {
         $edit = $this->createBuild(['melee1_']);

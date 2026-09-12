@@ -79,9 +79,11 @@ final class EditorContext
         }
 
         $searches = $this->searches->all();
+        $highlightedIds = array_column($searches['passiveResults'], 'id');
 
         return array_merge([
             'build' => $build,
+            'highlightedIds' => $highlightedIds,
             'token' => $token,
             'document' => $document,
             'classes' => $this->entityManager->getRepository(CatalogClass::class)->findBy([], ['id' => 'ASC']),

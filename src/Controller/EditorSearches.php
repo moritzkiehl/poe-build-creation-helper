@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Extracted from EditorContext once there were five: a context builder that
  * also coordinates searching is doing two jobs, and the searches share one
  * awkward rule about where a term comes from.
+ *
+ * @phpstan-import-type ResultRow from CatalogSearch
  */
 final class EditorSearches
 {
@@ -24,7 +26,20 @@ final class EditorSearches
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{
+     *     passiveQuery: string,
+     *     passiveResults: list<array{id: string, name: string, kind: string, stats: list<string>}>,
+     *     gemQuery: string,
+     *     gemResults: list<ResultRow>,
+     *     supportQuery: string,
+     *     supportResults: list<ResultRow>,
+     *     uniqueQuery: string,
+     *     uniqueResults: list<ResultRow>,
+     *     instilledQuery: string,
+     *     instilledResults: list<array{id: string, name: string, kind: string, stats: list<string>, recipe: list<string>}>,
+     *     intervalsOverride: string,
+     *     supportsOverride: string,
+     * }
      */
     public function all(): array
     {
