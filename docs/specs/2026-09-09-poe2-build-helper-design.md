@@ -1356,9 +1356,10 @@ patch.
 7. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
-Settled 2026-09-12 (owner, 0.5.5): an Instilled Modifier costs no passive point. Curated,
-not derivable — the catalog carries anointment recipes but nothing about their
-cost. Binds `passive.budget_exceeded` and the stats overview's separate listing.
+Settled 2026-09-12 (owner, 0.5.5): an Instilled Modifier costs no passive point.
+Curated, not derivable — the catalog carries the Distilled Emotion recipes but
+nothing about their cost. Binds `passive.budget_exceeded` and the stats
+overview's separate listing.
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
 Settled: the `.build` key spaces for passives and gems match their sources
 exactly (step 0).
@@ -1380,13 +1381,13 @@ geometry. What was proof #6 is dropped rather than stamped.
   league mechanic "Martyr of the First Edict", which grants every player in a
   league an extra point. The rule needs a tolerance or a user field for extra
   points, otherwise it fires on correct builds.
-- **Anointed nodes are not counted by it at all.** An Instilled Modifier costs no passive
-  point — it is granted by the amulet — so counting the declared Instilled Modifiers
+- **Instilled nodes are not counted by it at all.** An Instilled Modifier costs
+  no passive point — it is granted by the amulet — so counting the declared ones
   towards the budget would make correct builds look over-spent. Owner-confirmed
-  for 0.5.5, not derivable from catalog data; see "Anointed nodes must be
-  declared". This is the practical reason the editor records anointment
-  explicitly rather than guessing: a guess here would feed a wrong number
-  straight into this rule.
+  for 0.5.5, not derivable from catalog data; see "Instilled nodes are declared,
+  not inferred". This is the practical reason the editor records them explicitly
+  rather than guessing: a guess here would feed a wrong number straight into this
+  rule.
 - A full joint walkthrough of warnings and hints, after the first sync and
   against a concrete version.
 
