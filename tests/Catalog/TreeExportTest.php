@@ -68,6 +68,23 @@ final class TreeExportTest extends KernelTestCase
         self::assertSame(['Concentrated Liquid Suffering', 'Liquid Despair'], $node[7]);
     }
 
+    public function testTheNodeTupleCarriesLegalityDataAtItsAgreedPositions(): void
+    {
+        $db = self::getContainer()->get(Connection::class);
+
+        $db->executeStatement('DELETE FROM catalog_passive');
+        $db->executeStatement(
+            "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint)
+             VALUES ('covered', 'Covered', 'small', NULL, 1.5, -2.5, '[]', '[]', '[\"keystone_a\"]', '{\"nodes\":[\"gate_a\"],\"ascendancy\":\"Druid1\"}')"
+        );
+
+        $payload = self::getContainer()->get(TreeExport::class)->payload();
+        $node = $payload['nodes'][0];
+
+        self::assertSame(['keystone_a'], $node[8]);
+        self::assertSame(['nodes' => ['gate_a'], 'ascendancy' => 'Druid1'], $node[9]);
+    }
+
     /**
      * @param list<string> $stats
      * @param list<string> $recipe
@@ -89,7 +106,7 @@ final class TreeExportTest extends KernelTestCase
     }
 
     /**
-     * @return array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float, 6: list<string>, 7: list<string>}
+     * @return array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float, 6: list<string>, 7: list<string>, 8: list<string>, 9: array{nodes: list<string>, ascendancy: string|null}|null}
      */
     private function nodeById(string $id): array
     {

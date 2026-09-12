@@ -10,10 +10,10 @@ use Doctrine\DBAL\Connection;
 /**
  * The whole passive tree in one payload, for the canvas renderer.
  *
- * Nodes are tuples rather than objects: five thousand of them with eight named
+ * Nodes are tuples rather than objects: five thousand of them with ten named
  * keys each is a payload several times larger than it needs to be, and the
  * only consumer is our own Stimulus controller. The order is fixed by
- * contract: id, name, kind, ascendancy key, x, y, stats, recipe.
+ * contract: id, name, kind, ascendancy key, x, y, stats, recipe, keystones_in_radius, unlock_constraint.
  */
 final class TreeExport
 {
@@ -22,12 +22,12 @@ final class TreeExport
     }
 
     /**
-     * @return array{nodes: list<array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float, 6: list<string>, 7: list<string>}>, edges: list<array{0: string, 1: string}>, classes: list<array{id: string, start_node_id: string, ascendancies: list<array{id: string, name: string}>}>}
+     * @return array{nodes: list<array{0: string, 1: string, 2: string, 3: string|null, 4: float, 5: float, 6: list<string>, 7: list<string>, 8: list<string>, 9: array{nodes: list<string>, ascendancy: string|null}|null}>, edges: list<array{0: string, 1: string}>, classes: list<array{id: string, start_node_id: string, ascendancies: list<array{id: string, name: string}>}>}
      */
     public function payload(): array
     {
         $nodes = [];
-        foreach ($this->db->fetchAllAssociative('SELECT id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe FROM catalog_passive') as $row) {
+        foreach ($this->db->fetchAllAssociative('SELECT id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint FROM catalog_passive') as $row) {
             $nodes[] = [
                 Row::str($row, 'id'),
                 Row::str($row, 'name'),
@@ -37,6 +37,8 @@ final class TreeExport
                 Row::float($row, 'pos_y'),
                 array_map(StatText::plain(...), Row::jsonStrings($row, 'stats')),
                 array_map(StatText::emotion(...), Row::jsonStrings($row, 'recipe')),
+                Row::jsonStrings($row, 'keystones_in_radius'),
+                $this->unlockConstraint($row),
             ];
         }
 
@@ -63,6 +65,33 @@ final class TreeExport
         }
 
         return ['nodes' => $nodes, 'edges' => $edges, 'classes' => $classes];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array{nodes: list<string>, ascendancy: string|null}|null
+     */
+    private function unlockConstraint(array $row): ?array
+    {
+        $raw = $row['unlock_constraint'] ?? null;
+
+        if (!\is_string($raw) || '' === $raw) {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (!\is_array($decoded)) {
+            return null;
+        }
+
+        $nodes = array_values(array_filter((array) ($decoded['nodes'] ?? []), is_string(...)));
+
+        return [] === $nodes ? null : [
+            'nodes' => $nodes,
+            'ascendancy' => \is_string($decoded['ascendancy'] ?? null) ? $decoded['ascendancy'] : null,
+        ];
     }
 
     /**
