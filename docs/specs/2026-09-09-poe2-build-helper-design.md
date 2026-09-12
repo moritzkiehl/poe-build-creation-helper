@@ -1124,6 +1124,26 @@ Plain Turbo Frame forms posting to `/act`, no custom JS:
 
 ## Iteration 3 refinements (2026-09-12)
 
+**Split into two slices, decided 2026-09-12.** Everything below is designed, but
+only the first slice is built next:
+
+- **Slice A (next).** Level-interval modes; the node hover; the collective stats
+  overview; the Instilled Modifier search beside `Amulet1` — pulled in because
+  the overview's distilled section has no data without it. Plus the three gaps
+  iteration 3 left against this spec: the support-gem autocomplete, the
+  unique-name autocomplete, and making `game_version` editable. `catalog_passive`
+  gains only `recipe`; the node tuple goes from six fields to eight.
+- **Slice B (later).** The tree edited from the canvas only, with search becoming
+  find-and-highlight, and the four allocation-legality rules. That is where
+  `keystones_in_radius` and `unlock_constraint` are added and the tuple reaches
+  ten.
+
+The split follows the shape of the risk. Slice A changes what the editor shows;
+slice B changes how it behaves under the cursor, and that is worth judging after
+the tooltip and overview have been used rather than from a document. Until slice
+B lands, the search box keeps its allocate buttons — only the per-node remove
+controls go, with the list they lived on.
+
 Decided after the first look at the built editor in a browser, and after the
 catalog was synced for the first time on the development machine (4912 passives,
 1120 gems, 5408 items). These change confirmed decisions, so they are recorded
