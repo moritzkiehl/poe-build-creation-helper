@@ -1169,7 +1169,7 @@ New actions: `passive.interval_all` (from, to) and `skill.interval_cascade`
 ### The node hover shows what the node actually does
 
 The tree export carries a `recipe` field the normaliser currently discards: the
-Liquid Emotions needed to anoint that node. 875 nodes have one, always three
+Liquid Emotions needed to instil that node. 875 nodes have one, always three
 ingredients, drawn from 13 distinct emotions, and an ingredient may repeat
 within a recipe (*Cold Coat* needs `LiquidEnvy, LiquidDespair, LiquidEnvy`).
 `catalog_passive` gains a `recipe` column, one of three added below.
@@ -1219,13 +1219,13 @@ Grouping is by id, so two families that both grant critical chance stay separate
 there is no build-wide total. That was asked for deliberately.
 
 **Distilled nodes list separately**, above the tree families. The reason is a
-mechanic, not tidiness: **an anointment costs no passive point** — it is granted
-by the amulet — so folding anointed nodes into the tree's own figures would
+mechanic, not tidiness: **an Instilled Modifier costs no passive point** — it is granted
+by the amulet — so folding instilled nodes into the tree's own figures would
 misstate both what the tree gives and what it cost. Owner-confirmed for 0.5.5;
 this is not derivable from catalog data, so it is curated knowledge and carries a
 version stamp like every other such claim. The same fact governs
 `passive.budget_exceeded`, which must not count them (see "Notes for the later
-rule walkthrough"). See "Anointed nodes must be declared" below for why this
+rule walkthrough"). See "Instilled nodes are declared, not inferred" below for why this
 cannot be inferred.
 
 ### The tree is edited from the canvas only
@@ -1285,17 +1285,42 @@ weapons, armour, jewellery and a flask — so none of this can be stored in the
 exported document. The declared keystone is an app-only column, like
 `class_key`.
 
-### Anointed nodes must be declared
+### Instilled nodes are declared, not inferred
 
-"Distilled separately" cannot be inferred. A disconnected node might be anointed,
-jewel-enabled, Oracle-enabled, or a mistake; an anointed notable might equally be
-sitting connected on the tree. Having a recipe is necessary but far from
-sufficient — 875 nodes have one, against 1192 notables, and no keystone or
-ascendancy node does.
+**The game's own vocabulary**, taken from the mod data rather than from habit:
+the currency is a **Distilled Emotion**, applying it produces an **Instilled
+Modifier**. The tree's `recipe` field lists the three Liquid Emotions a node
+costs. "Anoint" survives in some mod names and in the Oil Extractor's
+description, but the live markup is `[DistilledEmotion|Instilled]`.
 
-So anointment is recorded explicitly, as an app-only column listing the passive
-ids the player marked as anointed. It never reaches the exported file, which is
-correct: the game reconstructs an anointment from the amulet, not from the tree.
+Which cannot be inferred. A disconnected node might be instilled, jewel-enabled,
+Oracle-enabled, or a mistake; an instilled notable might equally be sitting
+connected on the tree. Having a recipe is necessary but far from sufficient — 875
+nodes have one, against 1192 notables, and no keystone or ascendancy node does.
+
+Since the app models no items except uniques by name, it does not describe the
+amulet at all. It records the *result*: an app-only column listing the passive
+ids the player declared. It never reaches the exported file, which is correct —
+the game reconstructs the modifier from the amulet, not from the tree.
+
+**The interface** is a search field beside `Amulet1` in the equipment area,
+searching the 875 nodes that have a recipe, because that is mechanically where a
+Distilled Emotion is applied. The resulting passives appear in the overview's
+separate distilled section, where their stats are read.
+
+**One entry by default, with more addable and no hard cap.** A normal amulet
+carries one; `UniqueMultipleAnointments1` ("Can have 3 additional
+`[DistilledEmotion|Instilled]` Modifiers", `local_item_can_have_x_additional_
+enchantments` = 3, required level 66) shows at least one unique exceeds that. The
+app cannot know which amulet the player wears, so it does not police a limit it
+cannot verify — the same reasoning as the declared jewel keystone.
+
+**A caution about the source.** `mods.json` carries visible PoE1 leftovers — a
+Blight *map* mod reading "Can be Anointed up to 3 times", a Heist chest "of
+Anointments". Presence in that file is therefore not proof a mechanic is live in
+0.5.5. `UniqueMultipleAnointments1` is treated as strong evidence rather than
+settled fact because it uses the PoE2-style `[Key|Display]` markup that current
+tree stats use.
 
 ### Catalog and payload
 
@@ -1324,10 +1349,14 @@ patch.
 3. Support sockets per skill gem: what the number depends on
 4. Spirit sources: how much sits on the tree, how much only on gear
 5. Weapon binding of skills: whether RePoE models it as a tag or a requirement
-6. Which spelling of `unique_name` the game accepts for the three ambiguous
+6. How many Instilled Modifiers a normal amulet allows. `UniqueMultipleAnointments1`
+   grants "3 additional", which implies a base of at least one, but the base
+   itself is nowhere in the catalog. The editor deliberately does not enforce a
+   limit; this proof would only be needed if it ever should.
+7. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
-Settled 2026-09-12 (owner, 0.5.5): an anointment costs no passive point. Curated,
+Settled 2026-09-12 (owner, 0.5.5): an Instilled Modifier costs no passive point. Curated,
 not derivable — the catalog carries anointment recipes but nothing about their
 cost. Binds `passive.budget_exceeded` and the stats overview's separate listing.
 Settled: uniqueness of supports per character — applied up to 0.2, lifted in 0.3.
@@ -1351,8 +1380,8 @@ geometry. What was proof #6 is dropped rather than stamped.
   league mechanic "Martyr of the First Edict", which grants every player in a
   league an extra point. The rule needs a tolerance or a user field for extra
   points, otherwise it fires on correct builds.
-- **Anointed nodes are not counted by it at all.** An anointment costs no passive
-  point — it is granted by the amulet — so counting the declared anointments
+- **Anointed nodes are not counted by it at all.** An Instilled Modifier costs no passive
+  point — it is granted by the amulet — so counting the declared Instilled Modifiers
   towards the budget would make correct builds look over-spent. Owner-confirmed
   for 0.5.5, not derivable from catalog data; see "Anointed nodes must be
   declared". This is the practical reason the editor records anointment
