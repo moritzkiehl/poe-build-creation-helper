@@ -1252,15 +1252,21 @@ endpoint is what enforces. Four rules, all derivable from data already synced:
 2. **Unlock constraints.** 200 nodes carry an explicit `unlockConstraint`. 197 of
    them are the `oracle_*` nodes gated behind `AscendancyDruid1Notable2` — *The
    Unseen Path*, "Walk the Paths Not Taken" — and require both the Druid1
-   ascendancy and that notable allocated. The other three are notable chains:
-   *Path of the Renegade* (Mutewind Agility, Brinerot Ferocity, Redblade
-   Discipline), *The Hollowkeeper*, and Huntress's *Sacred Unity*.
+   ascendancy and that notable **allocated**, not merely reachable
+   (owner-confirmed, 0.5.5). The other three are notable chains: *Path of the
+   Renegade* (Mutewind Agility, Brinerot Ferocity, Redblade Discipline), *The
+   Hollowkeeper*, and Huntress's *Sacred Unity*.
 3. **Entwined Realities.** `AscendancyDruid1Notable1` permits non-keystone
-   passives within a radius of an allocated keystone to be allocated
-   disconnected. The radius needs no geometry: 1573 nodes carry
-   `keystonesInRadius`, the precomputed tree-keys of the keystones covering them,
-   across 33 distinct keystones. The exception applies only once that notable is
-   itself allocated.
+   passives near a keystone to be allocated disconnected. The radius needs no
+   geometry: 1573 nodes carry `keystonesInRadius`, the precomputed tree-keys of
+   the keystones covering them, across 33 distinct keystones.
+
+   **Two things must both be allocated** (owner-confirmed, 0.5.5): the notable
+   itself, *and* the keystone whose radius is being used. Allocating the notable
+   alone unlocks nothing; it arms the mechanism, and each keystone switches on its
+   own neighbourhood as it is taken. Keystones are not themselves exempt — the
+   stat reads "Non-Keystone Passive Skills" — so a keystone still has to be
+   reached by ordinary connection before it can enable anything.
 4. **A declared jewel.** A build may nominate **one** keystone as jewel-enabled,
    granting the same radius exception around it.
 
@@ -1356,6 +1362,12 @@ patch.
 7. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
 
+Settled 2026-09-12 (owner, 0.5.5): the two tree-legality exceptions both need
+their enabling node *allocated*. *The Unseen Path* must be allocated before any
+`oracle_*` node can be; *Entwined Realities* must be allocated **and** the
+individual keystone taken before that keystone's neighbourhood opens up. The
+catalog states which nodes are affected but nothing about what switches them on,
+so this is curated.
 Settled 2026-09-12 (owner, 0.5.5): an Instilled Modifier costs no passive point.
 Curated, not derivable — the catalog carries the Distilled Emotion recipes but
 nothing about their cost. Binds `passive.budget_exceeded` and the stats
