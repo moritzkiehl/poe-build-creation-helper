@@ -1143,6 +1143,21 @@ only the first slice is built next:
   keyed by `inventory_id` alone — which is losing charm and flask entries today.
   See the dated subsections at the end of this section.
 
+  **Split in two, decided 2026-09-12**, because that scope roughly doubled the
+  slice and its two halves share no file, test or interface:
+
+  - **B1 — the tree.** Canvas-only editing, search as find-and-highlight, the
+    four legality rules with `keystones_in_radius` and `unlock_constraint`
+    synced, cascading deallocation, and weapon sets (mode, colours, per-set
+    connectivity, three-way summary). The risky half.
+  - **B2 — equipment.** The declared jewel keystone's pseudo-slot and the
+    `(inventory_id, slot_x, slot_y)` re-key that stops losing charm and flask
+    entries. Mechanical, and reviewable without any tree context.
+
+  B1 runs first. The ordering is a judgement call rather than a dependency —
+  B2 fixes data loss that exists today, but it touches no code B1 touches, so
+  running it second costs nothing but the delay.
+
 The split follows the shape of the risk. Slice A changes what the editor shows;
 slice B changes how it behaves under the cursor, and that is worth judging after
 the tooltip and overview have been used rather than from a document. Until slice
