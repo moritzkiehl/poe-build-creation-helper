@@ -19,7 +19,7 @@ final class EditHistory
     }
 
     /**
-     * @param array<string, scalar|null> $payload
+     * @param array<string, scalar|list<string>|null> $payload
      */
     public function record(Build $build, string $action, array $payload, ?string $snapshotName = null): BuildEvent
     {

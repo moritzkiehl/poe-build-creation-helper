@@ -22,6 +22,7 @@ use App\Build\Edit\Command\SetSkillInterval;
 use App\Build\Edit\Command\SetSkillIntervalCascading;
 use App\Build\Edit\Command\SetSlot;
 use App\Build\Edit\Command\SetSupportInterval;
+use App\Build\Tree\WeaponSet;
 use Symfony\Component\HttpFoundation\InputBag;
 
 /**
@@ -40,7 +41,7 @@ final class CommandFactory
     {
         return match ($action) {
             'header.set' => new SetHeaderField($buildId, $this->string($payload, 'field'), $this->string($payload, 'value', required: false)),
-            'passive.allocate' => new AllocatePassive($buildId, $this->string($payload, 'id')),
+            'passive.allocate' => new AllocatePassive($buildId, $this->string($payload, 'id'), WeaponSet::fromWire($this->optionalString($payload, 'set'))),
             'passive.deallocate' => new DeallocatePassive($buildId, $this->string($payload, 'id')),
             'passive.interval' => new SetPassiveInterval($buildId, $this->string($payload, 'id'), $this->int($payload, 'from'), $this->int($payload, 'to')),
             'passive.interval_all' => new SetAllPassiveIntervals($buildId, $this->int($payload, 'from'), $this->int($payload, 'to')),

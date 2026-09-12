@@ -25,6 +25,11 @@ final class InvalidEditCommand extends \RuntimeException
         return new self(\sprintf('This build has no %s to change.', $what));
     }
 
+    public static function illegalAllocation(string $id): self
+    {
+        return new self('"'.$id.'" is not connected to your tree, or something it needs is not allocated yet.');
+    }
+
     /**
      * For a field the build must always carry a value for — unlike
      * `noSuchEntry()`, the field is not unknown, it was just left empty.

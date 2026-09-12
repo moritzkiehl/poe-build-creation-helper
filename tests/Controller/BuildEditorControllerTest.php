@@ -6,6 +6,8 @@ namespace App\Tests\Controller;
 
 use App\Entity\Build;
 use App\Entity\BuildEvent;
+use App\Tests\Support\SeedsALegalPassiveTree;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -13,6 +15,8 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class BuildEditorControllerTest extends WebTestCase
 {
+    use SeedsALegalPassiveTree;
+
     private const string STREAM = 'text/vnd.turbo-stream.html';
 
     private KernelBrowser $client;
@@ -108,7 +112,7 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testAPassiveCanBeAllocatedAndRemovedWithoutJavascript(): void
     {
-        $edit = $this->createBuild();
+        $edit = $this->createBuild(['melee99_']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee99_']);
         $this->client->followRedirect();
@@ -119,6 +123,46 @@ final class BuildEditorControllerTest extends WebTestCase
         $this->client->followRedirect();
 
         self::assertSelectorTextNotContains('#build-nodes', 'melee99_');
+    }
+
+    public function testAllocatingAPassiveIsRefusedWithoutAClass(): void
+    {
+        // The node genuinely exists in the catalog — this refusal is about
+        // the build having no class to root a start node on, not about the
+        // node being unknown (that is a different failure, covered above by
+        // `far` in `testAllocatingANodeThatTouchesNothingIsRefused()`).
+        $edit = $this->createBuild();
+        $db = self::getContainer()->get(Connection::class);
+        $this->seedALegalPassiveTree($db, ['unreachable_without_class']);
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'unreachable_without_class'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('not connected', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testAllocatingANodeThatTouchesNothingIsRefused(): void
+    {
+        $edit = $this->seedBuildWithTree();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'far'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('not connected', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testDeallocatingAJunctionTakesWhatHungOffIt(): void
+    {
+        $edit = $this->seedBuildWithTree();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'near']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'leaf']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.deallocate', 'id' => 'near']);
+
+        $crawler = $this->client->request('GET', $edit);
+
+        self::assertStringNotContainsString('leaf', $crawler->filter('#build-nodes')->text(), 'the leaf lost its only route to the start');
+        self::assertStringContainsString('and 1 more', $crawler->filter('#build-history')->text());
     }
 
     public function testASkillCanBeAddedGivenASupportAndRemovedAgain(): void
@@ -297,7 +341,7 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testAnEditCanBeRevertedFromTheHistoryPanel(): void
     {
-        $edit = $this->createBuild();
+        $edit = $this->createBuild(['first', 'second']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'first']);
         $crawler = $this->client->followRedirect();
@@ -316,7 +360,7 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testANodeSearchSurvivesAPlainFormPostAndRedirect(): void
     {
-        $edit = $this->createBuild();
+        $edit = $this->createBuild(['melee1_']);
 
         // The search page itself already carries the term forward into its
         // /act forms as a hidden field — confirm that before relying on it.
@@ -331,7 +375,7 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testANodeSearchSurvivesInTheTurboStreamResponse(): void
     {
-        $edit = $this->createBuild();
+        $edit = $this->createBuild(['melee1_']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee1_', 'q' => 'crit'], server: ['HTTP_ACCEPT' => self::STREAM]);
 
@@ -346,7 +390,7 @@ final class BuildEditorControllerTest extends WebTestCase
         // there regardless of grouping. Starting from a fresh, uniform build keeps
         // that second section collapsed, so the only place an id could leak from
         // is the summary this test actually exercises.
-        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $edit = $this->pastedBuild('{"name":"Uniform"}', ['criticals7', 'criticals38']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'criticals7']);
         $this->client->followRedirect();
@@ -362,7 +406,7 @@ final class BuildEditorControllerTest extends WebTestCase
         // The fixture build is staggered on purpose (strength89 [1,100], melee22_
         // [34,60], attributes70 [0,100]) so it cannot stand in for the uniform
         // case here — a fresh build with two default-interval allocations does.
-        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $edit = $this->pastedBuild('{"name":"Uniform"}', ['strength89', 'melee22_']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
         $this->client->followRedirect();
@@ -378,7 +422,7 @@ final class BuildEditorControllerTest extends WebTestCase
         // Same uniform starting point as above, then one passive is staggered so
         // the assertion below has an actual difference to detect — the fixture
         // build is already staggered before passive.interval touches anything.
-        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $edit = $this->pastedBuild('{"name":"Uniform"}', ['strength89', 'melee22_']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
         $this->client->followRedirect();
@@ -410,7 +454,7 @@ final class BuildEditorControllerTest extends WebTestCase
     public function testTheIntervalsQueryParameterOverridesTheDerivedPassiveMode(): void
     {
         // A fresh, uniform build derives to the flat, whole-tree mode.
-        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $edit = $this->pastedBuild('{"name":"Uniform"}', ['strength89', 'melee22_']);
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
         $this->client->followRedirect();
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee22_']);
@@ -430,7 +474,7 @@ final class BuildEditorControllerTest extends WebTestCase
 
     public function testTheIntervalsOverrideSurvivesAPlainFormPostAndRedirect(): void
     {
-        $edit = $this->pastedBuild('{"name":"Uniform"}');
+        $edit = $this->pastedBuild('{"name":"Uniform"}', ['strength89', 'melee22_']);
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
         $this->client->followRedirect();
 
@@ -510,27 +554,109 @@ final class BuildEditorControllerTest extends WebTestCase
     }
 
     /**
+     * @param list<string> $legalPassiveIds ids the caller is about to allocate;
+     *                                       when given, a legal star tree is seeded
+     *                                       for them and assigned to the build
+     *
      * @return string the edit URL, without a trailing slash
      */
-    private function createBuild(): string
+    private function createBuild(array $legalPassiveIds = []): string
     {
         $source = __DIR__.'/../fixtures/build/valid-full.build';
         $copy = sys_get_temp_dir().'/'.uniqid('upload', true).'.build';
         copy($source, $copy);
 
         $this->client->request('POST', '/builds', files: ['build' => new UploadedFile($copy, 'valid-full.build', 'application/json', test: true)]);
+        $edit = (string) $this->client->getResponse()->headers->get('Location');
 
-        return (string) $this->client->getResponse()->headers->get('Location');
+        if ([] !== $legalPassiveIds) {
+            $this->assignLegalClass($edit, $legalPassiveIds);
+        }
+
+        return $edit;
     }
 
     /**
+     * @param list<string> $legalPassiveIds see {@see createBuild()}
+     *
      * @return string the edit URL, without a trailing slash
      */
-    private function pastedBuild(string $json): string
+    private function pastedBuild(string $json, array $legalPassiveIds = []): string
     {
         $this->client->request('POST', '/builds', ['json' => $json]);
+        $edit = (string) $this->client->getResponse()->headers->get('Location');
 
-        return (string) $this->client->getResponse()->headers->get('Location');
+        if ([] !== $legalPassiveIds) {
+            $this->assignLegalClass($edit, $legalPassiveIds);
+        }
+
+        return $edit;
+    }
+
+    /**
+     * Since Task 8, allocating a passive is refused unless it is connected to
+     * the build's class's start node — real product behaviour, not a test
+     * inconvenience (see `testAllocatingAPassiveIsRefusedWithoutAClass()`).
+     * Tests that allocate a passive only incidentally, on the way to testing
+     * something else, need a legal tree under the ids they use; this seeds
+     * one and assigns its class to the given build.
+     *
+     * @param list<string> $ids
+     */
+    private function assignLegalClass(string $edit, array $ids): void
+    {
+        $db = self::getContainer()->get(Connection::class);
+        $classId = $this->seedALegalPassiveTree($db, $ids);
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
+    }
+
+    /**
+     * A dedicated chain — start — near — leaf — plus an unconnected far, for
+     * the two tests below that care about the tree's shape: one needs a node
+     * with no route to the start, the other needs removing a junction to
+     * strand something hanging off it. `seedALegalPassiveTree()`'s star
+     * cannot express either, so this graph is seeded on its own.
+     *
+     * @return string the edit URL, without a trailing slash
+     */
+    private function seedBuildWithTree(): string
+    {
+        $db = self::getContainer()->get(Connection::class);
+        $classId = 'test_chain_class';
+        $startNodeId = 'start';
+        $ids = [$startNodeId, 'near', 'leaf', 'far'];
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+
+        $db->executeStatement("DELETE FROM catalog_passive_edge WHERE from_id IN ({$placeholders}) OR to_id IN ({$placeholders})", [...$ids, ...$ids]);
+        $db->executeStatement("DELETE FROM catalog_passive WHERE id IN ({$placeholders})", $ids);
+        $db->executeStatement('DELETE FROM catalog_class WHERE id = ?', [$classId]);
+
+        foreach ($ids as $id) {
+            $db->executeStatement(
+                "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, 'small', NULL, 0, 0, '[]', '[]')",
+                [$id, $id],
+            );
+        }
+
+        $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$startNodeId, 'near']);
+        $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', ['near', 'leaf']);
+        // 'far' is left with no edge at all: it touches nothing.
+
+        $db->executeStatement(
+            'INSERT INTO catalog_class (id, start_node_id, base_str, base_dex, base_int, ascendancies) VALUES (?, ?, 0, 0, 0, ?)',
+            [$classId, $startNodeId, '[]'],
+        );
+
+        // A build straight off `valid-full.build` already carries three
+        // passives of its own; the deallocate test's cascade would sweep
+        // those out too, since they are unknown to this synthetic catalog.
+        // Starting from an empty document keeps the cascade to exactly what
+        // this test allocates.
+        $edit = $this->pastedBuild('{"name":"Chain"}');
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
+
+        return $edit;
     }
 
     /**

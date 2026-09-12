@@ -37,7 +37,7 @@ class BuildEvent
     #[ORM\Column(length: 32)]
     private string $action;
 
-    /** @var array<string, scalar|null> */
+    /** @var array<string, scalar|list<string>|null> */
     #[ORM\Column(type: Types::JSON)]
     private array $payload;
 
@@ -52,8 +52,8 @@ class BuildEvent
     private ?string $snapshotName = null;
 
     /**
-     * @param array<string, scalar|null> $payload
-     * @param Snapshot                   $snapshot
+     * @param array<string, scalar|list<string>|null> $payload
+     * @param Snapshot                                 $snapshot
      */
     public function __construct(Build $build, string $action, array $payload, array $snapshot, ?string $snapshotName = null)
     {
@@ -86,7 +86,7 @@ class BuildEvent
         return $this->action;
     }
 
-    /** @return array<string, scalar|null> */
+    /** @return array<string, scalar|list<string>|null> */
     public function getPayload(): array
     {
         return $this->payload;

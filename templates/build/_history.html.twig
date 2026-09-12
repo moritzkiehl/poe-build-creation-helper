@@ -1,7 +1,5 @@
 {% set sentences = {
     'header.set': 'Changed a build detail',
-    'passive.allocate': 'Allocated a passive',
-    'passive.deallocate': 'Removed a passive',
     'passive.interval': 'Changed when a passive is taken',
     'passive.interval_all': 'Set one range for the whole tree',
     'skill.add': 'Added a skill',
@@ -36,7 +34,13 @@
         {% for event in events %}
             <li>
                 <time datetime="{{ event.createdAt|date('c') }}">{{ event.createdAt|date('Y-m-d H:i') }}</time>
-                {{ sentences[event.action]|default(event.action) }}
+                {% if event.action == 'passive.allocate' %}
+                    Allocated {{ event.payload.id }}{% if event.payload.set is defined and event.payload.set %} for weapon set {{ event.payload.set }}{% endif %}
+                {% elseif event.action == 'passive.deallocate' %}
+                    Removed {{ event.payload.id }}{% if event.payload.also is defined and event.payload.also|length %} and {{ event.payload.also|length }} more{% endif %}
+                {% else %}
+                    {{ sentences[event.action]|default(event.action) }}
+                {% endif %}
                 {% if event.namedSnapshot %}
                     — <strong>{{ event.snapshotName }}</strong> (kept)
                 {% endif %}
