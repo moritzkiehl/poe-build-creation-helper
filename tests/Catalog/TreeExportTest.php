@@ -70,10 +70,8 @@ final class TreeExportTest extends KernelTestCase
 
     public function testTheNodeTupleCarriesLegalityDataAtItsAgreedPositions(): void
     {
-        $db = self::getContainer()->get(Connection::class);
-
-        $db->executeStatement('DELETE FROM catalog_passive');
-        $db->executeStatement(
+        $this->db->executeStatement('DELETE FROM catalog_passive');
+        $this->db->executeStatement(
             "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint)
              VALUES ('covered', 'Covered', 'small', NULL, 1.5, -2.5, '[]', '[]', '[\"keystone_a\"]', '{\"nodes\":[\"gate_a\"],\"ascendancy\":\"Druid1\"}')"
         );
@@ -81,8 +79,19 @@ final class TreeExportTest extends KernelTestCase
         $payload = self::getContainer()->get(TreeExport::class)->payload();
         $node = $payload['nodes'][0];
 
+        self::assertCount(10, $node);
         self::assertSame(['keystone_a'], $node[8]);
         self::assertSame(['nodes' => ['gate_a'], 'ascendancy' => 'Druid1'], $node[9]);
+    }
+
+    public function testUnlockConstraintIsNullWhenNotSet(): void
+    {
+        $this->seedPassive(id: 'null_constraint');
+
+        $node = $this->nodeById('null_constraint');
+
+        self::assertSame([], $node[8]);
+        self::assertNull($node[9]);
     }
 
     /**
