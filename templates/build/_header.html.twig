@@ -1,12 +1,11 @@
 <section id="build-header" class="full">
     <h2>Build</h2>
 
-    {% macro field(build, token, name, label, value, q, gem, type) %}
+    {% macro field(build, token, name, label, value, q, gem, support, unique, instilled, type) %}
         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
             <input type="hidden" name="action" value="header.set">
             <input type="hidden" name="field" value="{{ name }}">
-            <input type="hidden" name="q" value="{{ q }}">
-            <input type="hidden" name="gem" value="{{ gem }}">
+            {{ include('build/_search_state.html.twig', {passiveQuery: q, gemQuery: gem, supportQuery: support, uniqueQuery: unique, instilledQuery: instilled}) }}
             <label for="header-{{ name }}">{{ label }}</label>
             <input type="{{ type|default('text') }}" id="header-{{ name }}" name="value" value="{{ value }}" onchange="this.form.requestSubmit()">
             <button type="submit">Save</button>
@@ -15,17 +14,16 @@
 
     {% import _self as header %}
 
-    {{ header.field(build, token, 'name', 'Name', build.name, passiveQuery, gemQuery) }}
-    {{ header.field(build, token, 'author', 'Author', build.author, passiveQuery, gemQuery) }}
-    {{ header.field(build, token, 'target_level', 'Target level', build.targetLevel, passiveQuery, gemQuery, 'number') }}
-    {{ header.field(build, token, 'note', 'Note', build.note, passiveQuery, gemQuery) }}
-    {{ header.field(build, token, 'archetype_key', 'Archetype', build.archetypeKey, passiveQuery, gemQuery) }}
+    {{ header.field(build, token, 'name', 'Name', build.name, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery) }}
+    {{ header.field(build, token, 'author', 'Author', build.author, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery) }}
+    {{ header.field(build, token, 'target_level', 'Target level', build.targetLevel, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, 'number') }}
+    {{ header.field(build, token, 'note', 'Note', build.note, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery) }}
+    {{ header.field(build, token, 'archetype_key', 'Archetype', build.archetypeKey, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery) }}
 
     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
         <input type="hidden" name="action" value="header.set">
         <input type="hidden" name="field" value="class_key">
-        <input type="hidden" name="q" value="{{ passiveQuery }}">
-        <input type="hidden" name="gem" value="{{ gemQuery }}">
+        {{ include('build/_search_state.html.twig') }}
         <label for="header-class">Class</label>
         <select id="header-class" name="value" onchange="this.form.requestSubmit()">
             <option value="">Not chosen</option>
@@ -39,8 +37,7 @@
     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
         <input type="hidden" name="action" value="header.set">
         <input type="hidden" name="field" value="ascendancy">
-        <input type="hidden" name="q" value="{{ passiveQuery }}">
-        <input type="hidden" name="gem" value="{{ gemQuery }}">
+        {{ include('build/_search_state.html.twig') }}
         <label for="header-ascendancy">Ascendancy</label>
         <select id="header-ascendancy" name="value" onchange="this.form.requestSubmit()">
             <option value="">Not chosen</option>

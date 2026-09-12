@@ -14,8 +14,7 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-slot="{{ slot.id }}">
                     <input type="hidden" name="action" value="slot.set">
                     <input type="hidden" name="inventory_id" value="{{ slot.id }}">
-                    <input type="hidden" name="q" value="{{ passiveQuery }}">
-                    <input type="hidden" name="gem" value="{{ gemQuery }}">
+                    {{ include('build/_search_state.html.twig') }}
 
                     <label for="slot-name-{{ slot.id }}">{{ slot.label }}</label>
                     <input type="text" id="slot-name-{{ slot.id }}" name="unique_name" value="{{ current.unique_name|default('') }}" placeholder="a unique's name, or leave empty">
@@ -35,8 +34,7 @@
                     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                         <input type="hidden" name="action" value="slot.clear">
                         <input type="hidden" name="inventory_id" value="{{ slot.id }}">
-                        <input type="hidden" name="q" value="{{ passiveQuery }}">
-                        <input type="hidden" name="gem" value="{{ gemQuery }}">
+                        {{ include('build/_search_state.html.twig') }}
                         <button type="submit">Clear</button>
                     </form>
                 {% endif %}

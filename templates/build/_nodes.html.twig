@@ -20,7 +20,7 @@
                         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                             <input type="hidden" name="action" value="passive.allocate">
                             <input type="hidden" name="id" value="{{ node.id }}">
-                            <input type="hidden" name="q" value="{{ passiveQuery }}">
+                            {{ include('build/_search_state.html.twig') }}
                             <button type="submit">Allocate</button>
                         </form>
                     {% endif %}
@@ -35,7 +35,7 @@
     {% if passivesUniform %}
         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-interval="all">
             <input type="hidden" name="action" value="passive.interval_all">
-            <input type="hidden" name="q" value="{{ passiveQuery }}">
+            {{ include('build/_search_state.html.twig') }}
             <label for="tree-from">The whole tree, from</label>
             <input type="number" id="tree-from" name="from" min="0" max="100" value="{{ passiveSpan[0] }}">
             <label for="tree-to">to</label>
@@ -62,7 +62,7 @@
                         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-interval="one">
                             <input type="hidden" name="action" value="passive.interval">
                             <input type="hidden" name="id" value="{{ passive.id }}">
-                            <input type="hidden" name="q" value="{{ passiveQuery }}">
+                            {{ include('build/_search_state.html.twig') }}
                             <label for="from-{{ passive.id }}"><code>{{ passive.id }}</code> from</label>
                             <input type="number" id="from-{{ passive.id }}" name="from" min="0" max="100" value="{{ passive.level_interval[0] ?? 1 }}">
                             <label for="to-{{ passive.id }}">to</label>
@@ -88,6 +88,7 @@
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="instilled.remove">
                     <input type="hidden" name="id" value="{{ node.id }}">
+                    {{ include('build/_search_state.html.twig') }}
                     <button type="submit">Remove</button>
                 </form>
             </li>

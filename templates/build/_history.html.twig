@@ -20,8 +20,7 @@
 
     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
         <input type="hidden" name="action" value="snapshot.create">
-        <input type="hidden" name="q" value="{{ passiveQuery }}">
-        <input type="hidden" name="gem" value="{{ gemQuery }}">
+        {{ include('build/_search_state.html.twig') }}
         <label for="snapshot-name">Name this state</label>
         <input type="text" id="snapshot-name" name="name" placeholder="Before the respec" required>
         <button type="submit">Save a snapshot</button>
@@ -40,8 +39,7 @@
 
                 <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                     <input type="hidden" name="action" value="history.revert">
-                    <input type="hidden" name="q" value="{{ passiveQuery }}">
-                    <input type="hidden" name="gem" value="{{ gemQuery }}">
+                    {{ include('build/_search_state.html.twig') }}
                     <button type="submit" name="event_id" value="{{ event.id }}">Revert to here</button>
                 </form>
             </li>

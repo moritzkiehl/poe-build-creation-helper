@@ -72,6 +72,7 @@ final class EditorContext
             'instilledNodes' => array_values(array_filter(array_map(static fn (string $id): ?array => $detail[$id] ?? null, $instilledIds))),
             'passivesUniform' => IntervalMode::passivesAreUniform($document),
             'passiveSpan' => IntervalMode::passiveSpan($document),
+            'supportsFollow' => IntervalMode::supportsFollowTheirSkills($document),
         ], $this->searches->all());
     }
 }

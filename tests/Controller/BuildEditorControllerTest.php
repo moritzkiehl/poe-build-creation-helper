@@ -118,6 +118,49 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorTextNotContains('#build-skills', 'FrostBlades');
     }
 
+    public function testASupportCanBeFoundBySearchRatherThanTyped(): void
+    {
+        $edit = $this->createBuild();
+
+        // The catalog tables are empty in this test database — the controller
+        // tests elsewhere never rely on a real match, only on the term
+        // surviving. This assertion needs an actual hit, so one is seeded.
+        $connection = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+        $connection->executeStatement("DELETE FROM catalog_gem WHERE id = 'Metadata/Items/Gems/SupportGemFastForward'");
+        $connection->executeStatement(
+            "INSERT INTO catalog_gem (id, name, kind, primary_attribute, icon) VALUES ('Metadata/Items/Gems/SupportGemFastForward', 'Fast Forward', 'support', 'dexterity', NULL)",
+        );
+
+        try {
+            $this->client->request('GET', $edit.'?support=Fast');
+
+            self::assertSelectorExists('#build-skills input[name="support"]');
+            self::assertSelectorExists('#build-skills form input[name="action"][value="support.add"]');
+        } finally {
+            $connection->executeStatement("DELETE FROM catalog_gem WHERE id = 'Metadata/Items/Gems/SupportGemFastForward'");
+        }
+    }
+
+    public function testASupportSearchSurvivesAPlainFormPostAndRedirect(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'skill.interval', 'index' => '0', 'from' => '1', 'to' => '100', 'support' => 'Fast']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#support-q[value="Fast"]');
+    }
+
+    public function testASkillIntervalCascadesToItsSupportsWhenTheyFollow(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'skill.interval_cascade', 'index' => '0', 'from' => '12', 'to' => '90']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#build-skills input[name="from"][value="12"]');
+    }
+
     public function testAUniqueCanBeNamedForASlotAndClearedAgain(): void
     {
         $edit = $this->createBuild();
