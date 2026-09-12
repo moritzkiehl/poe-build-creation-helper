@@ -54,9 +54,10 @@ rewrites the latter.
 ddev composer gate
 ```
 
-Coding standard, PHPStan at its highest level, and the whole test suite. This is
-the same command CI runs, and it should be green on a fresh clone before you
-change anything.
+Coding standard, PHPStan at its highest level, and the whole test suite —
+PHP, JS and one browser-driven end-to-end test. This is the same command CI
+runs, and it should be green on a fresh clone before you change anything, once
+"The end-to-end test" section below has been followed for Chromium.
 
 ## Frontend assets
 
@@ -83,6 +84,47 @@ No bundler and no Node runtime in production, but the two pure geometry
 modules the editor's canvas rests on (`assets/lib/camera.js`,
 `assets/lib/spatial_grid.js`) do have unit tests, run under Node inside the
 DDEV web container: `ddev npm install` once, then `ddev npm run test:js`.
+
+## The end-to-end test
+
+Neither PHPUnit nor those unit tests ever put the tree canvas in front of a
+browser — nothing inside a `<canvas>` is part of the DOM, so nothing there is
+reachable from a request/response test or a pure-function one. One Playwright
+test closes that gap: it creates a build, clicks a real point on a real
+canvas, and checks a real node was allocated. See `tests/e2e/editor.spec.js`
+and the "Game data" note in the README for why it is exactly one test.
+
+It needs Chromium, which is not part of `ddev npm install` and is large enough
+that it is worth doing once deliberately:
+
+```bash
+ddev npm install
+ddev npx playwright install --with-deps chromium
+```
+
+`--with-deps` also installs the system libraries Chromium needs to launch
+headless, via `apt` inside the container; expect this to take a few minutes on
+a slow connection. Without it the test fails with a missing-library error
+rather than a useful assertion.
+
+The test drives a throwaway `php -S` server bound to `127.0.0.1:8001` inside
+the same container (see `playwright.config.js`), talking to the `_test`
+database — never the public `https://poe-build-helper.ddev.site`, which is
+development data behind a self-signed certificate. It seeds its own tiny,
+invented corner of the passive tree catalog (see
+`src/Command/CreateTestBuildCommand.php`), so it needs a migrated test
+database but deliberately does **not** need `app:catalog:sync` — real game
+data would make an unrelated test depend on a third-party download.
+
+Run it with:
+
+```bash
+ddev composer db:migrate
+ddev npm run test:e2e
+```
+
+`ddev composer gate` runs this alongside everything else, so a full gate run
+also needs Chromium installed first.
 
 ## Game data
 

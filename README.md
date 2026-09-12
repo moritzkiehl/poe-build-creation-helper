@@ -20,6 +20,13 @@ ddev composer gate          # coding standard, PHPStan, tests
 Then <https://poe-build-helper.ddev.site>. Full instructions, including Windows
 and WSL2, are in [`docs/setup.md`](docs/setup.md).
 
+`composer gate` includes one Playwright test that drives a real browser
+against the editor's passive-tree canvas. Nothing inside a `<canvas>` is part
+of the DOM, so it's the only kind of test — not PHPUnit, not a JS unit test —
+that can click a node and check it was allocated; everything else about the
+editor is covered more cheaply than that, which is why there is exactly one.
+It needs Chromium installed once (`docs/setup.md` has the command).
+
 ## Status
 
 Design stage. There is no code yet, only the design under

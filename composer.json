@@ -69,13 +69,17 @@
             "@auto-scripts"
         ],
         "test": "php bin/phpunit",
+        "test:js": "npm run test:js",
+        "test:e2e": "npm run test:e2e",
         "stan": "phpstan analyse --no-progress",
         "cs": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --dry-run --diff",
         "cs:fix": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix",
         "gate": [
             "@cs",
             "@stan",
-            "@test"
+            "@test",
+            "@test:js",
+            "@test:e2e"
         ],
         "db:migrate": [
             "php bin/console doctrine:migrations:migrate --no-interaction",
@@ -103,7 +107,7 @@
         "symfony/maker-bundle": "^1.67"
     },
     "scripts-descriptions": {
-        "gate": "The quality gate: coding standard, PHPStan at max, the whole test suite.",
+        "gate": "The quality gate: coding standard, PHPStan at max, the PHP suite, the JS unit tests and the Playwright end-to-end test.",
         "db:migrate": "Bring both the development and the test database up to date."
     }
 }

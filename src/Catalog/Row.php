@@ -42,4 +42,19 @@ final class Row
 
         return is_numeric($value) ? (int) $value : $default;
     }
+
+    /**
+     * Unlike the other accessors here, a numeric column is not reliably a PHP
+     * string: the driver hands back a native float for FLOAT/DOUBLE columns
+     * fetched outside the ORM, so this checks `is_numeric()` rather than
+     * `is_string()`.
+     *
+     * @param array<string, mixed> $row
+     */
+    public static function float(array $row, string $key, float $default = 0.0): float
+    {
+        $value = $row[$key] ?? null;
+
+        return is_numeric($value) ? (float) $value : $default;
+    }
 }

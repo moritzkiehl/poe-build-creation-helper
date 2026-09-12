@@ -32,8 +32,8 @@ final class TreeExport
                 Row::str($row, 'name'),
                 Row::str($row, 'kind'),
                 Row::nullableStr($row, 'ascendancy_key'),
-                (float) Row::str($row, 'pos_x', '0'),
-                (float) Row::str($row, 'pos_y', '0'),
+                Row::float($row, 'pos_x'),
+                Row::float($row, 'pos_y'),
             ];
         }
 
