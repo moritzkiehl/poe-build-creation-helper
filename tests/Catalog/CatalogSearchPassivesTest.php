@@ -53,15 +53,33 @@ final class CatalogSearchPassivesTest extends KernelTestCase
         self::assertSame([], $this->search->instillablePassives(''));
     }
 
+    public function testLookingUpNodesByIdReturnsReadableDetail(): void
+    {
+        $this->seedPassives([
+            ['id' => 'criticals1', 'name' => 'Critical Damage', 'kind' => 'small', 'stats' => ['15% increased [CriticalDamageBonus|Critical Damage Bonus]'], 'recipe' => []],
+            ['id' => 'ignite_mitigation13', 'name' => 'Self Immolation', 'kind' => 'notable', 'stats' => [], 'recipe' => ['ConcentratedLiquidSuffering']],
+        ]);
+
+        $found = array_column($this->search->passivesByIds(['ignite_mitigation13', 'criticals1']), null, 'id');
+
+        self::assertSame(['15% increased Critical Damage Bonus'], $found['criticals1']['stats']);
+        self::assertSame(['Concentrated Liquid Suffering'], $found['ignite_mitigation13']['recipe']);
+    }
+
+    public function testLookingUpNothingQueriesNothing(): void
+    {
+        self::assertSame([], $this->search->passivesByIds([]));
+    }
+
     /**
-     * @param list<array{id: string, name: string, kind: string, recipe?: list<string>}> $passives
+     * @param list<array{id: string, name: string, kind: string, stats?: list<string>, recipe?: list<string>}> $passives
      */
     private function seedPassives(array $passives): void
     {
         foreach ($passives as $passive) {
             $this->db->executeStatement(
                 'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, NULL, 0, 0, ?, ?)',
-                [$passive['id'], $passive['name'], $passive['kind'], '[]', json_encode($passive['recipe'] ?? [])],
+                [$passive['id'], $passive['name'], $passive['kind'], json_encode($passive['stats'] ?? []), json_encode($passive['recipe'] ?? [])],
             );
         }
     }

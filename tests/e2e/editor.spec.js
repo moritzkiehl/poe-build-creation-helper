@@ -36,8 +36,12 @@ test('a node clicked on the canvas appears in the allocated list', async ({ page
     // but the click lands on whatever the unscrolled viewport shows instead.
     await canvas.scrollIntoViewIfNeeded();
 
+    // #build-nodes carries three headings now (Levels, the stats overview,
+    // Instilled) — only the stats overview's count changes on allocation, so
+    // the locator picks that one by its stable "What the tree gives" prefix
+    // rather than an unqualified 'h3' that resolves to all three.
     const nodes = page.locator('#build-nodes');
-    const allocated = nodes.locator('h3');
+    const allocated = nodes.locator('h3').filter({ hasText: 'What the tree gives' });
     const before = await allocated.textContent();
 
     // The seeded target node sits CLICK_OFFSET_PX to the right of the start

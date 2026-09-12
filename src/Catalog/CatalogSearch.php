@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Catalog;
 
 use App\Catalog\View\StatText;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -100,6 +101,41 @@ final class CatalogSearch
         }
 
         return $results;
+    }
+
+    /**
+     * Detail for a known set of ids — what the stats overview and the instilled
+     * list both need. Ids come from a build document, so the set is small.
+     *
+     * @param list<string> $ids
+     *
+     * @return list<array{id: string, name: string, kind: string, stats: list<string>, recipe: list<string>}>
+     */
+    public function passivesByIds(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT id, name, kind, stats, recipe FROM catalog_passive WHERE id IN (?)',
+            [$ids],
+            [ArrayParameterType::STRING],
+        );
+
+        $found = [];
+
+        foreach ($rows as $row) {
+            $found[] = [
+                'id' => Row::str($row, 'id'),
+                'name' => Row::str($row, 'name'),
+                'kind' => Row::str($row, 'kind'),
+                'stats' => array_map(StatText::plain(...), Row::jsonStrings($row, 'stats')),
+                'recipe' => array_map(StatText::emotion(...), Row::jsonStrings($row, 'recipe')),
+            ];
+        }
+
+        return $found;
     }
 
     /**

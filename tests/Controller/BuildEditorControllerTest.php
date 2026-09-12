@@ -191,6 +191,78 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringContainsString('id="passive-q" name="q" value="crit"', (string) $this->client->getResponse()->getContent());
     }
 
+    public function testTheOverviewGroupsAllocatedPassivesByFamily(): void
+    {
+        // A build straight off the fixture is already staggered (see the interval
+        // tests below), which would open the per-passive editor and print each id
+        // there regardless of grouping. Starting from a fresh, uniform build keeps
+        // that second section collapsed, so the only place an id could leak from
+        // is the summary this test actually exercises.
+        $edit = $this->pastedBuild('{"name":"Uniform"}');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'criticals7']);
+        $this->client->followRedirect();
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'criticals38']);
+        $this->client->followRedirect();
+
+        self::assertSelectorTextContains('#build-nodes', 'criticals');
+        self::assertSelectorTextNotContains('#build-nodes', 'criticals7', 'the family is shown, not each id');
+    }
+
+    public function testTheOverviewOffersOneIntervalWhenTheyAreUniform(): void
+    {
+        // The fixture build is staggered on purpose (strength89 [1,100], melee22_
+        // [34,60], attributes70 [0,100]) so it cannot stand in for the uniform
+        // case here — a fresh build with two default-interval allocations does.
+        $edit = $this->pastedBuild('{"name":"Uniform"}');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
+        $this->client->followRedirect();
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee22_']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#build-nodes form[data-interval="all"]');
+        self::assertSelectorNotExists('#build-nodes form[data-interval="one"]');
+    }
+
+    public function testStaggeredIntervalsOpenThePerPassiveEditor(): void
+    {
+        // Same uniform starting point as above, then one passive is staggered so
+        // the assertion below has an actual difference to detect — the fixture
+        // build is already staggered before passive.interval touches anything.
+        $edit = $this->pastedBuild('{"name":"Uniform"}');
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'strength89']);
+        $this->client->followRedirect();
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'melee22_']);
+        $this->client->followRedirect();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.interval', 'id' => 'strength89', 'from' => '34', 'to' => '60']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#build-nodes form[data-interval="one"]');
+    }
+
+    public function testSettingTheTreeWideIntervalTouchesEveryPassive(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.interval_all', 'from' => '12', 'to' => '90']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#build-nodes input[name="from"][value="12"]');
+    }
+
+    public function testInstilledNodesListSeparatelyFromTheTree(): void
+    {
+        $edit = $this->createBuild();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'instilled.add', 'id' => 'strength89']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#build-instilled');
+    }
+
     public function testASnapshotCanBeNamedAndIsMarkedAsKept(): void
     {
         $edit = $this->createBuild();
@@ -212,6 +284,16 @@ final class BuildEditorControllerTest extends WebTestCase
         copy($source, $copy);
 
         $this->client->request('POST', '/builds', files: ['build' => new UploadedFile($copy, 'valid-full.build', 'application/json', test: true)]);
+
+        return (string) $this->client->getResponse()->headers->get('Location');
+    }
+
+    /**
+     * @return string the edit URL, without a trailing slash
+     */
+    private function pastedBuild(string $json): string
+    {
+        $this->client->request('POST', '/builds', ['json' => $json]);
 
         return (string) $this->client->getResponse()->headers->get('Location');
     }
