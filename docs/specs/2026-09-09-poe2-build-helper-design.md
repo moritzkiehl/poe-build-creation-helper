@@ -320,6 +320,14 @@ Consequences to design for:
   a screen reader on its own. The searchable node list beside the tree is not
   decoration — it is the accessible path to the same actions, and it also carries
   the ids that findings target.
+
+  **Amended 2026-09-12, and narrowed:** the search half survives, so a node can
+  still be found and allocated without a mouse. The per-node list with its remove
+  controls does not — it was replaced by the collective stats overview, and
+  deallocating is now canvas-only. The owner was shown that cost twice and chose
+  it deliberately both times. So the sentence above is no longer true of removal:
+  the editor can be driven one-way from a keyboard, not round-trip. See
+  "Iteration 3 refinements".
 - A Stimulus controller owns the canvas and redraws on state change; findings
   keep arriving over Turbo as elsewhere.
 - Orbit geometry as measured on 0.5.5: radii `[0, 82, 164, 334, 488, 657, 839,
@@ -1064,6 +1072,9 @@ for every command, rather than a second parallel client-state sync path.
   user journey asks for. A search box queries `catalog_passive` by name/id
   (server-side, over all 4912 nodes) and lists matches with an allocate
   button; below it, a `<ul>` of currently-allocated nodes has remove buttons.
+  (**Superseded 2026-09-12**: the allocated list and its remove buttons became
+  the collective stats overview — see "Iteration 3 refinements". The search
+  half below is unchanged and still server-rendered.)
   Both post to the same `/act` endpoint as the canvas. Zero custom JS; the
   same Hotwire form-in-a-frame pattern as Header/Skills/Slots. This is the
   load-bearing accessible path: nothing in the canvas is reachable by
@@ -1105,6 +1116,109 @@ Plain Turbo Frame forms posting to `/act`, no custom JS:
   for pure-logic modules like this — no DOM/browser automation needed, since
   the screen→world/grid-lookup/nearest-node math is itself DOM-free. First use
   of a JS test runner in this project.
+
+## Iteration 3 refinements (2026-09-12)
+
+Decided after the first look at the built editor in a browser, and after the
+catalog was synced for the first time on the development machine (4912 passives,
+1120 gems, 5408 items). These change confirmed decisions, so they are recorded
+here rather than folded silently into the iteration 3 section.
+
+### Level intervals get two modes, derived from the document
+
+Per-passive level intervals were judged something "nobody would configure". They
+are not removed, because the format requires `level_interval` on every passive
+and because a game-exported file may legitimately carry different values per
+node — flattening those on import would destroy data the round-trip guarantee
+exists to protect.
+
+Instead there are two modes, and **the mode is derived from the document, never
+stored**. A stored mode could disagree with the document it describes; a derived
+one cannot.
+
+- **Passives.** If every allocated passive shares one interval, the editor opens
+  flattened: a single From/To seeded from the widest span (lowest `from`, highest
+  `to`), written to every passive on submit. Otherwise it opens per-passive.
+  Since the flat allocated list is gone, per-passive controls live inside the
+  overview itself: each family group expands to its member nodes, each with its
+  own From/To. Those rows carry no remove button — deallocating is canvas-only in
+  both modes, deliberately.
+- **Skills.** If every support's interval already equals its parent skill's, the
+  editor opens flattened: each skill keeps its own From/To and its supports
+  inherit it, shown read-only. Otherwise each support keeps its own control.
+  Skills always differ from one another — only the supports collapse into their
+  skill, because a skill setup comes online together while different skills do
+  not.
+
+**A toggle switches the view and writes nothing.** The rewrite happens only when
+a value is submitted. Otherwise a stray click while inspecting an imported file
+would flatten it.
+
+One accepted quirk: a build edited per-passive into uniform intervals reopens
+flattened. The data is identical either way, so this costs nothing but a
+surprise, and avoiding it would mean storing a mode that can lie.
+
+New actions: `passive.interval_all` (from, to) and `skill.interval_cascade`
+(index, from, to).
+
+### The node hover shows what the node actually does
+
+The tree export carries a `recipe` field the normaliser currently discards: the
+Liquid Emotions needed to anoint that node. 875 nodes have one, always three
+ingredients, drawn from 13 distinct emotions, and an ingredient may repeat
+within a recipe (*Cold Coat* needs `LiquidEnvy, LiquidDespair, LiquidEnvy`).
+`catalog_passive` gains a `recipe` JSON column.
+
+`stats` is already stored and simply was not shipped. The `tree.json` node tuple
+therefore grows from six to eight by **appending**, never reordering:
+`[id, name, kind, ascendancy_key, x, y, stats, recipe]`. Appending keeps the
+canvas controller's existing destructuring working untouched.
+
+Measured, not estimated: the payload goes from 551 KB to 744 KB raw, but the
+endpoint already serves gzip with an ETag bound to the catalog sync, so on the
+wire it is 113 KB to 142 KB — 29 KB more, downloaded once per game patch and
+answered 304 thereafter. That is why the detail ships with the tree rather than
+being fetched per node on hover: hover has to be instant, and a request per node
+never can be.
+
+Two pure functions, shared by the tooltip and the overview:
+
+- **Stat markup.** `[Key|Display]` renders as `Display`, `[Key]` as `Key`, so
+  `40% reduced [BuffMagnitude|Magnitude] of [Ignite|Ignite] on you` reads as
+  written.
+- **Emotion names.** `ConcentratedLiquidSuffering` becomes
+  `Concentrated Liquid Suffering` by splitting camel case. This is a mechanical
+  transformation, not a claim about GGG's own wording; if their display names
+  differ, this becomes a curated map like `inventory_slots.yaml`.
+
+The tooltip is a positioned DOM element, not the `title` attribute — that has a
+browser-imposed delay of about a second and cannot format several lines.
+
+### The allocated list becomes a collective stats overview
+
+Allocated passives group by **id family**: the id with trailing digits and any
+trailing underscore removed, so `area_attacks38` and `area_attacks39` are one
+group and `melee22_` joins `melee`. The synced tree has 506 such families across
+4912 nodes; the largest are `criticals` (99), `attributes` (90), `strength` (82).
+
+Within a family, stat lines are summed by a rule holding **no game knowledge**:
+normalise a line by replacing its numbers with a placeholder, and lines sharing a
+normalised form that contain exactly one number are summable, their numbers
+added. Everything else is listed verbatim with a count.
+
+The rule can therefore never be wrong about a mechanic — it can only decline to
+sum, and a declined line appears in full on screen. That visible degradation is
+why this needs no accuracy measurement, unlike the `support_text` parser, whose
+failures are invisible at the point of use.
+
+Grouping is by id, so two families that both grant critical chance stay separate;
+there is no build-wide total. That was asked for deliberately.
+
+**What this costs.** The search box and its allocate buttons remain, so a node
+can still be found and allocated from a keyboard. The per-node remove controls
+are gone, in both modes, and deallocating is canvas-only — a mouse-only action.
+The owner was shown this cost twice and chose it deliberately both times. The
+rendering-the-passive-tree section above has been corrected accordingly.
 
 ## Open points
 
