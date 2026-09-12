@@ -101,13 +101,23 @@ export default class extends Controller {
 
     pointermove(event) {
         if (this.dragging) {
+            // event.offsetX/Y are CSS pixels. The drag/click threshold is
+            // measured in that same unit — DRAG_SLOP is a physical distance
+            // the pointer travelled, and should feel the same regardless of
+            // devicePixelRatio. The camera, though, is scaled against
+            // canvas.width/height, which are device pixels (see resize()),
+            // the same space wheel() and nodeAt() already convert into. So
+            // the CSS-pixel delta is only converted to device pixels at the
+            // point it is handed to panBy, to agree with zoom and hit-testing.
             const dx = event.offsetX - this.dragging.x;
             const dy = event.offsetY - this.dragging.y;
 
             this.dragging.moved += Math.abs(dx) + Math.abs(dy);
             this.dragging.x = event.offsetX;
             this.dragging.y = event.offsetY;
-            this.camera = panBy(this.camera, dx, dy);
+
+            const ratio = this.ratio();
+            this.camera = panBy(this.camera, dx * ratio, dy * ratio);
             this.redraw();
 
             return;
@@ -159,10 +169,13 @@ export default class extends Controller {
 
     async toggle(id) {
         const allocating = !this.allocated.has(id);
+        const before = new Set(this.allocated);
 
         // Draw the change at once and put it back if the server refuses:
         // waiting a round trip before the node lights up makes the tree feel
-        // broken on a slow connection.
+        // broken on a slow connection. The rollback below restores this exact
+        // snapshot rather than inverting the toggle, so it is correct even if
+        // something else touched `this.allocated` while the request was in flight.
         if (allocating) {
             this.allocated.add(id);
         } else {
@@ -172,24 +185,48 @@ export default class extends Controller {
         this.redraw();
 
         const body = new URLSearchParams({ action: allocating ? 'passive.allocate' : 'passive.deallocate', id });
-        const response = await fetch(this.actUrlValue, {
-            method: 'POST',
-            headers: { Accept: 'text/vnd.turbo-stream.html' },
-            body,
-        });
 
-        if (!response.ok && response.status !== 422) {
-            if (allocating) {
-                this.allocated.delete(id);
-            } else {
-                this.allocated.add(id);
-            }
-
+        let response;
+        try {
+            response = await fetch(this.actUrlValue, {
+                method: 'POST',
+                headers: { Accept: 'text/vnd.turbo-stream.html' },
+                body,
+            });
+        } catch {
+            // Request never reached (or never returned from) the network:
+            // there is no response body of any kind to render.
+            this.allocated = before;
             this.redraw();
 
             return;
         }
 
-        Turbo.renderStreamMessage(await response.text());
+        if (response.ok) {
+            Turbo.renderStreamMessage(await response.text());
+
+            return;
+        }
+
+        if (422 === response.status) {
+            // Rejected, but the server still renders a full turbo-stream for
+            // a 422 — an error message plus a replaced build-state tag — so
+            // roll back the optimistic guess first and then render it: the
+            // render is what resyncs `this.allocated` from server truth via
+            // stateTargetConnected(). Do not drop this render "to match the
+            // other failure case" — without it the canvas is left holding
+            // the rolled-back guess instead of the server's actual state.
+            this.allocated = before;
+            this.redraw();
+            Turbo.renderStreamMessage(await response.text());
+
+            return;
+        }
+
+        // Anything else (500, etc.): the body is not guaranteed to be a
+        // turbo-stream, so roll back and stop rather than hand an arbitrary
+        // error page to Turbo.
+        this.allocated = before;
+        this.redraw();
     }
 }
