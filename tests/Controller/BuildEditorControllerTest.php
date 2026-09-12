@@ -139,6 +139,9 @@ final class BuildEditorControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('not connected', (string) $this->client->getResponse()->getContent());
+
+        $crawler = $this->client->request('GET', $edit);
+        self::assertStringNotContainsString('unreachable_without_class', $crawler->filter('#build-nodes')->text(), 'a refused allocation must not reach the document');
     }
 
     public function testAllocatingANodeThatTouchesNothingIsRefused(): void
@@ -149,6 +152,9 @@ final class BuildEditorControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('not connected', (string) $this->client->getResponse()->getContent());
+
+        $crawler = $this->client->request('GET', $edit);
+        self::assertStringNotContainsString('far', $crawler->filter('#build-nodes')->text(), 'a refused allocation must not reach the document');
     }
 
     public function testDeallocatingAJunctionTakesWhatHungOffIt(): void
@@ -163,6 +169,29 @@ final class BuildEditorControllerTest extends WebTestCase
 
         self::assertStringNotContainsString('leaf', $crawler->filter('#build-nodes')->text(), 'the leaf lost its only route to the start');
         self::assertStringContainsString('and 1 more', $crawler->filter('#build-history')->text());
+    }
+
+    public function testDeallocatingDoesNotSweepPassivesThatWereAlreadyIllegal(): void
+    {
+        // `seedBuildWithTree()` builds from `valid-full.build`, which already
+        // carries `strength89` — a passive this synthetic catalog has never
+        // heard of, so it is illegal from the moment the build is created,
+        // independently of anything this test does. A real imported build
+        // can carry passives like this for real (this app models neither
+        // socket-radius jewels nor every unlock path), so removing an
+        // unrelated junction must not take it: only what the removal itself
+        // strands belongs in the cascade.
+        $edit = $this->seedBuildWithTree();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'near']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'leaf']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.deallocate', 'id' => 'near']);
+
+        $crawler = $this->client->request('GET', $edit);
+
+        self::assertStringContainsString('strength89', $crawler->filter('#build-nodes')->text(), 'a passive already illegal before the edit must survive an unrelated removal');
+        self::assertStringContainsString('and 1 more', $crawler->filter('#build-history')->text());
+        self::assertStringNotContainsString('and 2 more', $crawler->filter('#build-history')->text());
     }
 
     public function testASkillCanBeAddedGivenASupportAndRemovedAgain(): void
@@ -648,12 +677,7 @@ final class BuildEditorControllerTest extends WebTestCase
             [$classId, $startNodeId, '[]'],
         );
 
-        // A build straight off `valid-full.build` already carries three
-        // passives of its own; the deallocate test's cascade would sweep
-        // those out too, since they are unknown to this synthetic catalog.
-        // Starting from an empty document keeps the cascade to exactly what
-        // this test allocates.
-        $edit = $this->pastedBuild('{"name":"Chain"}');
+        $edit = $this->createBuild();
         $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
 
         return $edit;

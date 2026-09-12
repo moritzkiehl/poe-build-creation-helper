@@ -12,7 +12,6 @@ use App\Interchange\BuildDocumentReader;
 use App\Repository\BuildEventRepository;
 use App\Repository\BuildRepository;
 use App\Tests\Support\SeedsALegalPassiveTree;
-use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -43,7 +42,7 @@ final class BuildEditorTest extends KernelTestCase
         // the fixture, and Task 8 refuses re-allocating an already-allocated
         // id. This id is connected to the seeded class's start node and is
         // absent from valid-full.build, so allocating it is a genuine change.
-        $build = $this->buildWithLegalTree(['test_target_node']);
+        $build = $this->buildWithLegalTree($this->build(), $this->entityManager, ['test_target_node']);
 
         $this->bus->dispatch(new AllocatePassive((int) $build->getId(), 'test_target_node'));
         $this->entityManager->clear();
@@ -98,25 +97,6 @@ final class BuildEditorTest extends KernelTestCase
         self::assertIsString($json);
 
         $build = $this->builds->create(new BuildDocumentReader()->read($json), '0.5.5');
-        $this->entityManager->flush();
-
-        return $build;
-    }
-
-    /**
-     * A build assigned to a class whose start node reaches every given id
-     * directly, so allocating them is legal. Only a test that dispatches
-     * `AllocatePassive` needs this over the plain `build()` above.
-     *
-     * @param list<string> $legalPassiveIds
-     */
-    private function buildWithLegalTree(array $legalPassiveIds): Build
-    {
-        $build = $this->build();
-        $db = self::getContainer()->get(Connection::class);
-        $classId = $this->seedALegalPassiveTree($db, $legalPassiveIds);
-
-        $build->setClassKey($classId);
         $this->entityManager->flush();
 
         return $build;

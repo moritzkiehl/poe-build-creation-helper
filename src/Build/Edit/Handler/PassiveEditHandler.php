@@ -52,13 +52,25 @@ final class PassiveEditHandler
      * identity map returns the same `Build` instance for both the lookup here
      * and the one inside `apply()`, so the cascade computed against it here
      * cannot go stale before the mutation below applies it.
+     *
+     * `also` is only what `illegalAfter()` newly condemns — what *becomes*
+     * illegal *as a result of* this removal. This app models neither
+     * socket-radius jewels nor every unlock path, so a real imported build
+     * can already carry passives the rules cannot justify; subtracting the
+     * pre-removal illegal set keeps those exactly as illegal as they already
+     * were, rather than sweeping them out on an unrelated, or even a no-op,
+     * deallocation.
      */
     #[AsMessageHandler]
     public function deallocate(DeallocatePassive $command): void
     {
         $build = $this->builds->find($command->buildId);
         $context = $this->contexts->of($build);
-        $also = $this->rules->illegalAfter(Allocation::of($build->toDocument())->without($command->id), $context);
+        $allocation = Allocation::of($build->toDocument());
+
+        $alreadyIllegal = $this->rules->illegalAfter($allocation, $context);
+        $illegalAfterRemoval = $this->rules->illegalAfter($allocation->without($command->id), $context);
+        $also = array_values(array_diff($illegalAfterRemoval, $alreadyIllegal));
 
         $this->builds->apply($command->buildId, 'passive.deallocate', ['id' => $command->id, 'also' => $also], function (Build $build) use ($command, $also): void {
             $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->deallocatePassives($d, [$command->id, ...$also]));

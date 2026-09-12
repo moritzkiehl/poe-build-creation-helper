@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Support;
 
+use App\Entity\Build;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Seeds a star-shaped passive tree the legality rules accept: one start node,
@@ -57,5 +59,24 @@ trait SeedsALegalPassiveTree
         }
 
         return self::LEGAL_TREE_CLASS;
+    }
+
+    /**
+     * Assigns a build to a class whose start node reaches every given id
+     * directly, so allocating them is legal. For a kernel test dispatching
+     * `AllocatePassive` straight onto the bus, which has no `header.set`
+     * action to go through the way an HTTP test does.
+     *
+     * @param list<string> $legalPassiveIds
+     */
+    private function buildWithLegalTree(Build $build, EntityManagerInterface $entityManager, array $legalPassiveIds): Build
+    {
+        $db = self::getContainer()->get(Connection::class);
+        $classId = $this->seedALegalPassiveTree($db, $legalPassiveIds);
+
+        $build->setClassKey($classId);
+        $entityManager->flush();
+
+        return $build;
     }
 }

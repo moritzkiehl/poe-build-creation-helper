@@ -47,6 +47,15 @@ final class DocumentEditor
         return $this->withPassives($document, $passives);
     }
 
+    /**
+     * The single-id counterpart to `allocatePassive()`, kept for that
+     * symmetry even though `PassiveEditHandler` now calls `deallocatePassives()`
+     * directly to carry a cascade alongside the requested id. Reverting does
+     * not replay this or any other `DocumentEditor` call — `BuildSnapshot`
+     * restores the whole document at once — so this method's only remaining
+     * caller is `DocumentEditorPassivesTest`, which is why it stays rather
+     * than being removed with it.
+     */
     public function deallocatePassive(BuildDocument $document, string $id): BuildDocument
     {
         return $this->deallocatePassives($document, [$id]);
