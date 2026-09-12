@@ -54,3 +54,35 @@ test('a node clicked on the canvas appears in the allocated list', async ({ page
     await expect(allocated).not.toHaveText(before ?? '');
     await expect(nodes).toContainText(TARGET_NODE_ID);
 });
+
+test('hovering a node shows its effect and instil cost in a tooltip', async ({ page }) => {
+    await page.goto(createBuild());
+
+    const canvas = page.locator('canvas.tree-canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvas.scrollIntoViewIfNeeded();
+
+    const tooltip = page.locator('.tree-tooltip');
+    await expect(tooltip).toBeHidden();
+
+    // Same point the other test clicks — the seeded target node, which the
+    // test fixture (CreateTestBuildCommand) now gives both a stat line and a
+    // three-emotion recipe, so one hover proves both halves of the tooltip.
+    const box = await canvas.boundingBox();
+    await page.mouse.move(box.x + box.width / 2 + CLICK_OFFSET_PX, box.y + box.height / 2);
+
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText('End-to-end target');
+    await expect(tooltip).toContainText('+10 to Strength');
+    await expect(tooltip).toContainText('Concentrated Fear');
+    await expect(tooltip).toContainText('Concentrated Ire');
+    await expect(tooltip).toContainText('Concentrated Envy');
+
+    // Moving off every node again hides it rather than leaving stale content.
+    // The corner is far in screen space from both the start node (canvas
+    // centre) and the target node (CLICK_OFFSET_PX right of centre), well
+    // outside either one's hit radius.
+    await page.mouse.move(box.x + 5, box.y + 5);
+    await expect(tooltip).toBeHidden();
+});

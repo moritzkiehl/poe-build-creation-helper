@@ -102,7 +102,7 @@ final class CreateTestBuildCommand extends Command
             );
             $db->executeStatement(
                 'INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [self::TARGET_NODE_ID, 'End-to-end target', 'small', null, self::TARGET_OFFSET_X, 0.0, '["+10 to Strength"]', '[]'],
+                [self::TARGET_NODE_ID, 'End-to-end target', 'small', null, self::TARGET_OFFSET_X, 0.0, '["+10 to Strength"]', '["Concentrated Fear","Concentrated Ire","Concentrated Envy"]'],
             );
 
             $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [self::START_NODE_ID, self::TARGET_NODE_ID]);

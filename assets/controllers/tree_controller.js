@@ -8,7 +8,7 @@ const DRAG_SLOP = 4;
 const CLICK_RADIUS = 30;
 
 export default class extends Controller {
-    static targets = ['canvas', 'state'];
+    static targets = ['canvas', 'state', 'tooltip'];
     static values = { treeUrl: String, actUrl: String };
 
     async connect() {
@@ -55,14 +55,14 @@ export default class extends Controller {
         const response = await fetch(this.treeUrlValue, { headers: { Accept: 'application/json' } });
         const tree = await response.json();
 
-        for (const [id, name, kind, ascendancy, x, y] of tree.nodes) {
+        for (const [id, name, kind, ascendancy, x, y, stats, recipe] of tree.nodes) {
             // Another ascendancy's nodes are not reachable by this build and
             // would only be clutter around the part that is.
             if (ascendancy && ascendancy !== this.ascendancy) {
                 continue;
             }
 
-            this.nodes.set(id, { id, name, kind, x, y });
+            this.nodes.set(id, { id, name, kind, x, y, stats: stats ?? [], recipe: recipe ?? [] });
         }
 
         this.edges = tree.edges.filter(([from, to]) => this.nodes.has(from) && this.nodes.has(to));
@@ -97,6 +97,7 @@ export default class extends Controller {
     pointerdown(event) {
         this.dragging = { x: event.offsetX, y: event.offsetY, moved: 0 };
         this.canvasTarget.setPointerCapture(event.pointerId);
+        this.showTooltip(null);
     }
 
     pointermove(event) {
@@ -128,9 +129,10 @@ export default class extends Controller {
 
         if (id !== this.hovered) {
             this.hovered = id;
-            this.canvasTarget.title = node ? `${node.name} (${node.id})` : '';
             this.redraw();
         }
+
+        this.showTooltip(node, event.offsetX, event.offsetY);
     }
 
     pointerup(event) {
@@ -165,6 +167,26 @@ export default class extends Controller {
 
     ratio() {
         return this.canvasTarget.width / this.canvasTarget.clientWidth;
+    }
+
+    showTooltip(node, offsetX, offsetY) {
+        const tip = this.tooltipTarget;
+
+        if (!node) {
+            tip.hidden = true;
+
+            return;
+        }
+
+        const stats = node.stats.map((line) => `<li>${escapeHtml(line)}</li>`).join('');
+        const cost = node.recipe.length
+            ? `<span class="cost">Instil with ${node.recipe.map(escapeHtml).join(', ')}</span>`
+            : '';
+
+        tip.innerHTML = `<h3>${escapeHtml(node.name)}</h3><ul>${stats}</ul>${cost}`;
+        tip.style.left = `${offsetX + 14}px`;
+        tip.style.top = `${offsetY + 14}px`;
+        tip.hidden = false;
     }
 
     async toggle(id) {
@@ -229,4 +251,8 @@ export default class extends Controller {
         this.allocated = before;
         this.redraw();
     }
+}
+
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

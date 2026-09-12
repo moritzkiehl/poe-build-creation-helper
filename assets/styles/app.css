@@ -6,7 +6,13 @@ body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 0 auto; max
 .editor > section { border: 1px solid var(--line); padding: var(--gap); }
 .editor > section.full { grid-column: 1 / -1; }
 
+#build-tree { position: relative; }
 .tree-canvas { background: #101014; display: block; height: 32rem; touch-action: none; width: 100%; }
+
+.tree-tooltip { background: #17171d; border: 1px solid var(--line); color: #e8e8ea; font-size: 0.85rem; max-width: 22rem; padding: 0.5rem 0.6rem; pointer-events: none; position: absolute; z-index: 2; }
+.tree-tooltip h3 { font-size: 0.9rem; margin: 0 0 0.25rem; }
+.tree-tooltip ul { margin: 0; padding-left: 1rem; }
+.tree-tooltip .cost { color: #c7a54a; display: block; margin-top: 0.35rem; }
 
 .error:not(:empty) { background: #fdeaea; border: 1px solid #c00; margin-bottom: var(--gap); padding: 0.5rem; }
 
