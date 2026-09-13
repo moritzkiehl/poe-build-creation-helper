@@ -53,7 +53,7 @@ final class DocumentEditorPassivesTest extends TestCase
             ['id' => 'c', 'level_interval' => [1, 100], 'additional_text' => ''],
         ]);
 
-        $changed = $this->editor->deallocatePassive($document, 'b');
+        $changed = $this->editor->deallocatePassives($document, ['b']);
 
         self::assertSame(['a', 'c'], array_column($changed->passives, 'id'));
         self::assertSame([0, 1], array_keys($changed->passives));
@@ -63,7 +63,7 @@ final class DocumentEditorPassivesTest extends TestCase
     {
         $document = new BuildDocument(name: 'Build', passives: [['id' => 'a', 'level_interval' => [1, 100], 'additional_text' => '']]);
 
-        self::assertEquals($document, $this->editor->deallocatePassive($document, 'zzz'));
+        self::assertEquals($document, $this->editor->deallocatePassives($document, ['zzz']));
     }
 
     public function testTheLevelIntervalIsSetInPlaceAndKeepsEveryOtherField(): void
