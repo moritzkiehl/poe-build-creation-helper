@@ -1519,6 +1519,12 @@ together would misreport every build that uses them. Slice B does not implement
 that rule, so it does not need the answer; iteration 4 does, and must not assume
 one pool without checking. Listed under "Open points".
 
+**Measured against the real catalog, 2026-09-13** (`SELECT COUNT(*) AS total,
+SUM(JSON_LENGTH(keystones_in_radius) > 0) AS with_radius, SUM(unlock_constraint
+IS NOT NULL) AS with_constraint FROM catalog_passive`, development database):
+**4912 nodes total, 1573 carrying `keystones_in_radius`, 200 carrying
+`unlock_constraint`.**
+
 ### Deferred: a design round on how the editor is organised
 
 Raised 2026-09-12 and explicitly postponed. The editor is one long scroll —
@@ -1570,6 +1576,15 @@ patch.
    is suggestive but not decisive — 24 nodes on each set across three files, a
    symmetry that a shared pool would not require. Slice B does not need this;
    iteration 4 must not assume an answer
+10. Whether legality *enablers* — a keystone, *Entwined Realities*, an
+    `unlockConstraint` gate node — are scoped to the weapon set they are
+    allocated in. "Connectivity is per set" above is owner-confirmed
+    (0.5.5), but enablement is not: the code currently counts an enabler
+    whichever set it sits in, so a keystone allocated at weapon set 2 opens
+    its neighbourhood for an allocation at set 1 just as readily as for
+    set 2. `testAnEnablerCountsWhicheverWeaponSetItSitsIn` in
+    `tests/Build/Tree/AllocationRulesTest.php` pins this behaviour; if the
+    game scopes enablers per set after all, that is the test to invert
 
 Settled 2026-09-12 (owner, 0.5.5): the two tree-legality exceptions both need
 their enabling node *allocated*. *The Unseen Path* must be allocated before any
