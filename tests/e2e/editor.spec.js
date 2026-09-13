@@ -51,8 +51,12 @@ test('a node clicked on the canvas appears in the allocated list', async ({ page
     const box = await canvas.boundingBox();
     await page.mouse.click(box.x + box.width / 2 + CLICK_OFFSET_PX, box.y + box.height / 2);
 
-    await expect(allocated).not.toHaveText(before ?? '');
-    await expect(nodes).toContainText(TARGET_NODE_ID);
+    // Polling here, rather than a single synchronous read right after the
+    // click, is what makes this reliable regardless of how long the allocate
+    // request and its Turbo Stream render take — the same swap that fixed a
+    // flaky read of #build-state further down this file.
+    await expect.poll(() => allocated.textContent()).not.toBe(before ?? '');
+    await expect.poll(() => nodes.textContent()).toContain(TARGET_NODE_ID);
 });
 
 test('hovering a node shows its effect and instil cost in a tooltip', async ({ page }) => {
