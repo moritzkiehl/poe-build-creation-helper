@@ -12,8 +12,28 @@ const TARGET_OFFSET_X = 1000;
 const CLICK_OFFSET_PX = TARGET_OFFSET_X * SCALE;
 const TARGET_NODE_ID = 'e2e_target';
 
+// e2e_leaf hangs off e2e_target (not off the start), so allocating both makes
+// the target a junction whose removal must strand the leaf too.
+const LEAF_OFFSET_X = 2000;
+// e2e_island carries no edge at all — a click there must be refused as not
+// connected.
+const ISLAND_OFFSET_X = -1000;
+
 function createBuild() {
     return execSync('APP_ENV=test php bin/console app:test:build').toString().trim();
+}
+
+/**
+ * Clicks the canvas at the point `worldOffsetX` world units right of the
+ * start node the camera centres on (negative moves left) — the same
+ * geometry `CLICK_OFFSET_PX` computes inline above, extracted here because
+ * the two tests below click three or more distinct points between them.
+ * Callers must have already called `canvas.scrollIntoViewIfNeeded()`, since
+ * `page.mouse.click()` sends raw viewport coordinates and never scrolls.
+ */
+async function clickCanvasAt(page, canvas, worldOffsetX) {
+    const box = await canvas.boundingBox();
+    await page.mouse.click(box.x + box.width / 2 + worldOffsetX * SCALE, box.y + box.height / 2);
 }
 
 test('a node clicked on the canvas appears in the allocated list', async ({ page }) => {
@@ -227,4 +247,65 @@ test('the chosen weapon set survives back-navigation, and a click after it still
     const state = JSON.parse(await page.locator('#build-state').textContent());
     expect(state.allocatedBySet.shared).not.toContain(TARGET_NODE_ID);
     expect(state.allocatedBySet['2']).not.toContain(TARGET_NODE_ID);
+});
+
+test('an illegal node cannot be allocated from the canvas', async ({ page }) => {
+    await page.goto(createBuild());
+
+    const canvas = page.locator('canvas.tree-canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvas.scrollIntoViewIfNeeded();
+
+    const nodes = page.locator('#build-nodes');
+    const before = await nodes.textContent();
+
+    // e2e_island (CreateTestBuildCommand) carries no edge at all. A click
+    // that misses every node produces the same "nothing happened" as a
+    // correct refusal, so the before/after comparison on #build-nodes is what
+    // tells the two apart — only the error message proves this was a real
+    // refusal rather than a miss.
+    await clickCanvasAt(page, canvas, ISLAND_OFFSET_X);
+
+    await expect(page.locator('.error')).toContainText('not connected');
+    await expect(nodes).toHaveText(before ?? '');
+});
+
+test('removing a junction takes its branch with it', async ({ page }) => {
+    await page.goto(createBuild());
+
+    const canvas = page.locator('canvas.tree-canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvas.scrollIntoViewIfNeeded();
+
+    // #build-nodes carries three headings (Levels, the stats overview,
+    // Instilled) — only the stats overview's count changes on allocation, so
+    // this picks it out by its stable "What the tree gives" prefix, same as
+    // the first test in this file.
+    const nodes = page.locator('#build-nodes');
+    const allocated = nodes.locator('h3').filter({ hasText: 'What the tree gives' });
+
+    // valid-full.build (the fixture app:test:build loads) already carries 3
+    // passives — strength89, melee22_, attributes70 — that this seeded
+    // catalog has never heard of, so they are illegal from the very moment
+    // the build is created, independently of anything this test does. The
+    // count therefore runs 3 -> 5 -> 3 below, not to 0: landing back at 3
+    // rather than 0 after the removal is the browser-level proof that a
+    // removal no longer sweeps passives that were already illegal before it
+    // ran.
+    await expect.poll(() => allocated.textContent()).toContain('3 passives');
+
+    // e2e_target hangs one edge off the start; allocating it, then e2e_leaf
+    // which hangs off *it*, makes the target a junction.
+    await clickCanvasAt(page, canvas, TARGET_OFFSET_X);
+    await expect.poll(() => allocated.textContent()).toContain('4 passives');
+
+    await clickCanvasAt(page, canvas, LEAF_OFFSET_X);
+    await expect.poll(() => allocated.textContent()).toContain('5 passives');
+
+    // Removing the junction must take the leaf with it.
+    await clickCanvasAt(page, canvas, TARGET_OFFSET_X);
+    await expect.poll(() => allocated.textContent()).toContain('3 passives');
+    await expect(page.locator('#build-history')).toContainText('and 1 more');
 });
