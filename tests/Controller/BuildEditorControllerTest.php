@@ -258,6 +258,54 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringContainsString('attributes70', $this->client->request('GET', $edit.'?stats=2')->filter('#build-nodes')->text());
     }
 
+    public function testARemovalDoesNotSweepANodeThatStillRoutesThroughAnAlreadyIllegalOne(): void
+    {
+        // `pin_v` reaches the start through `pin_x` and through `pin_z`.
+        // `pin_z` is connected but gated by `pin_gate`, which the build never
+        // allocates — the shape an imported build or an ascendancy switch
+        // leaves behind. `pin_z` is kept as already illegal, so `pin_v` still
+        // has a route once `pin_x` goes, and must stay.
+        $db = self::getContainer()->get(Connection::class);
+        $classId = 'test_pin_class';
+        $ids = ['pin_start', 'pin_x', 'pin_z', 'pin_v', 'pin_gate'];
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+
+        $db->executeStatement("DELETE FROM catalog_passive_edge WHERE from_id IN ({$placeholders}) OR to_id IN ({$placeholders})", [...$ids, ...$ids]);
+        $db->executeStatement("DELETE FROM catalog_passive WHERE id IN ({$placeholders})", $ids);
+        $db->executeStatement('DELETE FROM catalog_class WHERE id = ?', [$classId]);
+
+        foreach ($ids as $id) {
+            $db->executeStatement(
+                "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe, unlock_constraint) VALUES (?, ?, 'small', NULL, 0, 0, '[]', '[]', ?)",
+                [$id, $id, 'pin_z' === $id ? json_encode(['nodes' => ['pin_gate']], \JSON_THROW_ON_ERROR) : null],
+            );
+        }
+
+        foreach ([['pin_start', 'pin_x'], ['pin_x', 'pin_v'], ['pin_start', 'pin_z'], ['pin_z', 'pin_v'], ['pin_start', 'pin_gate']] as [$from, $to]) {
+            $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$from, $to]);
+        }
+
+        $db->executeStatement(
+            'INSERT INTO catalog_class (id, start_node_id, base_str, base_dex, base_int, ascendancies) VALUES (?, ?, 0, 0, 0, ?)',
+            [$classId, 'pin_start', '[]'],
+        );
+
+        $passives = array_map(static fn (string $id): array => ['id' => $id, 'level_interval' => [1, 100], 'additional_text' => ''], ['pin_x', 'pin_z', 'pin_v']);
+        $edit = $this->pastedBuild(json_encode(['name' => 'Pinned', 'passives' => $passives], \JSON_THROW_ON_ERROR));
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.deallocate', 'id' => 'pin_x']);
+
+        $crawler = $this->client->request('GET', $edit);
+        $state = json_decode($crawler->filter('#build-state')->text(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($state);
+        $allocatedBySet = $state['allocatedBySet'];
+        self::assertIsArray($allocatedBySet);
+
+        self::assertSame(['pin_z', 'pin_v'], $allocatedBySet['shared'], 'pin_v still routes through pin_z, which stays');
+        self::assertStringNotContainsString('more', $crawler->filter('#build-history')->text(), 'the removal took nothing with it');
+    }
+
     public function testASkillCanBeAddedGivenASupportAndRemovedAgain(): void
     {
         $edit = $this->createBuild();

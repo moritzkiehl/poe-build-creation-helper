@@ -53,13 +53,13 @@ final class PassiveEditHandler
      * and the one inside `apply()`, so the cascade computed against it here
      * cannot go stale before the mutation below applies it.
      *
-     * `also` is only what `illegalAfter()` newly condemns — what *becomes*
-     * illegal *as a result of* this removal. This app models neither
-     * socket-radius jewels nor every unlock path, so a real imported build
-     * can already carry passives the rules cannot justify; subtracting the
-     * pre-removal illegal set keeps those exactly as illegal as they already
-     * were, rather than sweeping them out on an unrelated, or even a no-op,
-     * deallocation.
+     * `also` is only what *becomes* illegal *as a result of* this removal.
+     * This app models neither socket-radius jewels nor every unlock path, so
+     * a real imported build can already carry passives the rules cannot
+     * justify. Those are pinned: they stay exactly as illegal as they already
+     * were rather than being swept on an unrelated, or even a no-op,
+     * deallocation — and because they stay, whatever still routes through
+     * one, or is gated by one, stays with them.
      */
     #[AsMessageHandler]
     public function deallocate(DeallocatePassive $command): void
@@ -69,8 +69,7 @@ final class PassiveEditHandler
         $allocation = Allocation::of($build->toDocument());
 
         $alreadyIllegal = $this->rules->illegalAfter($allocation, $context);
-        $illegalAfterRemoval = $this->rules->illegalAfter($allocation->without($command->id), $context);
-        $also = array_values(array_diff($illegalAfterRemoval, $alreadyIllegal));
+        $also = $this->rules->illegalAfter($allocation->without($command->id), $context, $alreadyIllegal);
 
         $this->builds->apply($command->buildId, 'passive.deallocate', ['id' => $command->id, 'also' => $also], function (Build $build) use ($command, $also): void {
             $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->deallocatePassives($d, [$command->id, ...$also]));

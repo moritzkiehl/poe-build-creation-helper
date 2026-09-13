@@ -51,17 +51,26 @@ final class AllocationRules
      * Every allocated node the rules now reject, to a fixed point: removing one
      * can strand the next, and that one the one after it.
      *
+     * A pinned id is never reported and never removed. It stays in the
+     * allocation throughout, so a route through it still counts and it still
+     * opens whatever it gates — the same allocation `mayAllocate()` would
+     * judge a node against. Each pass still removes at least one unpinned
+     * node or ends the loop, so it terminates.
+     *
+     * @param list<string> $pinned
+     *
      * @return list<string>
      */
-    public function illegalAfter(Allocation $allocation, TreeContext $context): array
+    public function illegalAfter(Allocation $allocation, TreeContext $context, array $pinned = []): array
     {
+        $kept = array_fill_keys($pinned, true);
         $removed = [];
 
         do {
             $stranded = [];
 
             foreach ($allocation->ids() as $id) {
-                if (!$this->isLegal($allocation, $context, $id)) {
+                if (!isset($kept[$id]) && !$this->isLegal($allocation, $context, $id)) {
                     $stranded[] = $id;
                 }
             }

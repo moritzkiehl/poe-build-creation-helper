@@ -239,6 +239,34 @@ final class AllocationRulesTest extends KernelTestCase
         self::assertSame(['gate', 'locked'], $rules->illegalAfter($stranded, $this->context()));
     }
 
+    /**
+     * `v` reaches the start through `x` and through `z`. `z` is connected but
+     * gated by `gate`, which is not allocated, so `z` is already illegal —
+     * and a removal keeps an already-illegal passive rather than sweeping
+     * it. A node that stays must stay routable: removing `x` still leaves
+     * `v` a route through `z`, the same route `mayAllocate()` would accept
+     * `v` back over. Unpinned, `z` goes in the first pass and strands `v` in
+     * the second.
+     */
+    public function testAPinnedNodeStaysRoutableThroughTheCascade(): void
+    {
+        $rules = $this->rulesOver(
+            nodes: [['start', 'small'], ['x', 'small'], ['z', 'small'], ['v', 'small'], ['gate', 'notable']],
+            edges: [['start', 'x'], ['x', 'v'], ['start', 'z'], ['z', 'v'], ['start', 'gate']],
+            constraints: ['z' => ['nodes' => ['gate']]],
+        );
+        $allocation = new Allocation(['start' => WeaponSet::Shared, 'x' => WeaponSet::Shared, 'z' => WeaponSet::Shared, 'v' => WeaponSet::Shared]);
+
+        self::assertSame(['z'], $rules->illegalAfter($allocation, $this->context()), 'z is illegal before anything is removed');
+        self::assertTrue(
+            $rules->mayAllocate($allocation->without('x')->without('v'), $this->context(), 'v', WeaponSet::Shared),
+            'with x gone, v may still be allocated over z',
+        );
+
+        self::assertSame([], $rules->illegalAfter($allocation->without('x'), $this->context(), ['z']), 'pinned, z keeps v routable');
+        self::assertSame(['v', 'z'], $rules->illegalAfter($allocation->without('x'), $this->context()), 'unpinned, z goes and takes v with it');
+    }
+
     public function testTheStartNodeItselfIsAlwaysLegal(): void
     {
         $rules = $this->rulesOver(nodes: [['start', 'small']], edges: []);
