@@ -43,11 +43,11 @@ class CatalogPassive
     private array $stats = [];
 
     /** @var list<string> */
-    #[ORM\Column(type: Types::JSON)]
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     private array $recipe = [];
 
     /** @var list<string> */
-    #[ORM\Column(name: 'keystones_in_radius', type: Types::JSON)]
+    #[ORM\Column(name: 'keystones_in_radius', type: Types::JSON, options: ['default' => '[]'])]
     private array $keystonesInRadius = [];
 
     /** @var array{nodes: list<string>, ascendancy: string|null}|null */
