@@ -11,7 +11,7 @@ use Doctrine\DBAL\Connection;
  * The passive tree as the legality rules need it: who touches whom, which
  * keystones cover a node, and what gates it.
  *
- * Loaded in three queries on first use. A rules evaluation walks thousands of
+ * Loaded in two queries on first use — the edges, then the nodes. A rules evaluation walks thousands of
  * nodes, so a query per node is not an option.
  */
 final class PassiveGraph
