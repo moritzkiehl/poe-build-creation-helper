@@ -323,18 +323,18 @@ test('removing a junction takes its branch with it', async ({ page }) => {
     // rather than 0 after the removal is the browser-level proof that a
     // removal no longer sweeps passives that were already illegal before it
     // ran.
-    await expect.poll(() => allocated.textContent()).toContain('3 passives');
+    await expect.poll(() => allocated.textContent()).toContain('(3 passives)');
 
     // e2e_target hangs one edge off the start; allocating it, then e2e_leaf
     // which hangs off *it*, makes the target a junction.
     await clickCanvasAt(page, canvas, TARGET_OFFSET_X);
-    await expect.poll(() => allocated.textContent()).toContain('4 passives');
+    await expect.poll(() => allocated.textContent()).toContain('(4 passives)');
 
     await clickCanvasAt(page, canvas, LEAF_OFFSET_X);
-    await expect.poll(() => allocated.textContent()).toContain('5 passives');
+    await expect.poll(() => allocated.textContent()).toContain('(5 passives)');
 
     // Removing the junction must take the leaf with it.
     await clickCanvasAt(page, canvas, TARGET_OFFSET_X);
-    await expect.poll(() => allocated.textContent()).toContain('3 passives');
+    await expect.poll(() => allocated.textContent()).toContain('(3 passives)');
     await expect(page.locator('#build-history')).toContainText('and 1 more');
 });
