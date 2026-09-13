@@ -577,8 +577,22 @@ final class BuildEditorControllerTest extends WebTestCase
         $build = $this->seedBuildWithStats($this->client);
 
         $crawler = $this->client->request('GET', $this->editUrl($build).'?stats=1');
-        self::assertStringContainsString('10% increased Damage', $crawler->filter('#build-nodes')->text(), 'the shared node counts toward the set 1 view');
-        self::assertStringContainsString('5% increased Damage', $crawler->filter('#build-nodes')->text());
+        $text = $crawler->filter('#build-nodes')->text();
+        self::assertStringContainsString('10% increased Damage', $text, 'the shared node counts toward the set 1 view');
+        self::assertStringContainsString('5% increased Damage', $text);
+        self::assertStringNotContainsString('20% increased Damage', $text, 'set 2 must not leak into the set 1 view');
+
+        $crawler = $this->client->request('GET', $this->editUrl($build).'?stats=2');
+        $text = $crawler->filter('#build-nodes')->text();
+        self::assertStringContainsString('10% increased Damage', $text, 'the shared node counts toward the set 2 view');
+        self::assertStringContainsString('20% increased Damage', $text);
+        self::assertStringNotContainsString('5% increased Damage', $text, 'set 1 must not leak into the set 2 view');
+
+        $crawler = $this->client->request('GET', $this->editUrl($build));
+        $text = $crawler->filter('#build-nodes')->text();
+        self::assertStringContainsString('10% increased Damage', $text, 'the shared node still counts toward the default view');
+        self::assertStringNotContainsString('5% increased Damage', $text, 'set 1 must not leak into the default (shared-only) view');
+        self::assertStringNotContainsString('20% increased Damage', $text, 'set 2 must not leak into the default (shared-only) view');
 
         // A plain form POST redirects; the view must come back with it.
         $this->client->request('POST', $this->actUrl($build), [
@@ -590,6 +604,17 @@ final class BuildEditorControllerTest extends WebTestCase
         $this->client->followRedirect();
 
         self::assertStringContainsString('stats=1', (string) $this->client->getHistory()->current()->getUri());
+    }
+
+    public function testTheStatsViewLinksCarryTheRestOfTheViewState(): void
+    {
+        $edit = $this->createBuild();
+
+        $crawler = $this->client->request('GET', $edit.'?gem=x&intervals=per-passive');
+        $href = (string) $crawler->filter('.stats-view a')->first()->attr('href');
+
+        self::assertStringContainsString('gem=x', $href, 'a stats-view link must not drop an unrelated search term');
+        self::assertStringContainsString('intervals=per-passive', $href, 'a stats-view link must not drop an unrelated view override');
     }
 
     public function testInstilledNodesListSeparatelyFromTheTree(): void
@@ -671,10 +696,14 @@ final class BuildEditorControllerTest extends WebTestCase
     }
 
     /**
-     * A shared node and a weapon-set-1 node, connected to each other and to a
-     * dedicated start node, each carrying a distinct stat line — so a test can
-     * tell whether the stats overview is summing the right ids without a real
-     * `melee1_`-style catalog id being read as a coincidence.
+     * A shared node, a weapon-set-1 node and a weapon-set-2 node, connected to
+     * each other and to a dedicated start node, each carrying a distinct stat
+     * line — so a test can tell not only that the stats overview sums the
+     * right ids for a chosen view, but that it excludes the *other* set's
+     * ids rather than summing every allocated passive regardless of view
+     * (the exact regression a two-node fixture cannot catch, since summing
+     * everything and summing "shared plus one set" look identical when
+     * there is nothing in the other set to wrongly include).
      * `SeedsALegalPassiveTree` cannot express this: its nodes all carry empty
      * stats, so the seeding here is bespoke, the same way `seedBuildWithTree()`
      * above is bespoke for a shape the shared trait cannot express either.
@@ -688,7 +717,8 @@ final class BuildEditorControllerTest extends WebTestCase
         $startNodeId = 'stats_start';
         $sharedId = 'stats_shared';
         $setOneId = 'stats_set_one';
-        $ids = [$startNodeId, $sharedId, $setOneId];
+        $setTwoId = 'stats_set_two';
+        $ids = [$startNodeId, $sharedId, $setOneId, $setTwoId];
         $placeholders = implode(',', array_fill(0, \count($ids), '?'));
 
         $db->executeStatement("DELETE FROM catalog_passive_edge WHERE from_id IN ({$placeholders}) OR to_id IN ({$placeholders})", [...$ids, ...$ids]);
@@ -707,9 +737,14 @@ final class BuildEditorControllerTest extends WebTestCase
             "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, 'small', NULL, 0, 0, ?, '[]')",
             [$setOneId, $setOneId, json_encode(['5% increased Damage'], \JSON_THROW_ON_ERROR)],
         );
+        $db->executeStatement(
+            "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, 'small', NULL, 0, 0, ?, '[]')",
+            [$setTwoId, $setTwoId, json_encode(['20% increased Damage'], \JSON_THROW_ON_ERROR)],
+        );
 
         $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$startNodeId, $sharedId]);
         $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$sharedId, $setOneId]);
+        $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$sharedId, $setTwoId]);
 
         $db->executeStatement(
             'INSERT INTO catalog_class (id, start_node_id, base_str, base_dex, base_int, ascendancies) VALUES (?, ?, 0, 0, 0, ?)',
@@ -726,6 +761,7 @@ final class BuildEditorControllerTest extends WebTestCase
         $client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
         $client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => $sharedId]);
         $client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => $setOneId, 'set' => '1']);
+        $client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => $setTwoId, 'set' => '2']);
 
         return $edit;
     }
