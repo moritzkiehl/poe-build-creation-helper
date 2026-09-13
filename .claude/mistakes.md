@@ -1,10 +1,40 @@
 # Mistake log
 
-## 2026-09-12 — view-state query key registered in one of two places
-**What:** A query parameter survives an edit only if `_search_state.html.twig` renders it as a hidden field AND `BuildEditorController::searchParams()` lists it for the non-Turbo redirect. Missed the controller list for three of the five search terms, then again for `intervals`/`supports`.
-**Cost:** Two silent drops after a plain form POST, both found by running the app, not by reading. Second one caught inside the final fix wave.
-**How it was detectable:** Adding a key to one list without grepping for the other. `grep -rn "searchParams\|_search_state" src templates` names both sites in one command.
-**Status:** repeated (2) — root fix scheduled in slice B (spec: "Carried into slice B: one place to register view state")
+## 2026-09-13 — plan code written against unchecked APIs
+**What:** B1 briefs named `openEditor()`, `clickNodeOnCanvas()`, `actUrl()`, `app:catalog:sync passive_tree`, `assertInstanceOf(Connection::class, …)`, `body.set = …` on a `URLSearchParams`. None exist or work.
+**Cost:** ~6 implementer deviations, rulings R6 and R14; `body.set` would have shipped an inert weapon-set control.
+**How it was detectable:** grep each helper, `bin/console list` each command, one PHPStan run on a pasted snippet — before writing it into a plan.
+**Status:** repeated (6) — CLAUDE.md line proposed to owner
+
+## 2026-09-13 — plan's cascade swept already-illegal passives
+**What:** B1 plan's handler re-validated every passive on removal; a deallocate for an unallocated id wiped every passive the rules cannot justify. Fix wave found a second hole: nodes routed through a kept illegal node.
+**Cost:** one Critical (R12), one Important (final review I3); silent data loss on imported builds.
+**How it was detectable:** spec says "becomes illegal as a result" — a delta. Test against a fixture carrying pre-existing illegal passives, not a clean one.
+**Status:** repeated (2)
+
+## 2026-09-13 — per-task gate commands narrower than the gate
+**What:** SDD dispatches told implementers to run `bin/phpunit`, `stan`, `lint:twig` — not `ddev composer gate`. Playwright and php-cs-fixer excluded.
+**Cost:** e2e suite red for ~9 tasks (17 fixture rows at (0,0)), cs violations in 5 files. Found only by controller spot-check.
+**How it was detectable:** plan's Global Constraints named `ddev composer gate`; every dispatch contradicted it.
+**Status:** one-off — full gate in every dispatch since (R13b)
+
+## 2026-09-13 — unverified rationale stated as codebase fact
+**What:** Claimed twice that `Revert` replays single-id events, to justify keeping `DocumentEditor::deallocatePassive()`. False — `Revert` restores a `BuildSnapshot`.
+**Cost:** compatibility requirement imposed on Task 7 on a false premise; implementer caught it.
+**How it was detectable:** `grep -rn "deallocatePassive" src` before asserting a caller exists.
+**Status:** one-off
+
+## 2026-09-13 — plan dropped a spec requirement
+**What:** spec says the canvas greys illegal nodes; B1 plan had no task for it and its own spec-coverage check missed it.
+**Cost:** found only by the final whole-branch review; now an owner decision.
+**How it was detectable:** walk each spec subsection sentence by sentence against the task list, not by feature headline.
+**Status:** one-off
+
+## 2026-09-12 — view-state key missed at one of its registration points
+**What:** A query key must reach hidden fields, `searchParams()`, the `_header` `field()` macro, template link maps, and the canvas fetch URL. Missed: 3 search terms, `intervals`/`supports`, then in B1 the link maps (T13), `_skills` map (R16), canvas fetch (final I1).
+**Cost:** each a silent state drop, found by running the app or by the final review — never by reading.
+**How it was detectable:** no single list of view-state keys exists; `grep -rn "intervals" src templates assets` shows every site in one command.
+**Status:** repeated (5) — CLAUDE.md line + gate test proposed to owner; `ViewState` refactor recommended as B2 task 1
 
 ## 2026-09-12 — every tree node exported at (0,0), past two reviews
 **What:** `TreeExport` read `pos_x`/`pos_y` with `Row::str($row, 'pos_x', '0')`. DBAL returns a native PHP float for a FLOAT column fetched outside the ORM, so `Row::str()` returned its default and every one of 4912 nodes exported at world (0,0). Found only when the first Playwright click ran.
