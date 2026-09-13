@@ -225,6 +225,39 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringNotContainsString('and 2 more', $crawler->filter('#build-history')->text());
     }
 
+    public function testDeallocatingAnIdThatWasNeverAllocatedDoesNotWipeExistingPassives(): void
+    {
+        // `seedBuildWithTree()` builds from `valid-full.build`, which already
+        // carries three passives (`strength89` shared, `melee22_` at weapon
+        // set 1, `attributes70` at weapon set 2) this synthetic catalog has
+        // never heard of — illegal from the moment the build is created,
+        // independently of anything this test does. `near` is never
+        // allocated below, so this deallocate request is a no-op as far as
+        // the tree is concerned. It used to return the whole already-illegal
+        // set unconditionally and wipe it — a no-op request that destroyed
+        // data; the fix subtracts the illegal set computed before the
+        // removal from the one computed after
+        // (`PassiveEditHandler::deallocate()`). All three surviving is what
+        // proves the subtraction runs even when nothing was actually
+        // allocated to begin with.
+        $edit = $this->seedBuildWithTree();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.deallocate', 'id' => 'near']);
+
+        // The heading counts every passive in the document regardless of
+        // weapon-set view, so this alone proves nothing was dropped.
+        $crawler = $this->client->request('GET', $edit);
+        self::assertStringContainsString('(3 passives)', $crawler->filter('#build-nodes')->text());
+
+        // The default (shared) view only lists a shared passive, so
+        // strength89 is checked there and the other two under the view that
+        // actually shows their weapon set — same split
+        // `testTheCanvasStateSeparatesTheThreeAllocationGroups()` above relies on.
+        self::assertStringContainsString('strength89', $crawler->filter('#build-nodes')->text());
+        self::assertStringContainsString('melee22_', $this->client->request('GET', $edit.'?stats=1')->filter('#build-nodes')->text());
+        self::assertStringContainsString('attributes70', $this->client->request('GET', $edit.'?stats=2')->filter('#build-nodes')->text());
+    }
+
     public function testASkillCanBeAddedGivenASupportAndRemovedAgain(): void
     {
         $edit = $this->createBuild();
