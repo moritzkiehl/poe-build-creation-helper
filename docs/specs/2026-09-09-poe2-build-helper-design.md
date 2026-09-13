@@ -1424,9 +1424,9 @@ sets are allocated, coloured and summed separately": removing a shared node can
 orphan nodes in all three groups, while removing a set 1 node can orphan only
 set 1 nodes.
 
-**Nodes held by an exception are never swept.** An instilled node, a
-jewel-enabled node, an Oracle node — none of them is connected in the first
-place, so "lost its connection" does not describe them. The cascade walks the
+**Nodes held by an exception are never swept.** An instilled node and a
+jewel-enabled node are not connected in the first place, and an Oracle node is
+connected but gated, so "lost its connection" does not describe them. The cascade walks the
 connected component rooted at the class start and removes only what falls out of
 it; every node whose legality came from one of the four rules' exceptions is
 evaluated against that rule instead, and stays unless its own enabling condition
