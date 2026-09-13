@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Build\ClassFromAscendancy;
 use App\Entity\Build;
 use App\Interchange\BuildDocumentReader;
 use App\Interchange\BuildDocumentWriter;
@@ -25,6 +26,7 @@ final class BuildController extends AbstractController
         private readonly BuildDocumentReader $reader,
         private readonly BuildDocumentWriter $writer,
         private readonly EditorContext $context,
+        private readonly ClassFromAscendancy $classes,
         #[Autowire('%app.default_game_version%')]
         private readonly string $defaultGameVersion,
     ) {
@@ -52,6 +54,7 @@ final class BuildController extends AbstractController
         }
 
         $build = $this->builds->create($document, $this->defaultGameVersion);
+        $this->classes->fillIn($build);
         $this->entityManager->flush();
 
         return $this->redirectToRoute('app_build_edit', [
@@ -107,6 +110,7 @@ final class BuildController extends AbstractController
 
         try {
             $build->applyDocument($this->reader->read($json));
+            $this->classes->fillIn($build);
         } catch (InvalidBuildDocument $e) {
             return $this->render('build/edit.html.twig', $this->context->of($build, $token, $e->getMessage()), new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY));
         }

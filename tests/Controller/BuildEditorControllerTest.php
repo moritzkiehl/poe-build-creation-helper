@@ -131,14 +131,21 @@ final class BuildEditorControllerTest extends WebTestCase
         // the build having no class to root a start node on, not about the
         // node being unknown (that is a different failure, covered above by
         // `far` in `testAllocatingANodeThatTouchesNothingIsRefused()`).
-        $edit = $this->createBuild();
+        // Imported builds take their class from their ascendancy, so a
+        // class-less build has to be arranged: no class may own the fixture's
+        // "Warrior2", or the build would arrive with one.
         $db = self::getContainer()->get(Connection::class);
+        $db->executeStatement('DELETE FROM catalog_class WHERE ascendancies LIKE ?', ['%"Warrior2"%']);
+        $edit = $this->createBuild();
         $this->seedALegalPassiveTree($db, ['unreachable_without_class']);
 
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'unreachable_without_class'], server: ['HTTP_ACCEPT' => self::STREAM]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('not connected', (string) $this->client->getResponse()->getContent());
+        // No class means no start node, so nothing can connect. The reader
+        // must be told to choose a class — "not connected" sends them
+        // looking at the tree for a problem that is in the header.
+        self::assertStringContainsString('Choose a class first', (string) $this->client->getResponse()->getContent());
 
         $crawler = $this->client->request('GET', $edit);
         self::assertStringNotContainsString('unreachable_without_class', $crawler->filter('#build-nodes')->text(), 'a refused allocation must not reach the document');

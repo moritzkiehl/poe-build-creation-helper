@@ -31,6 +31,16 @@ final class InvalidEditCommand extends \RuntimeException
     }
 
     /**
+     * The build has no class, so there is no start node for anything to
+     * connect to. Every allocation fails, and the reason is the missing class,
+     * not the node the player clicked.
+     */
+    public static function classRequired(): self
+    {
+        return new self('Choose a class first: the passive tree grows from your class\'s start node.');
+    }
+
+    /**
      * For a field the build must always carry a value for — unlike
      * `noSuchEntry()`, the field is not unknown, it was just left empty.
      */

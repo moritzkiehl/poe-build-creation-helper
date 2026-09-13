@@ -37,6 +37,13 @@ final class PassiveEditHandler
             $document = $build->toDocument();
             $context = $this->contexts->of($build);
 
+            // Without a class there is no start node, so the rules would
+            // refuse this — and every other node — as "not connected". Say
+            // what is actually missing.
+            if (null === $context->startNodeId) {
+                throw InvalidEditCommand::classRequired();
+            }
+
             if (!$this->rules->mayAllocate(Allocation::of($document), $context, $command->id, $command->set)) {
                 throw InvalidEditCommand::illegalAllocation($command->id);
             }
