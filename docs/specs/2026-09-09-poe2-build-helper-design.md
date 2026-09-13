@@ -986,7 +986,15 @@ the byte-exact round trip proven in iteration 1 stays untouched.
 - **`build` table gains app-only columns**: `class_key`, `target_level` (int,
   nullable), `note` (text, nullable), `archetype_key` (nullable). Planning
   metadata the `.build` format has no room for; never enters `document` or
-  `BuildDocument`.
+  `BuildDocument`. **`class_key` is filled in from the ascendancy** when a build
+  is imported or its file replaced, unless the player has already chosen one:
+  a `.build` file carries only the ascendancy, and every ascendancy belongs to
+  exactly one class (measured 2026-09-13: 23 ascendancy ids across 12 classes,
+  none shared). An ascendancy the catalog does not know leaves it unset. A
+  build with no class has no start node, so allocation refuses with "Choose a
+  class first" rather than a generic connectivity error. Added 2026-09-13,
+  after the first browser look at slice B1 found every imported build
+  unallocatable.
 - **New `catalog_class` table**, 12 rows, synced alongside the passive tree
   from the same `classes[]` array: `key`/`name`, `base_str`/`dex`/`int`,
   `ascendancies` (JSON: id + name pairs), `start_node_id` — resolved at sync
