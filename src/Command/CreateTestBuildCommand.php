@@ -106,7 +106,7 @@ final class CreateTestBuildCommand extends Command
         $this->db->transactional(static function (Connection $db): void {
             $db->executeStatement('DELETE FROM catalog_passive_edge');
             $db->executeStatement('DELETE FROM catalog_passive');
-            $db->executeStatement('DELETE FROM catalog_class WHERE id = ?', [self::CLASS_ID]);
+            $db->executeStatement('DELETE FROM catalog_class');
 
             $db->executeStatement(
                 'INSERT INTO catalog_class (id, start_node_id, base_str, base_dex, base_int, ascendancies) VALUES (?, ?, ?, ?, ?, ?)',
