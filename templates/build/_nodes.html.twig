@@ -48,7 +48,17 @@
         </p>
     {% endif %}
 
-    <h3>What the tree gives ({{ document.passives|length }} passives)</h3>
+    <p class="stats-view">
+        {% for value, label in {'shared': 'Both sets only', '1': 'With weapon set 1', '2': 'With weapon set 2'} %}
+            {% if value == statsView %}
+                <strong>{{ label }}</strong>
+            {% else %}
+                <a href="{{ path('app_build_edit', {slug: build.shareSlug, token: token, stats: value, q: passiveQuery}) }}">{{ label }}</a>
+            {% endif %}
+        {% endfor %}
+    </p>
+
+    <h3>What the tree gives{% if statsView != 'shared' %} with weapon set {{ statsView }}{% endif %} ({{ document.passives|length }} passives)</h3>
     <ul>
         {% for family in treeSummary %}
             <li>

@@ -66,8 +66,28 @@ final class EditorContext
         $instilledIds = $build->getInstilledPassives();
         $detail = array_column($this->catalog->passivesByIds(array_values(array_unique([...$allocatedIds, ...$instilledIds]))), null, 'id');
 
+        $searches = $this->searches->all();
+
+        // The stats overview answers "what does this build give while set N
+        // is equipped" — never a set's nodes in isolation — so it sums the
+        // shared nodes plus the chosen set, exactly what idsVisibleTo() already
+        // groups. `statsOverride` is the raw, possibly-empty query term (see
+        // `passivesUniform` below for why); `statsView` is the resolved label
+        // the templates compare against and the one control that isn't shown
+        // for the current view links away from.
+        $view = match ($searches['statsOverride']) {
+            '1' => WeaponSet::One,
+            '2' => WeaponSet::Two,
+            default => WeaponSet::Shared,
+        };
+        $statsView = match ($view) {
+            WeaponSet::One => '1',
+            WeaponSet::Two => '2',
+            WeaponSet::Shared => 'shared',
+        };
+
         $statsById = [];
-        foreach ($allocatedIds as $id) {
+        foreach ($allocation->idsVisibleTo($view) as $id) {
             $statsById[$id] = $detail[$id]['stats'] ?? [];
         }
 
@@ -78,7 +98,6 @@ final class EditorContext
             }
         }
 
-        $searches = $this->searches->all();
         $highlightedIds = array_column($searches['passiveResults'], 'id');
 
         return array_merge([
@@ -91,6 +110,7 @@ final class EditorContext
             'events' => $this->events->timeline($build),
             'error' => $error,
             'treeSummary' => StatSummary::of($statsById),
+            'statsView' => $statsView,
             'allocatedByFamily' => $allocatedByFamily,
             'allocationBySet' => $allocationBySet,
             'startNodeId' => $this->treeContexts->of($build)->startNodeId,

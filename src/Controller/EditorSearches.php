@@ -39,6 +39,7 @@ final class EditorSearches
      *     instilledResults: list<array{id: string, name: string, kind: string, stats: list<string>, recipe: list<string>}>,
      *     intervalsOverride: string,
      *     supportsOverride: string,
+     *     statsOverride: string,
      * }
      */
     public function all(): array
@@ -58,6 +59,7 @@ final class EditorSearches
         // idiom for the same problem.
         $intervalsOverride = $this->term($request, 'intervals');
         $supportsOverride = $this->term($request, 'supports');
+        $statsOverride = $this->term($request, 'stats');
 
         return [
             'passiveQuery' => $passive,
@@ -72,6 +74,7 @@ final class EditorSearches
             'instilledResults' => '' !== $instilled ? $this->search->instillablePassives($instilled) : [],
             'intervalsOverride' => $intervalsOverride,
             'supportsOverride' => $supportsOverride,
+            'statsOverride' => $statsOverride,
         ];
     }
 

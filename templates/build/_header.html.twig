@@ -1,11 +1,11 @@
 <section id="build-header" class="full">
     <h2>Build</h2>
 
-    {% macro field(build, token, name, label, value, q, gem, support, unique, instilled, intervals, supports, type) %}
+    {% macro field(build, token, name, label, value, q, gem, support, unique, instilled, intervals, supports, stats, type) %}
         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
             <input type="hidden" name="action" value="header.set">
             <input type="hidden" name="field" value="{{ name }}">
-            {{ include('build/_search_state.html.twig', {passiveQuery: q, gemQuery: gem, supportQuery: support, uniqueQuery: unique, instilledQuery: instilled, intervalsOverride: intervals, supportsOverride: supports}) }}
+            {{ include('build/_search_state.html.twig', {passiveQuery: q, gemQuery: gem, supportQuery: support, uniqueQuery: unique, instilledQuery: instilled, intervalsOverride: intervals, supportsOverride: supports, statsOverride: stats}) }}
             <label for="header-{{ name }}">{{ label }}</label>
             <input type="{{ type|default('text') }}" id="header-{{ name }}" name="value" value="{{ value }}" onchange="this.form.requestSubmit()">
             <button type="submit">Save</button>
@@ -14,11 +14,11 @@
 
     {% import _self as header %}
 
-    {{ header.field(build, token, 'name', 'Name', build.name, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride) }}
-    {{ header.field(build, token, 'author', 'Author', build.author, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride) }}
-    {{ header.field(build, token, 'target_level', 'Target level', build.targetLevel, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, 'number') }}
-    {{ header.field(build, token, 'note', 'Note', build.note, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride) }}
-    {{ header.field(build, token, 'archetype_key', 'Archetype', build.archetypeKey, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride) }}
+    {{ header.field(build, token, 'name', 'Name', build.name, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, statsOverride) }}
+    {{ header.field(build, token, 'author', 'Author', build.author, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, statsOverride) }}
+    {{ header.field(build, token, 'target_level', 'Target level', build.targetLevel, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, statsOverride, 'number') }}
+    {{ header.field(build, token, 'note', 'Note', build.note, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, statsOverride) }}
+    {{ header.field(build, token, 'archetype_key', 'Archetype', build.archetypeKey, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, statsOverride) }}
 
     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
         <input type="hidden" name="action" value="header.set">
@@ -50,5 +50,5 @@
         <button type="submit">Save</button>
     </form>
 
-    {{ header.field(build, token, 'game_version', 'Game version', build.gameVersion, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride) }}
+    {{ header.field(build, token, 'game_version', 'Game version', build.gameVersion, passiveQuery, gemQuery, supportQuery, uniqueQuery, instilledQuery, intervalsOverride, supportsOverride, statsOverride) }}
 </section>

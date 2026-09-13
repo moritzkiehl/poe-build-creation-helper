@@ -572,6 +572,26 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorTextContains('#build-skills', "Follows the skill's range");
     }
 
+    public function testTheStatsViewSurvivesAnEditAndSumsSharedPlusTheChosenSet(): void
+    {
+        $build = $this->seedBuildWithStats($this->client);
+
+        $crawler = $this->client->request('GET', $this->editUrl($build).'?stats=1');
+        self::assertStringContainsString('10% increased Damage', $crawler->filter('#build-nodes')->text(), 'the shared node counts toward the set 1 view');
+        self::assertStringContainsString('5% increased Damage', $crawler->filter('#build-nodes')->text());
+
+        // A plain form POST redirects; the view must come back with it.
+        $this->client->request('POST', $this->actUrl($build), [
+            'action' => 'passive.interval_all',
+            'from' => '1',
+            'to' => '90',
+            'stats' => '1',
+        ]);
+        $this->client->followRedirect();
+
+        self::assertStringContainsString('stats=1', (string) $this->client->getHistory()->current()->getUri());
+    }
+
     public function testInstilledNodesListSeparatelyFromTheTree(): void
     {
         $this->seedInstillablePassive('test_instill_apart', 'Test Apart Ward', ['TestLiquidCalm']);
@@ -648,6 +668,81 @@ final class BuildEditorControllerTest extends WebTestCase
         }
 
         return $edit;
+    }
+
+    /**
+     * A shared node and a weapon-set-1 node, connected to each other and to a
+     * dedicated start node, each carrying a distinct stat line — so a test can
+     * tell whether the stats overview is summing the right ids without a real
+     * `melee1_`-style catalog id being read as a coincidence.
+     * `SeedsALegalPassiveTree` cannot express this: its nodes all carry empty
+     * stats, so the seeding here is bespoke, the same way `seedBuildWithTree()`
+     * above is bespoke for a shape the shared trait cannot express either.
+     *
+     * @return string the edit URL, without a trailing slash
+     */
+    private function seedBuildWithStats(KernelBrowser $client): string
+    {
+        $db = self::getContainer()->get(Connection::class);
+        $classId = 'test_stats_class';
+        $startNodeId = 'stats_start';
+        $sharedId = 'stats_shared';
+        $setOneId = 'stats_set_one';
+        $ids = [$startNodeId, $sharedId, $setOneId];
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+
+        $db->executeStatement("DELETE FROM catalog_passive_edge WHERE from_id IN ({$placeholders}) OR to_id IN ({$placeholders})", [...$ids, ...$ids]);
+        $db->executeStatement("DELETE FROM catalog_passive WHERE id IN ({$placeholders})", $ids);
+        $db->executeStatement('DELETE FROM catalog_class WHERE id = ?', [$classId]);
+
+        $db->executeStatement(
+            "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, 'small', NULL, 0, 0, '[]', '[]')",
+            [$startNodeId, $startNodeId],
+        );
+        $db->executeStatement(
+            "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, 'small', NULL, 0, 0, ?, '[]')",
+            [$sharedId, $sharedId, json_encode(['10% increased Damage'], \JSON_THROW_ON_ERROR)],
+        );
+        $db->executeStatement(
+            "INSERT INTO catalog_passive (id, name, kind, ascendancy_key, pos_x, pos_y, stats, recipe) VALUES (?, ?, 'small', NULL, 0, 0, ?, '[]')",
+            [$setOneId, $setOneId, json_encode(['5% increased Damage'], \JSON_THROW_ON_ERROR)],
+        );
+
+        $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$startNodeId, $sharedId]);
+        $db->executeStatement('INSERT INTO catalog_passive_edge (from_id, to_id) VALUES (?, ?)', [$sharedId, $setOneId]);
+
+        $db->executeStatement(
+            'INSERT INTO catalog_class (id, start_node_id, base_str, base_dex, base_int, ascendancies) VALUES (?, ?, 0, 0, 0, ?)',
+            [$classId, $startNodeId, '[]'],
+        );
+
+        $source = __DIR__.'/../fixtures/build/valid-full.build';
+        $copy = sys_get_temp_dir().'/'.uniqid('upload', true).'.build';
+        copy($source, $copy);
+
+        $client->request('POST', '/builds', files: ['build' => new UploadedFile($copy, 'valid-full.build', 'application/json', test: true)]);
+        $edit = (string) $client->getResponse()->headers->get('Location');
+
+        $client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
+        $client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => $sharedId]);
+        $client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => $setOneId, 'set' => '1']);
+
+        return $edit;
+    }
+
+    /**
+     * A one-line indirection so the stats-view test above reads as operating
+     * on "the build" rather than on a bare URL string it has to remember the
+     * shape of.
+     */
+    private function editUrl(string $edit): string
+    {
+        return $edit;
+    }
+
+    private function actUrl(string $edit): string
+    {
+        return $edit.'/act';
     }
 
     /**
