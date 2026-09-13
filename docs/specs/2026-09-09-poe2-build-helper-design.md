@@ -1160,7 +1160,10 @@ only the first slice is built next:
     connectivity, three-way summary). The risky half.
   - **B2 — equipment.** The declared jewel keystone's pseudo-slot and the
     `(inventory_id, slot_x, slot_y)` re-key that stops losing charm and flask
-    entries. Mechanical, and reviewable without any tree context.
+    entries. Grown on 2026-09-13 to start with one `ViewState` registry and to
+    make Revert restore every app-only field; the jewel feeds the tree's rule 4,
+    so B2 is not free of tree context after all. See "Slice B2 decisions
+    (2026-09-13)".
 
   B1 runs first. The ordering is a judgement call rather than a dependency —
   B2 fixes data loss that exists today, but it touches no code B1 touches, so
@@ -1330,10 +1333,12 @@ Jewels that enable a radius around their own socket are out: nodes carry
 node-keys and their coordinates exist, the radius values do not. And the app
 cannot detect which jewel a player owns: `uniques.json` carries only
 `id`, `name`, `item_class`, `visual_identity` and inventory dimensions — no mod
-text — so although two granting mods exist in `mods.json`
-(`JewelUniqueAllocateDisconnectedPassives` and
-`AllocateDisconnectedPassivesDonut`), nothing links a mod to the unique carrying
-it. The jewel is therefore declared by the player, and the interface says plainly
+text — so although three granting mods exist in `mods.json` — two around the
+jewel's own socket (`JewelUniqueAllocateDisconnectedPassives`, radius 800, and
+`AllocateDisconnectedPassivesDonut`) and one around a keystone
+(`JewelUniqueAllocateDisconnectedPassivesAroundKeystone`, radius 1000, the one
+rule 4 models; the third was missed until 2026-09-13) — nothing links a mod to
+the unique carrying it. The jewel is therefore declared by the player, and the interface says plainly
 that socket-radius jewels are not modelled rather than pretending otherwise.
 
 The `.build` format has no jewels at all — its fourteen inventory ids are
@@ -1477,8 +1482,58 @@ The fix, folded into slice B because the slice already opens the equipment area:
 **slots are identified by `(inventory_id, slot_x, slot_y)`**, and an id that can
 hold several entries renders as the container it is. `config/inventory_slots.yaml`
 stays curated and hand-maintained — no upstream source carries this vocabulary —
-but gains, per id, how many positions it may hold. The labels `Trinket` and
-`Flask` are corrected to name what the corpus shows them to be.
+but gains, per id, the positions it may hold: the `slot_x` values themselves,
+not a count, because `Trinket1` starts at 2 on the strip it shares with
+`Flask1`. The labels `Trinket` and `Flask` are corrected to name what the corpus
+shows them to be.
+
+### Slice B2 decisions (2026-09-13)
+
+Settled with the owner after B1 shipped, before B2 was planned. B2 grew from two
+items to three, built in this order.
+
+**1. One registry for view state, first.** The item carried into slice B as "one
+place to register view state" was deferred through B1 and grew. A key that
+survives an edit must now agree across five places: the hidden fields in
+`_search_state.html.twig`, the `searchParams()` redirect whitelist, the `_header`
+`field()` macro (Twig macros inherit no context), the per-template link maps,
+and — implicitly — the canvas's fetch URL. B1 alone shipped three defects from
+that seam. A `ViewState` class holds the key list and reads the raw values from
+the request, and every consumer reads from it: the redirect whitelist,
+`_search_state` as a loop, the `field()` macro as a single argument, the link
+maps by merging into it, and the five GET search forms, which today each submit
+only their own term and silently drop the rest. A gate test asserts that every
+key in the registry renders as a hidden field — the mechanical guard
+`.claude/mistakes.md` called for after the fifth repeat.
+
+**2. Slots by position.** `config/inventory_slots.yaml` records the positions
+each id holds: `Flask1` at `slot_x` 0 and 1, labelled "Life flask" and "Mana
+flask" (every corpus file holds a life flask at 0 and a mana flask at 1);
+`Trinket1` at 2, 3 and 4, labelled "Charm 1" to "Charm 3"; every other id at 0.
+`slot_y` is part of the key but never set by the player, since the corpus never
+varies it. Every slot form names its target with one `position` field
+(`Trinket1@3`), parsed in one place, so the unique search's target dropdown and
+the direct slot forms share one input shape (owner's choice); the history
+payload still records `inventory_id` and `slot_x` separately. No migration:
+stored documents already hold every entry, and only the editor could not see
+them.
+
+**3. The jewel keystone pseudo-slot.** An app-only `build.jewel_keystone`
+column, set by a `jewel.set` action validated against the catalog's keystones.
+All 33 keystones cover at least one node, so all 33 are offered. Its control
+sits in the equipment area, labelled as not exported, and `TreeContextFactory`
+passes it to the rules as `jewelKeystoneId` — the seam B1 left for it. The
+keystone need not itself be allocated (proof 11). **Clearing or changing it keeps
+the passives that only it made legal** (owner, 2026-09-13): the same as a class
+or ascendancy change, which today leave now-illegal passives in place — and must,
+since a class switch moves the start node and a cascade would wipe the whole
+tree. Iteration 4's findings report them.
+
+**Revert restores every app-only field.** `BuildSnapshot` captures `class_key`,
+`target_level`, `note` and `archetype_key` but not `instilled_passives`, so
+reverting past an Instilled Modifier change silently keeps the later
+declarations. B2 adds `jewel_keystone` to the snapshot and fixes
+`instilled_passives` in the same change.
 
 ### Weapon sets are allocated, coloured and summed separately
 
@@ -1593,6 +1648,15 @@ patch.
     set 2. `testAnEnablerCountsWhicheverWeaponSetItSitsIn` in
     `tests/Build/Tree/AllocationRulesTest.php` pins this behaviour; if the
     game scopes enablers per set after all, that is the test to invert
+11. Whether a keystone-radius jewel needs its keystone *allocated*.
+    `JewelUniqueAllocateDisconnectedPassivesAroundKeystone` carries no display
+    text — only the stat
+    `local_unique_jewel_disconnected_passives_can_be_allocated_around_keystone_hash`
+    and a 1000 radius — and the equivalent PoE1 jewel works around a keystone
+    the player does not hold. The code follows that: a declared jewel keystone
+    excuses connectivity whether or not it is allocated
+    (`AllocationRules::excusedByRadius()`). If the game requires it allocated,
+    that check gains one condition
 
 Settled 2026-09-12 (owner, 0.5.5): the two tree-legality exceptions both need
 their enabling node *allocated*. *The Unseen Path* must be allocated before any
