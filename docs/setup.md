@@ -42,6 +42,11 @@ ddev composer db:migrate   # development and test schema
 
 Then open <https://poe-build-helper.ddev.site>.
 
+Upgrading an instance whose catalog is already synced: run
+`ddev exec php bin/console app:catalog:sync` once after migrating. Sync is
+manual, so until it runs the new catalog columns keep their empty defaults and
+unlock gates and the keystone-radius exception silently never apply.
+
 `ddev start` also creates the `db_test` database. That is not decoration: PHPUnit
 runs against real MariaDB rather than SQLite, because JSON and generated columns
 behave differently and a green SQLite run would prove nothing. The hook lives in
