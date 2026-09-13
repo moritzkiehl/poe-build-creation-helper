@@ -650,6 +650,21 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringContainsString('intervals=per-passive', $href, 'a stats-view link must not drop an unrelated view override');
     }
 
+    public function testTheSupportsToggleCarriesTheRestOfTheViewState(): void
+    {
+        // The fixture's supports sit at their own ranges, so the page offers
+        // "Make supports follow their skill's range" — the one toggle link in
+        // #build-skills.
+        $edit = $this->createBuild();
+
+        $crawler = $this->client->request('GET', $edit.'?stats=1&gem=x');
+        $href = (string) $crawler->filter('#build-skills a')->first()->attr('href');
+
+        self::assertStringContainsString('supports=flat', $href);
+        self::assertStringContainsString('gem=x', $href, 'a supports toggle must not drop an unrelated search term');
+        self::assertStringContainsString('stats=1', $href, 'a supports toggle must not reset the stats view');
+    }
+
     public function testInstilledNodesListSeparatelyFromTheTree(): void
     {
         $this->seedInstillablePassive('test_instill_apart', 'Test Apart Ward', ['TestLiquidCalm']);

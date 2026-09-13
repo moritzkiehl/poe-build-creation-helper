@@ -55,17 +55,18 @@
         </ul>
     {% endif %}
 
-    {% set supportsViewState = {slug: build.shareSlug, token: token, q: passiveQuery, gem: gemQuery, support: supportQuery, unique: uniqueQuery, instilled: instilledQuery, intervals: intervalsOverride} %}
+    {# Same one raw view-state map `_nodes.html.twig` builds its links from. #}
+    {% set editLink = {slug: build.shareSlug, token: token}|merge(viewState) %}
     {% if supportsFollow %}
         <p>
             Every support follows its skill's range.
-            <a href="{{ path('app_build_edit', supportsViewState|merge({supports: 'per-passive'})) }}">Set a support's range on its own</a>
+            <a href="{{ path('app_build_edit', editLink|merge({supports: 'per-passive'})) }}">Set a support's range on its own</a>
             to plan it apart from its skill.
         </p>
     {% else %}
         <p>
             These supports have their own ranges below, set independently of their skill.
-            <a href="{{ path('app_build_edit', supportsViewState|merge({supports: 'flat'})) }}">Make supports follow their skill's range</a>
+            <a href="{{ path('app_build_edit', editLink|merge({supports: 'flat'})) }}">Make supports follow their skill's range</a>
             again.
         </p>
     {% endif %}

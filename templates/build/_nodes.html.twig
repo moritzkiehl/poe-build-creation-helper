@@ -25,13 +25,12 @@
 
     <h3>Levels</h3>
     {#
-        One map of every raw view-state override, the same idiom
-        `_search_state.html.twig` renders as hidden fields — so a link built
-        from it can never drop a piece of state the way a hand-listed set of
-        query keys eventually will. Every link below overrides only the one
-        key it exists to change.
+        `viewState` (EditorContext) is the one map of every raw view-state
+        term, so a link built from it cannot drop a piece of state the way a
+        hand-listed set of query keys eventually will. Every link below
+        overrides only the one key it exists to change.
     #}
-    {% set viewState = {slug: build.shareSlug, token: token, q: passiveQuery, gem: gemQuery, support: supportQuery, unique: uniqueQuery, instilled: instilledQuery, intervals: intervalsOverride, supports: supportsOverride, stats: statsOverride} %}
+    {% set editLink = {slug: build.shareSlug, token: token}|merge(viewState) %}
     {% if passivesUniform %}
         <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-interval="all">
             <input type="hidden" name="action" value="passive.interval_all">
@@ -44,13 +43,13 @@
         </form>
         <p>
             Every passive shares one range.
-            <a href="{{ path('app_build_edit', viewState|merge({intervals: 'per-passive'})) }}">Set each passive's range on its own</a>
+            <a href="{{ path('app_build_edit', editLink|merge({intervals: 'per-passive'})) }}">Set each passive's range on its own</a>
             to plan them separately.
         </p>
     {% else %}
         <p>
             These passives have different ranges, so each is set on its own below.
-            <a href="{{ path('app_build_edit', viewState|merge({intervals: 'flat'})) }}">Use one range for the whole tree</a>
+            <a href="{{ path('app_build_edit', editLink|merge({intervals: 'flat'})) }}">Use one range for the whole tree</a>
             to go back to a single control.
         </p>
     {% endif %}
@@ -60,7 +59,7 @@
             {% if value == statsView %}
                 <strong>{{ label }}</strong>
             {% else %}
-                <a href="{{ path('app_build_edit', viewState|merge({stats: value})) }}">{{ label }}</a>
+                <a href="{{ path('app_build_edit', editLink|merge({stats: value})) }}">{{ label }}</a>
             {% endif %}
         {% endfor %}
     </p>
