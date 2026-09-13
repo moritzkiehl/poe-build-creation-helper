@@ -271,6 +271,35 @@ test('an illegal node cannot be allocated from the canvas', async ({ page }) => 
     await expect(nodes).toHaveText(before ?? '');
 });
 
+test('a canvas click keeps the passive search and the stats view', async ({ page }) => {
+    // "End-to-end leaf" names exactly one seeded node (CreateTestBuildCommand),
+    // so the search rings e2e_leaf, and stats=1 opens the weapon set 1 view.
+    // The canvas's own POST carries neither in its body: only the page's query
+    // string can keep them alive through the Turbo Stream it gets back.
+    await page.goto(`${createBuild()}?q=${encodeURIComponent('End-to-end leaf')}&stats=1`);
+
+    const canvas = page.locator('canvas.tree-canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((el) => el.width)).toBeGreaterThan(0);
+    await canvas.scrollIntoViewIfNeeded();
+
+    const allocated = page.locator('#build-nodes h3').filter({ hasText: 'What the tree gives' });
+    await expect(allocated).toContainText('with weapon set 1');
+    await expect(allocated).toContainText('(3 passives)');
+
+    await clickCanvasAt(page, canvas, TARGET_OFFSET_X);
+
+    // The count moving is what proves the stream has landed. Reading the
+    // search and the view before that would only read the page as it was
+    // first served, which already carries both.
+    await expect.poll(() => allocated.textContent()).toContain('(4 passives)');
+
+    const state = JSON.parse(await page.locator('#build-state').textContent());
+    expect(state.highlighted).toContain('e2e_leaf');
+    await expect(page.locator('#passive-q')).toHaveValue('End-to-end leaf');
+    await expect(allocated).toContainText('with weapon set 1');
+});
+
 test('removing a junction takes its branch with it', async ({ page }) => {
     await page.goto(createBuild());
 

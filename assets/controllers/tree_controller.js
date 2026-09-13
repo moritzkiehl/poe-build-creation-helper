@@ -275,9 +275,14 @@ export default class extends Controller {
         // what actually adds it to the encoded body.
         body.set('set', this.weaponSet === 'shared' ? '' : this.weaponSet);
 
+        // The page's own query string carries the view state — the passive
+        // search, the stats view, the interval overrides — and the server
+        // reads a view-state key from the query before the body. Without it
+        // the Turbo Stream answering this click would render every section
+        // with that state emptied while the URL still claims it.
         let response;
         try {
-            response = await fetch(this.actUrlValue, {
+            response = await fetch(this.actUrlValue + window.location.search, {
                 method: 'POST',
                 headers: { Accept: 'text/vnd.turbo-stream.html' },
                 body,
