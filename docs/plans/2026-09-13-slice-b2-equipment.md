@@ -1214,3 +1214,34 @@ git commit -m "feat(editor): declare a jewel keystone and let its radius bypass 
 **Type consistency.** `setInventorySlot(document, inventoryId, slotX, uniqueName, from, to, additionalText)` in Task 4's implementation, handler and tests; `hasPosition(string, int)` and `positions()`'s `{id, x, key, label}` from Task 3 used in Task 4; `SetSlot`/`ClearSlot` with `slotX` after `inventoryId`; `getJewelKeystone()`/`setJewelKeystone()`/`setInstilledPassives()` from Task 5 used in Task 6; `ViewState::KEYS`/`fromRequest()` and the `viewState` template variable from Task 1 used in Task 2.
 
 **Boundary check (slice B1's R1 lesson).** Task 3 leaves `isKnown()` unchanged so the commit before Task 4 keeps Trinket edits working. Task 4 lands the commands and the template together. Task 1 leaves templates untouched and working.
+
+---
+
+## Amendment, 2026-09-14: the jewel gets its own coverage
+
+The owner confirmed that the keystone jewel is a separate mechanism from
+*Entwined Realities* (spec proof 12). B1's `AllocationRules::excusedByRadius()`
+used `keystonesInRadius` for both, and that list is *Entwined Realities*' own:
+it reaches 1379 units from a keystone, while the jewel's mod carries a base
+radius of 1000. Task 6 therefore also does the following.
+
+- **`PassiveGraph` loads node positions** — `pos_x`, `pos_y`, read with the
+  existing `Row::float()` — alongside the columns it already reads, and gains
+  `jewelCovers(string $keystoneId, string $id): bool`: true when `$id` is not
+  itself a keystone and lies within 1000.0 units (Euclidean, stored
+  positions) of the keystone. Name the radius as a constant with a comment
+  pointing at the mod's `local_jewel_effect_base_radius`.
+- **`AllocationRules::excusedByRadius()`** tests the declared jewel keystone
+  with `jewelCovers()` instead of `keystonesCovering()`. *Entwined Realities*
+  keeps `keystonesCovering()` unchanged.
+- **Tests.** The `AllocationRulesTest::rulesOver()` helper inserts every node
+  at (0, 0) today; give it an optional `positions` argument. Add a unit test
+  showing the jewel covers a node 950 units from its keystone and does not
+  cover one 1050 units away. In `BuildEditorControllerTest`, Task 6's
+  `seedJewelKeystoneCovering()` must place the keystone by position — within
+  1000 units of `far`, not by writing `far`'s `keystones_in_radius` — and a
+  second assertion moves it 1500 units away and expects the allocation refused.
+
+The owner may rework the radius logic later if it does not feel true to the
+game. Proof 12's in-game check narrows whether 1000 export units is the jewel's
+real reach.

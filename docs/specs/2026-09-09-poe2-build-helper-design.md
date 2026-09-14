@@ -877,12 +877,11 @@ parser over `support_text` plus a curated override file.
 paste, storage, unchanged download, share slug and edit token, read-only view.
 No catalog, no rules, no editor.
 
-Status: **provisionally accepted.** Fourteen game-exported files round-trip
-byte-exact, and a build exported through the app into the game's BuildPlanner
-directory is byte-identical to the file the game wrote. The full acceptance
-condition — PoE2 actually reading a file the tool produced — is still open and
-will be checked later. Until it is, "the game accepts our output" remains an
-inference from byte equality, not an observation.
+Status: **accepted, 2026-09-14.** Fourteen game-exported files round-trip
+byte-exact, a build exported through the app into the game's BuildPlanner
+directory is byte-identical to the file the game wrote, and on 2026-09-14 the
+owner confirmed that PoE2 imports a file the tool produced. "The game accepts
+our output" is now an observation, no longer an inference from byte equality.
 
 The layout follows Symfony conventions (`src/Entity`, `src/Repository`,
 `src/Controller`) rather than a directory per module; the five modules of part 1
@@ -1588,6 +1587,54 @@ IS NOT NULL) AS with_constraint FROM catalog_passive`, development database):
 **4912 nodes total, 1573 carrying `keystones_in_radius`, 200 carrying
 `unlock_constraint`.**
 
+### Canvas feedback, decided 2026-09-14
+
+Two owner decisions taken from `TODO.md`, recorded here before their design:
+
+- **The canvas greys out nodes that cannot be allocated.** "Allocation is
+  checked, not merely drawn" requires this, but no plan task ever built it.
+  The server stays the authority; greying is feedback only.
+- **The canvas colours are reworked for contrast in light and dark mode.**
+  Today's shared / set 1 / set 2 palette fails for deuteranopes and in
+  greyscale (gold `#e8c56a` against green `#7ad67a` is 1.08:1 luminance). The
+  owner chose better colours over a second shape channel.
+
+**Greying: the server sends what can be allocated.** `AllocationRules` gains a
+bulk `allocatable(Allocation, TreeContext, WeaponSet): list<string>` — every
+node `mayAllocate()` would accept for that set, computed once per set rather
+than node by node: the connected component is walked once, the candidates are
+its neighbours plus the nodes an enabled keystone's radius covers, and each
+candidate must pass the unlock check. The build state carries
+`allocatable: {shared, 1, 2}`; the canvas greys every unallocated node that is
+not in the set for the selected weapon-set mode, and each edit's stream
+refreshes the sets. There is one implementation of the rules, not a JavaScript
+port (owner's choice, 2026-09-14): the bulk method is tested against
+`mayAllocate()` itself, node by node, on a seeded graph. A build with no class
+therefore shows a fully greyed tree, which says "choose a class" before any
+click is refused.
+
+**Colours: hue means allocation, and the whole app follows the OS theme.**
+`app.css` defines colour tokens in a light and a dark set, switched by
+`prefers-color-scheme` — the whole app, not only the canvas (owner's choice).
+Surfaces and inks come from the dataviz reference palette: surface `#fcfcfb`
+light / `#1a1a19` dark; primary ink `#0b0b0b` / `#ffffff`; secondary ink
+`#52514e` / `#c3c2b7`; muted ink `#898781`; baseline `#c3c2b7` / `#383835`.
+Hue is reserved for the three allocation groups — shared blue (`#2a78d6` light,
+`#3987e5` dark), weapon set 1 orange (`#eb6834`, `#d95926`), weapon set 2 aqua
+(`#1baf7a`, `#199e70`) — the reference palette's first three slots, the only
+ones documented to stay distinct from each other all at once in both modes.
+Validated 2026-09-14 with the skill's validator, all pairs: worst colour-blind
+ΔE 9.2 light / 9.4 dark (target ≥ 8), worst normal-vision ΔE 24.0 / 20.9
+(floor 15). The light aqua is 2.74:1 on its surface, below 3:1, so each group is
+also named in the legend and in the node's tooltip.
+
+Node kind moves off hue onto size, as the radius already does, with a ring for
+keystones. Unallocated nodes that can be allocated take the secondary ink
+(7.7:1 light / 9.7:1 dark); greyed ones take the muted ink (3.5:1 / 4.9:1), still
+visible but subdued. The start node and the search and hover rings take the
+primary ink. The canvas reads its colours from the same CSS tokens and redraws
+when the OS theme changes, so the palette lives in one place.
+
 ### Deferred: a design round on how the editor is organised
 
 Raised 2026-09-12 and explicitly postponed. The editor is one long scroll —
@@ -1615,48 +1662,61 @@ patch.
 2. Ascendancy points: count and source (trials)
 3. Support sockets per skill gem: what the number depends on
 4. Spirit sources: how much sits on the tree, how much only on gear
-5. Weapon binding of skills: whether RePoE models it as a tag or a requirement
+5. **Settled 2026-09-14 from the data: neither.** The skill-gem export
+   carries `tags`, attribute `requirement_weights`, `grants_skills`,
+   `support_text` and presentation fields, but no weapon-type field, and only
+   one gem in 1191 carries a weapon tag (`bow`). Weapon binding would have to
+   come from the granted-skill data, which is not synced. A data question, not
+   a game check
 6. How many Instilled Modifiers a normal amulet allows. `UniqueMultipleAnointments1`
    grants "3 additional", which implies a base of at least one, but the base
    itself is nowhere in the catalog. The editor deliberately does not enforce a
    limit; this proof would only be needed if it ever should.
 7. Which spelling of `unique_name` the game accepts for the three ambiguous
    uniques, and whether `.build` offers any disambiguation at all
-8. Whether the three multi-node `unlockConstraint` chains require **all** their
-   listed gate nodes or **any one**. Measured 2026-09-12: the field is
+8. **Settled 2026-09-14 (owner, 0.5.5): all of them.** A multi-node
+   `unlockConstraint` needs every listed gate node allocated, not any one —
+   which is what B1 already implements. Measured 2026-09-12: the field is
    `{nodes: [tree-keys], ascendancy?: string}`; 197 entries list one node
-   (*The Unseen Path*, Druid1), and three list three each — *Path of the
-   Renegade* (Mutewind Agility, Brinerot Ferocity, Redblade Discipline), *The
-   Hollowkeeper* (First Teachings of the Keeper, First Principle of the Hollow —
-   two, not three), and Huntress's *Sacred Unity* (Vivid Stampede, Wild
-   Protector, Primal Bounty). The data cannot distinguish the two readings.
-   B1 implements **all-of** as the conservative reading, since requiring too much
-   refuses a legal build visibly while requiring too little permits an illegal
-   one silently
-9. Whether weapon-set passives draw on their own point pool or the shared one.
-   Binds `passive.budget_exceeded`: counting all three groups against one budget
-   misreports every build using weapon sets if the pools are separate. The corpus
-   is suggestive but not decisive — 24 nodes on each set across three files, a
-   symmetry that a shared pool would not require. Slice B does not need this;
-   iteration 4 must not assume an answer
-10. Whether legality *enablers* — a keystone, *Entwined Realities*, an
-    `unlockConstraint` gate node — are scoped to the weapon set they are
-    allocated in. "Connectivity is per set" above is owner-confirmed
-    (0.5.5), but enablement is not: the code currently counts an enabler
-    whichever set it sits in, so a keystone allocated at weapon set 2 opens
-    its neighbourhood for an allocation at set 1 just as readily as for
-    set 2. `testAnEnablerCountsWhicheverWeaponSetItSitsIn` in
-    `tests/Build/Tree/AllocationRulesTest.php` pins this behaviour; if the
-    game scopes enablers per set after all, that is the test to invert
-11. Whether a keystone-radius jewel needs its keystone *allocated*.
-    `JewelUniqueAllocateDisconnectedPassivesAroundKeystone` carries no display
-    text — only the stat
-    `local_unique_jewel_disconnected_passives_can_be_allocated_around_keystone_hash`
-    and a 1000 radius — and the equivalent PoE1 jewel works around a keystone
-    the player does not hold. The code follows that: a declared jewel keystone
-    excuses connectivity whether or not it is allocated
-    (`AllocationRules::excusedByRadius()`). If the game requires it allocated,
-    that check gains one condition
+   (*The Unseen Path*, Druid1), and three list more — *Path of the Renegade*
+   (Mutewind Agility, Brinerot Ferocity, Redblade Discipline), *The
+   Hollowkeeper* (First Teachings of the Keeper, First Principle of the Hollow),
+   and Huntress's *Sacred Unity* (Vivid Stampede, Wild Protector, Primal Bounty)
+9. **Settled 2026-09-14 (owner, 0.5.5): each weapon set has its own point
+   pool.** A shared passive costs one point from *both* sets' pools; a
+   weapon-set passive costs one only from its own set's pool. So
+   `passive.budget_exceeded` (iteration 4) checks each set separately — shared
+   passives plus that set's passives against that set's points — never all
+   three groups against one budget. The question as first asked ("own pool or
+   the shared one") had the shape wrong: there is no single shared pool
+10. **Settled 2026-09-14 (owner, 0.5.5): enablers are scoped to their weapon
+    set.** A keystone, *Entwined Realities* or an `unlockConstraint` gate node
+    counts only for nodes taken in the same weapon set, or for every set when
+    it is itself shared — the rule connectivity already follows. B1 had pinned
+    the opposite; that pin was inverted into
+    `testAnEnablerCountsOnlyInItsOwnWeaponSet` and
+    `testAnUnlockGateCountsOnlyInItsOwnWeaponSet`. The declared jewel stays
+    set-blind: it is an item, not a passive in a weapon set. That last point is
+    a design default, not an owner answer
+11. **Settled 2026-09-14 (owner, 0.5.5): a keystone-radius jewel does not
+    need its keystone allocated** — which is what
+    `AllocationRules::excusedByRadius()` already does for a declared jewel
+    keystone. *Entwined Realities* is the opposite, and says so in its own
+    stat, checked against the catalog the same day: "Non-Keystone Passive
+    Skills in Medium Radius of allocated Keystone Passive Skills can be
+    allocated without being connected to your tree"
+12. **Partly settled 2026-09-14 (owner, 0.5.5): the keystone jewel is a
+    separate mechanism from *Entwined Realities*,** so the two must not share
+    one coverage list. `keystonesInRadius` belongs to *Entwined Realities*
+    ("Medium Radius"): covered nodes sit 205 to 1379 units from their keystone,
+    and the list is not a plain distance cut — a non-keystone node 307 units
+    from a keystone is not listed for it. The jewel's mod carries its own base
+    radius, 1000, so rule 4 needs its own coverage — the nodes within 1000 units
+    of the declared keystone, from the stored node positions — while rule 3
+    keeps `keystonesInRadius`. B1 used the one list for both, which would let
+    the jewel reach 1379; slice B2's jewel task changes that. Still open:
+    whether the export's position units match the jewel's radius units,
+    checkable in-game with nodes about 950 and 1050 units from a keystone
 
 Settled 2026-09-12 (owner, 0.5.5): the two tree-legality exceptions both need
 their enabling node *allocated*. *The Unseen Path* must be allocated before any

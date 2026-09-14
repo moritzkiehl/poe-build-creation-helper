@@ -4,7 +4,7 @@
 **What:** B1 briefs named `openEditor()`, `clickNodeOnCanvas()`, `actUrl()`, `app:catalog:sync passive_tree`, `assertInstanceOf(Connection::class, …)`, `body.set = …` on a `URLSearchParams`. None exist or work.
 **Cost:** ~6 implementer deviations, rulings R6 and R14; `body.set` would have shipped an inert weapon-set control.
 **How it was detectable:** grep each helper, `bin/console list` each command, one PHPStan run on a pasted snippet — before writing it into a plan.
-**Status:** repeated (6) — CLAUDE.md line proposed to owner
+**Status:** repeated (6) — rule in CLAUDE.md since 2026-09-14 ("Plans name only code that exists")
 
 ## 2026-09-13 — plan's cascade swept already-illegal passives
 **What:** B1 plan's handler re-validated every passive on removal; a deallocate for an unallocated id wiped every passive the rules cannot justify. Fix wave found a second hole: nodes routed through a kept illegal node.
@@ -34,7 +34,7 @@
 **What:** A query key must reach hidden fields, `searchParams()`, the `_header` `field()` macro, template link maps, and the canvas fetch URL. Missed: 3 search terms, `intervals`/`supports`, then in B1 the link maps (T13), `_skills` map (R16), canvas fetch (final I1).
 **Cost:** each a silent state drop, found by running the app or by the final review — never by reading.
 **How it was detectable:** no single list of view-state keys exists; `grep -rn "intervals" src templates assets` shows every site in one command.
-**Status:** repeated (5) — CLAUDE.md line + gate test proposed to owner; `ViewState` refactor recommended as B2 task 1
+**Status:** repeated (5) — rule in CLAUDE.md since 2026-09-14 ("View-state query keys live in one registry"); gate test and `ViewState` refactor are B2 tasks 1-2
 
 ## 2026-09-12 — every tree node exported at (0,0), past two reviews
 **What:** `TreeExport` read `pos_x`/`pos_y` with `Row::str($row, 'pos_x', '0')`. DBAL returns a native PHP float for a FLOAT column fetched outside the ORM, so `Row::str()` returned its default and every one of 4912 nodes exported at world (0,0). Found only when the first Playwright click ran.
