@@ -169,14 +169,12 @@ final class AllocationRulesTest extends KernelTestCase
     }
 
     /**
-     * Pins current behaviour: `has()` inside `unlocked()` and
-     * `excusedByRadius()` is weapon-set blind, so an enabler allocated into
-     * set Two still arms the mechanism and switches on its radius for a set
-     * One node. Whether enablement is scoped per weapon set is unconfirmed
-     * against the game and is recorded as an open proof in the spec. If the
-     * game turns out to scope enablers per set, this is the test to invert.
+     * Enablers are scoped to the weapon set they are allocated in (owner,
+     * 0.5.5, spec proof 10): a keystone or *Entwined Realities* taken at set
+     * Two does nothing for a node taken at set One — the rule connectivity
+     * already follows. A shared enabler counts for every set.
      */
-    public function testAnEnablerCountsWhicheverWeaponSetItSitsIn(): void
+    public function testAnEnablerCountsOnlyInItsOwnWeaponSet(): void
     {
         $rules = $this->rulesOver(
             nodes: [['start', 'small'], ['AscendancyDruid1Notable1', 'notable'], ['stone', 'keystone'], ['floating', 'small']],
@@ -191,10 +189,30 @@ final class AllocationRulesTest extends KernelTestCase
             'stone' => WeaponSet::Two,
         ]);
 
-        self::assertTrue(
-            $rules->mayAllocate($enablersInSetTwo, $context, 'floating', WeaponSet::One),
-            'enablement is not currently scoped per weapon set',
+        self::assertFalse($rules->mayAllocate($enablersInSetTwo, $context, 'floating', WeaponSet::One), 'set Two enablers must not open the radius for set One');
+        self::assertTrue($rules->mayAllocate($enablersInSetTwo, $context, 'floating', WeaponSet::Two));
+
+        $sharedEnablers = new Allocation([
+            'start' => WeaponSet::Shared,
+            'AscendancyDruid1Notable1' => WeaponSet::Shared,
+            'stone' => WeaponSet::Shared,
+        ]);
+
+        self::assertTrue($rules->mayAllocate($sharedEnablers, $context, 'floating', WeaponSet::One), 'a shared enabler counts for every set');
+    }
+
+    public function testAnUnlockGateCountsOnlyInItsOwnWeaponSet(): void
+    {
+        $rules = $this->rulesOver(
+            nodes: [['start', 'small'], ['gate', 'notable'], ['locked', 'small']],
+            edges: [['start', 'gate'], ['start', 'locked']],
+            constraints: ['locked' => ['nodes' => ['gate'], 'ascendancy' => null]],
         );
+        $context = new TreeContext('start', null);
+        $gateInSetTwo = new Allocation(['start' => WeaponSet::Shared, 'gate' => WeaponSet::Two]);
+
+        self::assertFalse($rules->mayAllocate($gateInSetTwo, $context, 'locked', WeaponSet::One), 'a set Two gate must not unlock a set One node');
+        self::assertTrue($rules->mayAllocate($gateInSetTwo, $context, 'locked', WeaponSet::Two));
     }
 
     public function testIllegalAfterFindsWhatAnEarlierRemovalStranded(): void

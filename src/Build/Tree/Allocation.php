@@ -73,6 +73,20 @@ final readonly class Allocation
         return $visible;
     }
 
+    /**
+     * The allocation as a node in `$set` sees it: its own set plus the shared
+     * nodes, never the other set. Legality enablers — unlock gates, *Entwined
+     * Realities*, a keystone — count only if they are visible this way (owner,
+     * 0.5.5, spec proof 10), the same rule connectivity follows.
+     */
+    public function visibleTo(WeaponSet $set): self
+    {
+        return new self(array_filter(
+            $this->byId,
+            static fn (WeaponSet $nodeSet): bool => WeaponSet::Shared === $nodeSet || $nodeSet === $set,
+        ));
+    }
+
     public function without(string $id): self
     {
         $byId = $this->byId;

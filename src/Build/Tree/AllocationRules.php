@@ -92,11 +92,15 @@ final class AllocationRules
             return true;
         }
 
-        if (!$this->unlocked($without, $context, $id)) {
+        // Enablers count only within the set the node is taken in — its own
+        // set plus the shared nodes (owner, 0.5.5, spec proof 10).
+        $visible = $without->visibleTo($set);
+
+        if (!$this->unlocked($visible, $context, $id)) {
             return false;
         }
 
-        return $this->connected($without, $context, $id, $set) || $this->excusedByRadius($without, $context, $id);
+        return $this->connected($without, $context, $id, $set) || $this->excusedByRadius($visible, $context, $id);
     }
 
     private function unlocked(Allocation $allocation, TreeContext $context, string $id): bool
