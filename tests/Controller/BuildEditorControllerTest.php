@@ -151,6 +151,25 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertStringNotContainsString('unreachable_without_class', $crawler->filter('#build-nodes')->text(), 'a refused allocation must not reach the document');
     }
 
+    public function testAnAscendancyWithoutAClassStillRootsTheTree(): void
+    {
+        // A build imported before the catalog knew its ascendancy keeps
+        // class_key NULL. The class is worked out from the ascendancy at
+        // runtime, so the tree is usable without re-uploading the file.
+        $db = self::getContainer()->get(Connection::class);
+        $db->executeStatement('DELETE FROM catalog_class WHERE ascendancies LIKE ?', ['%"Warrior2"%']);
+        $edit = $this->createBuild();
+        $this->seedALegalPassiveTree($db, ['reachable_by_ascendancy']);
+        $db->executeStatement('UPDATE catalog_class SET ascendancies = ? WHERE id = ?', ['[{"id":"Warrior2","name":"Warbringer"}]', self::LEGAL_TREE_CLASS]);
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'reachable_by_ascendancy'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseIsSuccessful();
+        $crawler = $this->client->request('GET', $edit);
+        self::assertCount(1, $crawler->filter(\sprintf('#header-class option[value="%s"][selected]', self::LEGAL_TREE_CLASS)), 'the header shows the class the ascendancy implies');
+        self::assertCount(1, $crawler->filter('#header-ascendancy option[value="Warrior2"][selected]'), 'the ascendancy list follows the derived class, so the current ascendancy stays visible');
+    }
+
     public function testAllocatingANodeThatTouchesNothingIsRefused(): void
     {
         $edit = $this->seedBuildWithTree();

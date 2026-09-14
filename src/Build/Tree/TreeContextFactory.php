@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Build\Tree;
 
+use App\Build\ClassFromAscendancy;
 use App\Entity\Build;
 use App\Entity\CatalogClass;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,15 +18,28 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class TreeContextFactory
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ClassFromAscendancy $classes,
+    ) {
     }
 
     public function of(Build $build): TreeContext
     {
-        $classKey = $build->getClassKey();
+        $classKey = $this->classKeyOf($build);
         $class = null === $classKey ? null : $this->entityManager->getRepository(CatalogClass::class)->find($classKey);
 
         return new TreeContext($class?->getStartNodeId(), $build->getAscendancyKey());
+    }
+
+    /**
+     * The class this build's tree grows from: the one the player chose, or else
+     * the one its ascendancy belongs to. A build imported before the catalog
+     * knew its ascendancy has no stored class; working it out here, on read,
+     * makes its tree usable without writing anything during a page view.
+     */
+    public function classKeyOf(Build $build): ?string
+    {
+        return $build->getClassKey() ?? $this->classes->classFor($build->getAscendancyKey());
     }
 }

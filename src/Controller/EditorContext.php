@@ -129,6 +129,9 @@ final class EditorContext
             'statsView' => $statsView,
             'allocatedByFamily' => $allocatedByFamily,
             'allocationBySet' => $allocationBySet,
+            // The stored class, or else the one the ascendancy implies — so
+            // the header shows the class the tree is actually rooted on.
+            'effectiveClassKey' => $this->treeContexts->classKeyOf($build),
             'startNodeId' => $this->treeContexts->of($build)->startNodeId,
             // An id the catalog no longer resolves — the build outlived a
             // catalog re-sync — stays visible under its bare id rather than

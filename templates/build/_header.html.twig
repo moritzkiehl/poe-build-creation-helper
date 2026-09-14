@@ -28,7 +28,7 @@
         <select id="header-class" name="value" onchange="this.form.requestSubmit()">
             <option value="">Not chosen</option>
             {% for class in classes %}
-                <option value="{{ class.id }}" {{ class.id == build.classKey ? 'selected' : '' }}>{{ class.id }}</option>
+                <option value="{{ class.id }}" {{ class.id == effectiveClassKey ? 'selected' : '' }}>{{ class.id }}</option>
             {% endfor %}
         </select>
         <button type="submit">Save</button>
@@ -41,7 +41,7 @@
         <label for="header-ascendancy">Ascendancy</label>
         <select id="header-ascendancy" name="value" onchange="this.form.requestSubmit()">
             <option value="">Not chosen</option>
-            {% for class in classes|filter(c => c.id == build.classKey) %}
+            {% for class in classes|filter(c => c.id == effectiveClassKey) %}
                 {% for ascendancy in class.ascendancies %}
                     <option value="{{ ascendancy.id }}" {{ ascendancy.id == build.ascendancyKey ? 'selected' : '' }}>{{ ascendancy.name }}</option>
                 {% endfor %}
