@@ -1754,8 +1754,8 @@ patch.
     from a keystone is not listed for it. The jewel's mod carries its own base
     radius, 1000, so rule 4 needs its own coverage — the nodes within 1000 units
     of the declared keystone, from the stored node positions — while rule 3
-    keeps `keystonesInRadius`. B1 used the one list for both, which would let
-    the jewel reach 1379; slice B2's jewel task changes that. Still open:
+    keeps `keystonesInRadius`. B1 used the one list for both; slice B2's jewel
+    task split them (`PassiveGraph::jewelCovers()`). Still open:
     whether the export's position units match the jewel's radius units,
     checkable in-game with nodes about 950 and 1050 units from a keystone
 

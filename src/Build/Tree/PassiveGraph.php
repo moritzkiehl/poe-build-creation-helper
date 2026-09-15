@@ -9,13 +9,22 @@ use Doctrine\DBAL\Connection;
 
 /**
  * The passive tree as the legality rules need it: who touches whom, which
- * keystones cover a node, and what gates it.
+ * keystones cover a node, where it sits, and what gates it.
  *
  * Loaded in two queries on first use — the edges, then the nodes. A rules evaluation walks thousands of
  * nodes, so a query per node is not an option.
  */
 final class PassiveGraph
 {
+    /**
+     * How far a keystone-radius jewel reaches from its keystone, in stored
+     * position units. The jewel's mod
+     * (`JewelUniqueAllocateDisconnectedPassivesAroundKeystone`) carries a
+     * `local_jewel_effect_base_radius` of 1000. One export unit is assumed to
+     * equal one unit of that radius until spec proof 12's in-game check.
+     */
+    private const float JEWEL_RADIUS = 1000.0;
+
     /** @var array<string, list<string>>|null */
     private ?array $neighbours = null;
 
@@ -27,6 +36,9 @@ final class PassiveGraph
 
     /** @var array<string, string> */
     private array $kinds = [];
+
+    /** @var array<string, array{0: float, 1: float}> */
+    private array $positions = [];
 
     public function __construct(private readonly Connection $db)
     {
@@ -62,6 +74,25 @@ final class PassiveGraph
         return $this->constraints[$id] ?? null;
     }
 
+    /**
+     * Whether a jewel declared around `$keystoneId` reaches `$id`: a
+     * non-keystone node within `JEWEL_RADIUS` of the keystone. Its own
+     * coverage, not `keystonesCovering()` — that list is Entwined Realities'.
+     */
+    public function jewelCovers(string $keystoneId, string $id): bool
+    {
+        $this->load();
+
+        if (!isset($this->positions[$keystoneId], $this->positions[$id]) || $this->isKeystone($id)) {
+            return false;
+        }
+
+        [$kx, $ky] = $this->positions[$keystoneId];
+        [$x, $y] = $this->positions[$id];
+
+        return hypot($x - $kx, $y - $ky) <= self::JEWEL_RADIUS;
+    }
+
     public function isKeystone(string $id): bool
     {
         $this->load();
@@ -94,9 +125,10 @@ final class PassiveGraph
             $neighbours[$to][$from] = true;
         }
 
-        foreach ($this->db->fetchAllAssociative('SELECT id, kind, keystones_in_radius, unlock_constraint FROM catalog_passive') as $row) {
+        foreach ($this->db->fetchAllAssociative('SELECT id, kind, pos_x, pos_y, keystones_in_radius, unlock_constraint FROM catalog_passive') as $row) {
             $id = Row::str($row, 'id');
             $this->kinds[$id] = Row::str($row, 'kind');
+            $this->positions[$id] = [Row::float($row, 'pos_x'), Row::float($row, 'pos_y')];
 
             $covering = Row::jsonStrings($row, 'keystones_in_radius');
             if ([] !== $covering) {

@@ -110,4 +110,21 @@
             </li>
         {% endfor %}
     </ul>
+
+    <div id="build-jewel">
+        <h3>Jewel keystone</h3>
+        <p>A keystone-radius jewel lets passives near one keystone be allocated without connecting to your tree. Not exported: the .build format has no jewels, so this lives only in this planner.</p>
+        <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
+            <input type="hidden" name="action" value="jewel.set">
+            {{ include('build/_search_state.html.twig') }}
+            <label for="jewel-keystone">Keystone</label>
+            <select id="jewel-keystone" name="keystone_id" onchange="this.form.requestSubmit()">
+                <option value="">No jewel</option>
+                {% for keystone in keystones %}
+                    <option value="{{ keystone.id }}" {{ keystone.id == build.jewelKeystone ? 'selected' : '' }}>{{ keystone.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Save</button>
+        </form>
+    </div>
 </section>

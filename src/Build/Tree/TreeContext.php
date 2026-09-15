@@ -7,9 +7,9 @@ namespace App\Build\Tree;
 /**
  * What legality depends on besides the tree itself.
  *
- * `jewelKeystoneId` is always null in slice B1: the mechanism is here because
- * rules 3 and 4 differ only in what enables a keystone, but the control that
- * declares it belongs to slice B2.
+ * `jewelKeystoneId` is the keystone a declared keystone-radius jewel works
+ * around (rule 4), set by the editor's `jewel.set` action; null when the build
+ * declares no jewel.
  */
 final readonly class TreeContext
 {

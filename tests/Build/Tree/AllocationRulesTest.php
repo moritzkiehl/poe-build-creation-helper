@@ -292,6 +292,22 @@ final class AllocationRulesTest extends KernelTestCase
         self::assertSame([], $rules->illegalAfter(new Allocation(['start' => WeaponSet::Shared]), $this->context()));
     }
 
+    public function testADeclaredJewelReachesNonKeystonesWithinOneThousandUnitsOfItsKeystone(): void
+    {
+        // Distances are Euclidean: (570, 760) is 950 units out, (630, 840) is 1050.
+        $rules = $this->rulesOver(
+            nodes: [['start', 'small'], ['jewel_keystone', 'keystone'], ['inside', 'small'], ['outside', 'small'], ['near_keystone', 'keystone']],
+            edges: [],
+            positions: ['start' => [5000.0, 5000.0], 'inside' => [570.0, 760.0], 'outside' => [630.0, 840.0], 'near_keystone' => [900.0, 0.0]],
+        );
+        $allocation = new Allocation(['start' => WeaponSet::Shared]);
+        $context = new TreeContext('start', null, 'jewel_keystone');
+
+        self::assertTrue($rules->mayAllocate($allocation, $context, 'inside', WeaponSet::Shared), '950 units is within the jewel\'s reach');
+        self::assertFalse($rules->mayAllocate($allocation, $context, 'outside', WeaponSet::Shared), '1050 units is beyond it');
+        self::assertFalse($rules->mayAllocate($allocation, $context, 'near_keystone', WeaponSet::Shared), 'a keystone is never excused by a radius');
+    }
+
     private function context(): TreeContext
     {
         return new TreeContext('start', null);
@@ -302,8 +318,9 @@ final class AllocationRulesTest extends KernelTestCase
      * @param list<array{0: string, 1: string}>                                   $edges
      * @param array<string, list<string>>                                         $radius
      * @param array<string, array{nodes: list<string>, ascendancy?: string|null}> $constraints
+     * @param array<string, array{0: float, 1: float}>                            $positions   a node left out sits at (0, 0)
      */
-    private function rulesOver(array $nodes, array $edges, array $radius = [], array $constraints = []): AllocationRules
+    private function rulesOver(array $nodes, array $edges, array $radius = [], array $constraints = [], array $positions = []): AllocationRules
     {
         $db = self::getContainer()->get(Connection::class);
 
@@ -312,8 +329,8 @@ final class AllocationRulesTest extends KernelTestCase
 
         foreach ($nodes as [$id, $kind]) {
             $db->executeStatement(
-                'INSERT INTO catalog_passive (id, name, kind, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint) VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?)',
-                [$id, ucfirst($id), $kind, '[]', '[]', json_encode($radius[$id] ?? [], \JSON_THROW_ON_ERROR), isset($constraints[$id]) ? json_encode($constraints[$id], \JSON_THROW_ON_ERROR) : null],
+                'INSERT INTO catalog_passive (id, name, kind, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$id, ucfirst($id), $kind, $positions[$id][0] ?? 0.0, $positions[$id][1] ?? 0.0, '[]', '[]', json_encode($radius[$id] ?? [], \JSON_THROW_ON_ERROR), isset($constraints[$id]) ? json_encode($constraints[$id], \JSON_THROW_ON_ERROR) : null],
             );
         }
 

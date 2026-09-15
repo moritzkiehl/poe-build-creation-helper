@@ -989,6 +989,90 @@ final class BuildEditorControllerTest extends WebTestCase
         $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'class_key', 'value' => $classId]);
     }
 
+    public function testADeclaredJewelKeystoneLetsANodeInItsRadiusBeTakenUnconnected(): void
+    {
+        $edit = $this->seedBuildWithTree();
+        $this->seedJewelKeystoneAt(1500.0);
+
+        // `far` touches nothing, and no jewel is declared yet.
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'far'], server: ['HTTP_ACCEPT' => self::STREAM]);
+        self::assertResponseStatusCodeSame(422);
+
+        // Declared, but 1500 units from `far`: beyond the jewel's 1000.
+        $this->client->request('POST', $edit.'/act', ['action' => 'jewel.set', 'keystone_id' => 'test_jewel_keystone']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'far'], server: ['HTTP_ACCEPT' => self::STREAM]);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->seedJewelKeystoneAt(500.0);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'far'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseIsSuccessful();
+        self::assertContains('far', $this->allocatedOn($edit));
+    }
+
+    public function testClearingTheJewelKeystoneKeepsWhatItMadeLegal(): void
+    {
+        $edit = $this->seedBuildWithTree();
+        $this->seedJewelKeystoneAt(500.0);
+        $this->client->request('POST', $edit.'/act', ['action' => 'jewel.set', 'keystone_id' => 'test_jewel_keystone']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'far'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'jewel.set', 'keystone_id' => '']);
+
+        // Owner's decision, 2026-09-13: like a class or ascendancy change, the
+        // passives stay; iteration 4's findings report them.
+        self::assertContains('far', $this->allocatedOn($edit));
+        self::assertSelectorTextContains('#build-history', 'Changed the jewel keystone');
+    }
+
+    public function testAJewelKeystoneMustBeAKeystone(): void
+    {
+        $edit = $this->seedBuildWithTree();
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'jewel.set', 'keystone_id' => 'near'], server: ['HTTP_ACCEPT' => self::STREAM]);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testTheJewelKeystonePickerSaysItIsNotExported(): void
+    {
+        $edit = $this->seedBuildWithTree();
+        $this->seedJewelKeystoneAt(500.0);
+
+        $this->client->request('GET', $edit);
+
+        self::assertSelectorExists('#jewel-keystone option[value="test_jewel_keystone"]');
+        self::assertSelectorTextContains('#build-jewel', 'Not exported');
+    }
+
+    /**
+     * An invented keystone `$x` units along the x axis from `far` — every node
+     * `seedBuildWithTree()` seeds sits at (0, 0). The jewel reaches by stored
+     * position, not by `keystones_in_radius`, so none is written. Calling it
+     * again moves the keystone.
+     */
+    private function seedJewelKeystoneAt(float $x): void
+    {
+        $db = self::getContainer()->get(Connection::class);
+        $db->executeStatement('DELETE FROM catalog_passive WHERE id = ?', ['test_jewel_keystone']);
+        $db->executeStatement(
+            'INSERT INTO catalog_passive (id, name, kind, pos_x, pos_y, stats, recipe, keystones_in_radius, unlock_constraint) VALUES (?, ?, ?, ?, 0, ?, ?, ?, NULL)',
+            ['test_jewel_keystone', 'Test Jewel Keystone', 'keystone', $x, '[]', '[]', '[]'],
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function allocatedOn(string $edit): array
+    {
+        $state = json_decode($this->client->request('GET', $edit)->filter('#build-state')->text(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($state);
+        self::assertIsArray($state['allocated'] ?? null);
+
+        return array_values(array_filter($state['allocated'], is_string(...)));
+    }
+
     /**
      * A dedicated chain — start — near — leaf — plus an unconnected far, for
      * the two tests below that care about the tree's shape: one needs a node

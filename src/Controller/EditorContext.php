@@ -107,6 +107,7 @@ final class EditorContext
             'document' => $document,
             'classes' => $this->entityManager->getRepository(CatalogClass::class)->findBy([], ['id' => 'ASC']),
             'slotPositions' => $this->slots->positions(),
+            'keystones' => $this->catalog->keystones(),
             'events' => $this->events->timeline($build),
             'error' => $error,
             'treeSummary' => StatSummary::of($statsById),

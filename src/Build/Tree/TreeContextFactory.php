@@ -29,7 +29,7 @@ final class TreeContextFactory
         $classKey = $this->classKeyOf($build);
         $class = null === $classKey ? null : $this->entityManager->getRepository(CatalogClass::class)->find($classKey);
 
-        return new TreeContext($class?->getStartNodeId(), $build->getAscendancyKey());
+        return new TreeContext($class?->getStartNodeId(), $build->getAscendancyKey(), $build->getJewelKeystone());
     }
 
     /**

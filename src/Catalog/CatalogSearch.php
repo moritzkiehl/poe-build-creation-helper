@@ -37,6 +37,20 @@ final class CatalogSearch
     }
 
     /**
+     * Every keystone, for the jewel keystone picker. All 33 cover at least one
+     * node (measured 2026-09-13), so none is filtered out.
+     *
+     * @return list<array{id: string, name: string}>
+     */
+    public function keystones(): array
+    {
+        return array_map(
+            static fn (array $row): array => ['id' => Row::str($row, 'id'), 'name' => Row::str($row, 'name')],
+            $this->db->fetchAllAssociative("SELECT id, name FROM catalog_passive WHERE kind = 'keystone' ORDER BY name"),
+        );
+    }
+
+    /**
      * Passives for the node list beside the tree. Ids are matched as well as
      * names: a finding names a node by id, and the list is where that id is
      * looked up.

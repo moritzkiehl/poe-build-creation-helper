@@ -17,6 +17,7 @@ use App\Build\Edit\Command\RemoveSupport;
 use App\Build\Edit\Command\Revert;
 use App\Build\Edit\Command\SetAllPassiveIntervals;
 use App\Build\Edit\Command\SetHeaderField;
+use App\Build\Edit\Command\SetJewelKeystone;
 use App\Build\Edit\Command\SetPassiveInterval;
 use App\Build\Edit\Command\SetSkillInterval;
 use App\Build\Edit\Command\SetSkillIntervalCascading;
@@ -58,6 +59,7 @@ final class CommandFactory
             'history.revert' => new Revert($buildId, $this->int($payload, 'event_id')),
             'instilled.add' => new AddInstilled($buildId, $this->string($payload, 'id')),
             'instilled.remove' => new RemoveInstilled($buildId, $this->string($payload, 'id')),
+            'jewel.set' => new SetJewelKeystone($buildId, $this->optionalString($payload, 'keystone_id')),
             default => throw InvalidEditCommand::unknownAction($action),
         };
     }

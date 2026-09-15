@@ -178,14 +178,18 @@ final class AllocationRules
             return false;
         }
 
-        $armed = $allocation->has(self::ENTWINED_REALITIES);
+        // The jewel has its own reach, by position, and needs neither its
+        // keystone allocated (proof 11) nor a weapon set (proof 10).
+        if (null !== $context->jewelKeystoneId && $this->graph->jewelCovers($context->jewelKeystoneId, $id)) {
+            return true;
+        }
+
+        if (!$allocation->has(self::ENTWINED_REALITIES)) {
+            return false;
+        }
 
         foreach ($this->graph->keystonesCovering($id) as $keystone) {
-            if ($keystone === $context->jewelKeystoneId) {
-                return true;
-            }
-
-            if ($armed && $allocation->has($keystone)) {
+            if ($allocation->has($keystone)) {
                 return true;
             }
         }
