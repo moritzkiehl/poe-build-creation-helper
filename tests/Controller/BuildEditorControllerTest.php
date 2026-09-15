@@ -1017,12 +1017,21 @@ final class BuildEditorControllerTest extends WebTestCase
         $this->client->request('POST', $edit.'/act', ['action' => 'jewel.set', 'keystone_id' => 'test_jewel_keystone']);
         $this->client->request('POST', $edit.'/act', ['action' => 'passive.allocate', 'id' => 'far'], server: ['HTTP_ACCEPT' => self::STREAM]);
 
+        $this->client->request('GET', $edit);
+        self::assertSelectorExists('#jewel-keystone option[value="test_jewel_keystone"][selected]');
+
         $this->client->request('POST', $edit.'/act', ['action' => 'jewel.set', 'keystone_id' => '']);
+        self::assertResponseRedirects();
 
         // Owner's decision, 2026-09-13: like a class or ascendancy change, the
         // passives stay; iteration 4's findings report them.
         self::assertContains('far', $this->allocatedOn($edit));
-        self::assertSelectorTextContains('#build-history', 'Changed the jewel keystone');
+
+        // The clear itself took effect: no keystone is selected any more, so
+        // the picker falls back to its first option, "No jewel" — which never
+        // carries `selected` itself — and the clear is its own history entry.
+        self::assertSelectorNotExists('#jewel-keystone option[selected]');
+        self::assertSame(2, substr_count($this->client->getCrawler()->filter('#build-history')->text(), 'Changed the jewel keystone'));
     }
 
     public function testAJewelKeystoneMustBeAKeystone(): void
