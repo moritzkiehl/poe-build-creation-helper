@@ -175,6 +175,7 @@ final class BuildEditorControllerTest extends WebTestCase
         $state = json_decode($crawler->filter('#build-state')->text(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($state);
         self::assertSame(self::LEGAL_TREE_CLASS, $state['classKey'] ?? null);
+        self::assertStringNotContainsString('Choose a class above', $crawler->filter('#build-tree')->text(), 'the tree is rooted, so it must not ask for a class');
     }
 
     public function testAllocatingANodeThatTouchesNothingIsRefused(): void
