@@ -4,6 +4,7 @@
     <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
         <label for="passive-q">Find a node</label>
         <input type="search" id="passive-q" name="q" value="{{ passiveQuery }}" placeholder="name or id">
+        {{ include('build/_search_state.html.twig', {except: 'q'}) }}
         <button type="submit">Search</button>
     </form>
 

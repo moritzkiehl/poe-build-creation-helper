@@ -10,6 +10,7 @@
     <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
         <label for="unique-q">Find a unique</label>
         <input type="search" id="unique-q" name="unique" value="{{ uniqueQuery }}" placeholder="name">
+        {{ include('build/_search_state.html.twig', {except: 'unique'}) }}
         <button type="submit">Search</button>
     </form>
 
@@ -80,6 +81,7 @@
                         <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
                             <label for="instilled-q">Find an instillable node</label>
                             <input type="search" id="instilled-q" name="instilled" value="{{ instilledQuery }}" placeholder="name or id">
+                            {{ include('build/_search_state.html.twig', {except: 'instilled'}) }}
                             <button type="submit">Search</button>
                         </form>
 

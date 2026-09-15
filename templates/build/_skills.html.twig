@@ -4,6 +4,7 @@
     <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
         <label for="gem-q">Find a gem</label>
         <input type="search" id="gem-q" name="gem" value="{{ gemQuery }}" placeholder="name or id">
+        {{ include('build/_search_state.html.twig', {except: 'gem'}) }}
         <button type="submit">Search</button>
     </form>
 
@@ -28,6 +29,7 @@
     <form action="{{ path('app_build_edit', {slug: build.shareSlug, token: token}) }}" method="get">
         <label for="support-q">Find a support gem</label>
         <input type="search" id="support-q" name="support" value="{{ supportQuery }}" placeholder="name or id">
+        {{ include('build/_search_state.html.twig', {except: 'support'}) }}
         <button type="submit">Search</button>
     </form>
 

@@ -9,6 +9,7 @@ use App\Entity\BuildEvent;
 use App\Tests\Support\SeedsALegalPassiveTree;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -1047,6 +1048,53 @@ final class BuildEditorControllerTest extends WebTestCase
     {
         self::getContainer()->get(EntityManagerInterface::class)->getConnection()
             ->executeStatement('DELETE FROM catalog_passive WHERE id = ?', [$id]);
+    }
+
+    /**
+     * The gate test the registry exists for: every key must reach the header's
+     * field macro, which inherits no Twig context and so is the form most
+     * likely to drop one.
+     */
+    public function testTheHeaderFieldFormCarriesEveryViewStateKey(): void
+    {
+        $state = ['q' => 'a', 'gem' => 'b', 'support' => 'c', 'unique' => 'd', 'instilled' => 'e', 'intervals' => 'flat', 'supports' => 'flat', 'stats' => '1'];
+        $crawler = $this->client->request('GET', $this->createBuild().'?'.http_build_query($state));
+
+        $form = $crawler->filter('#header-note')->closest('form');
+        self::assertNotNull($form);
+
+        foreach ($state as $key => $value) {
+            $hidden = $form->filter(\sprintf('input[type="hidden"][name="%s"]', $key));
+            self::assertCount(1, $hidden, $key.' is missing from the header field form');
+            self::assertSame($value, $hidden->attr('value'));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function searchForms(): iterable
+    {
+        yield 'passive' => ['#passive-q', 'q'];
+        yield 'gem' => ['#gem-q', 'gem'];
+        yield 'support' => ['#support-q', 'support'];
+        yield 'unique' => ['#unique-q', 'unique'];
+        yield 'instilled' => ['#instilled-q', 'instilled'];
+    }
+
+    #[DataProvider('searchForms')]
+    public function testAGetSearchFormCarriesTheRestOfTheViewStateButNotItsOwnKeyTwice(string $box, string $ownKey): void
+    {
+        $crawler = $this->client->request('GET', $this->createBuild().'?stats=1&intervals=flat&'.$ownKey.'=old');
+
+        $form = $crawler->filter($box)->closest('form');
+        self::assertNotNull($form);
+        self::assertCount(1, $form->filter('input[type="hidden"][name="stats"][value="1"]'), 'a search must not reset the stats view');
+        self::assertCount(1, $form->filter('input[type="hidden"][name="intervals"][value="flat"]'));
+        // Two inputs sharing the form's own name would let the stale hidden
+        // one override what the player just typed: PHP keeps the last value
+        // of a repeated name.
+        self::assertCount(1, $form->filter(\sprintf('input[name="%s"]', $ownKey)));
     }
 
     private function slugOf(string $editUrl): string

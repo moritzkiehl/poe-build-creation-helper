@@ -1,8 +1,8 @@
-<input type="hidden" name="q" value="{{ passiveQuery }}">
-<input type="hidden" name="gem" value="{{ gemQuery }}">
-<input type="hidden" name="support" value="{{ supportQuery }}">
-<input type="hidden" name="unique" value="{{ uniqueQuery }}">
-<input type="hidden" name="instilled" value="{{ instilledQuery }}">
-<input type="hidden" name="intervals" value="{{ intervalsOverride }}">
-<input type="hidden" name="supports" value="{{ supportsOverride }}">
-<input type="hidden" name="stats" value="{{ statsOverride }}">
+{# Every view-state key from the one registry (App\Controller\ViewState).
+   A GET search form passes `except` with its own key, which it already
+   carries in its search box. #}
+{% for key, value in viewState %}
+    {% if key != except|default('') %}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endif %}
+{% endfor %}
