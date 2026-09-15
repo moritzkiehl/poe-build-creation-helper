@@ -85,13 +85,15 @@ final class CommandFactoryTest extends TestCase
     /**
      * The fix for the two tests above narrows the emptiness check on `value`
      * alone. Every other field a command reads through the same helper must
-     * still refuse an empty string.
+     * still refuse an empty string — `position` included, which fails the
+     * `<inventory_id>@<slot_x>` pattern before it ever reaches that helper's
+     * emptiness check, but must still refuse.
      */
-    public function testAnEmptyInventoryIdIsStillRefused(): void
+    public function testAnEmptyPositionIsRefused(): void
     {
         $this->expectException(InvalidEditCommand::class);
 
-        $this->factory->fromRequest(7, 'slot.set', new InputBag(['inventory_id' => '', 'unique_name' => '', 'from' => '1', 'to' => '100', 'additional_text' => '']));
+        $this->factory->fromRequest(7, 'slot.set', new InputBag(['position' => '', 'unique_name' => '', 'from' => '1', 'to' => '100', 'additional_text' => '']));
     }
 
     public function testAnUnknownActionIsRefused(): void
