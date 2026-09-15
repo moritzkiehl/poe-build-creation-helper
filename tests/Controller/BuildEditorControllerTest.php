@@ -168,6 +168,13 @@ final class BuildEditorControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', $edit);
         self::assertCount(1, $crawler->filter(\sprintf('#header-class option[value="%s"][selected]', self::LEGAL_TREE_CLASS)), 'the header shows the class the ascendancy implies');
         self::assertCount(1, $crawler->filter('#header-ascendancy option[value="Warrior2"][selected]'), 'the ascendancy list follows the derived class, so the current ascendancy stays visible');
+
+        // The canvas looks the start node up from the class in its state, to
+        // centre on it and draw it — so that state must carry the derived
+        // class too, not the empty stored one.
+        $state = json_decode($crawler->filter('#build-state')->text(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($state);
+        self::assertSame(self::LEGAL_TREE_CLASS, $state['classKey'] ?? null);
     }
 
     public function testAllocatingANodeThatTouchesNothingIsRefused(): void
