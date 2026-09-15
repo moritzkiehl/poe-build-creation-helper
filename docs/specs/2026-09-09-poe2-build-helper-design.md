@@ -1658,22 +1658,58 @@ These belong in `docs/version-acceptance.md`; first pass 0.5.5, second 1.0. A
 proof without a version stamp is not a proof — it expires unnoticed at the next
 patch.
 
-1. Passive points: points per level plus quest points, exact figure
-2. Ascendancy points: count and source (trials)
-3. Support sockets per skill gem: what the number depends on
-4. Spirit sources: how much sits on the tree, how much only on gear
+1. **Settled 2026-09-15 (owner, 0.5.5): passive points.** One point per level
+   from level 2, so level − 1, plus 24 quest points, 4 per act, at about one
+   act per 10 levels (owner's figures: level 20 gives 19 + 8, level 50 gives
+   49 + 20, level 60 and above gives + 24). Two more come from the endgame:
+   the Site of the Martyr of the First Edict, and the Expedition drop
+   *Olroth's Boon*. With proof 9, each weapon set's pool is level − 1 + quest
+   points + up to 2. The app knows a target level, not quest progress, so it
+   approximates the quest share as min(24, 4 × floor(level / 10)). Checked
+   against the corpus, eleven files: every pool is within 99 + 24 + 2 = 125
+   except *Frostbolt Cast On Crit Oracle – Min Maxed* at 127, and that build
+   allocates both Oracle "Passive Point" nodes (`AscendancyDruid1Small1` and
+   `Small2`, "Grants 1 Passive Skill Point"), which makes it exactly 125 + 2.
+   So ascendancy nodes add points too, and the catalog says how many:
+   "Grants N Passive Skill Point(s)" on seven nodes (Druid1, and Ranger3,
+   whose *Path of the Sorceress* and *Path of the Warrior* grant 4 each).
+   *Weapon Master* (Mercenary2) instead reads "100 Passive Skill Points
+   become Weapon Set Skill Points", which is not yet understood
+2. **Settled 2026-09-15 (owner, 0.5.5): 8 ascendancy points, 2 per trial
+   level.** The app grants all 8 as soon as an ascendancy is chosen, at any
+   level. That is the owner's choice: a player should not wonder why the app
+   allows only 4 or 6. Corpus: no file allocates more than 8 ascendancy nodes
+3. **Settled 2026-09-15 (owner, 0.5.5): at most 5 supports per skill.** The
+   actual socket count varies per gem, and a `.build` doesn't carry it, so
+   `support.socket_limit` checks the ceiling. Gem quality (20% by default,
+   more through Gemling Legionnaire, an instill-only passive or an amulet mod)
+   doesn't change sockets. Corpus: no skill holds more than 5
+4. **Settled 2026-09-15 (owner, 0.5.5): 100 Spirit from quests**, more from
+   items, and some from a few tree and ascendancy nodes. In the catalog, 15
+   nodes mention Spirit, 11 of them on ascendancies, and several are
+   conditional ("for each of your empty Charm slots", "per Item Energy Shield
+   on Equipped Body Armour"), so they can't be summed. `spirit.overcommitted`
+   therefore stays a warning, above 100 plus the tree's flat Spirit
 5. **Settled 2026-09-14 from the data: neither.** The skill-gem export
    carries `tags`, attribute `requirement_weights`, `grants_skills`,
    `support_text` and presentation fields, but no weapon-type field, and only
    one gem in 1191 carries a weapon tag (`bow`). Weapon binding would have to
    come from the granted-skill data, which is not synced. A data question, not
    a game check
-6. How many Instilled Modifiers a normal amulet allows. `UniqueMultipleAnointments1`
-   grants "3 additional", which implies a base of at least one, but the base
-   itself is nowhere in the catalog. The editor deliberately does not enforce a
-   limit; this proof would only be needed if it ever should.
-7. Which spelling of `unique_name` the game accepts for the three ambiguous
-   uniques, and whether `.build` offers any disambiguation at all
+6. **Settled 2026-09-15 (owner, 0.5.5): one Instilled Modifier per normal
+   amulet.** One special amulet allows 4, which matches
+   `UniqueMultipleAnointments1` ("3 additional"). The owner also noted that
+   drop-only amulets with 2 exist. The editor still enforces no limit
+7. **Settled 2026-09-15 (owner and corpus, 0.5.5).** *Guiding Palm* is not
+   ambiguous in the game: the three sceptres are *Guiding Palm of the Eye*,
+   *of the Heart* and *of the Mind* (owner), and the catalog has rows under
+   those names. A real export writes the full name: `"unique_name": "Guiding
+   Palm of the Eye"`.
+   The catalog's three bare "Guiding Palm" rows share the same three pieces
+   of artwork (Fire, Cold, Lightning), so they look like base entries rather
+   than separate items. *Grip of Kulemak*'s five rows (artwork
+   `TokenOfPassage01`–`05`) are one ring at different counts of desecrated
+   mods (owner), and a `.build` can't express mods at all
 8. **Settled 2026-09-14 (owner, 0.5.5): all of them.** A multi-node
    `unlockConstraint` needs every listed gate node allocated, not any one —
    which is what B1 already implements. Measured 2026-09-12: the field is
@@ -1750,10 +1786,10 @@ geometry. What was proof #6 is dropped rather than stamped.
 
 ### Notes for the later rule walkthrough
 
-- `passive.budget_exceeded` can legitimately be exceeded: via a rune, and via the
-  league mechanic "Martyr of the First Edict", which grants every player in a
-  league an extra point. The rule needs a tolerance or a user field for extra
-  points, otherwise it fires on correct builds.
+- `passive.budget_exceeded` must allow the two endgame points above the level
+  and quest points, from the Site of the Martyr of the First Edict and the
+  Expedition drop *Olroth's Boon* (proof 1). Otherwise it fires on correct
+  builds.
 - **Instilled nodes are not counted by it at all.** An Instilled Modifier costs
   no passive point — it is granted by the amulet — so counting the declared ones
   towards the budget would make correct builds look over-spent. Owner-confirmed

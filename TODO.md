@@ -35,30 +35,28 @@ game version". Each note says what the code assumes today.
   unconnected, and one about 1050 away should not. Ask me for candidate nodes
   near any keystone and I'll list them with their distances.
 
-Each of the next six needs one number or rule from the game, stamped with the
-game version. Tell me the answer and I'll record it in
-`docs/version-acceptance.md`.
+Proofs 1–4, 6 and 7 were settled on 2026-09-15 from your answers and the new
+reference builds. They're recorded in the spec and in `docs/rules.md`.
 
-- [ ] **Proof 1: passive points.** On a character at a known level (50, and
-  100 if you have one), how many passive points has it been given in total,
-  and how many of those came from quest rewards? Iteration 4's budget check
-  counts exactly these two parts, per weapon-set pool.
-- [ ] **Proof 2: ascendancy points.** How many ascendancy points exist in
-  total, what awards them (the trials), and how many does each completion give?
-- [ ] **Proof 3: support sockets on a skill gem.** What decides how many
-  support gems a skill gem can hold: gem level, quality, the gem's tier, or
-  something else? Compare one skill at two gem levels in the gem menu.
-- [ ] **Proof 4: Spirit.** How much Spirit can the passive tree give in total,
-  and which sources exist only outside it (body armour, amulet, sceptre,
-  quests)?
-- [ ] **Proof 6: Instilled Modifiers per amulet.** Can a normal (non-unique)
-  amulet carry more than one? Try instilling a second on an amulet that already
-  has one. Low priority: the editor enforces no limit either way.
-- [ ] **Proof 7: ambiguous unique names.** *Grip of Kulemak* is the name of 5
-  different rings, and *Guiding Palm* of 3 sceptres. Put one in a build in the
-  game's planner, export the `.build`, and tell me what it wrote for
-  `unique_name`: the bare name, or something that tells the variants apart.
-  (*Grand Spectrum*, 3 jewels, can't appear in a `.build` at all.)
+- [ ] ***Weapon Master* (Mercenary2):** its stat reads "100 Passive Skill
+  Points become Weapon Set Skill Points". What does that do to the two
+  weapon-set pools? The points budget needs the answer.
+
+## Decisions from the proof answers
+
+- [ ] **Confirm the quest-point approximation:** the app assumes min(24,
+  4 × floor(level / 10)) quest points at a level. That matches your figures
+  for levels 20, 50, 60 and 80, but it's a guess between acts. For example,
+  it gives 4 at level 15 and 0 below level 10.
+- [ ] **Treat *Grip of Kulemak* as one unique?** Its five catalog rows differ
+  only in desecrated mods, which a `.build` can't carry. Treating it as one
+  would mean no "ambiguous unique" warning for it.
+- [ ] **Hide the three bare "Guiding Palm" rows** from the unique search? A
+  real export writes the full name, *Guiding Palm of the Eye*, so the bare
+  rows look like base entries no build would name.
+- [ ] **What are the "drop-only 2 instills"** in your proof 6 answer? I read
+  it as amulets that drop carrying two Instilled Modifiers. Correct me if
+  that's wrong.
 
 Proof 5 (weapon binding of skills) is not yours: it is a question about the
 catalog data, answered from it on 2026-09-14 and recorded in the spec.

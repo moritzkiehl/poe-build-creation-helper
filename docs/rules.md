@@ -39,6 +39,7 @@ Last updated 2026-09-15.
 | T9 | Changing the class, the ascendancy or the declared jewel doesn't cascade. Now-illegal passives stay and are reported later. | owner 2026-09-13 | Not enforced by design; iteration 4 findings |
 | T10 | Jewels that open a radius around their own socket are not modelled. The data has no socket radius. | data | Not modelled |
 | T11 | 240 tree nodes have `id: null` (unnamed ascendancy filler) and are not allocatable. | data | Filtered at sync |
+| T12 | Ranger3's *Path of the Sorceress* and *Path of the Warrior* each read "Can Allocate Passive Skills from the Sorceress's / Warrior's starting point". An allocated one adds that class's start node as a second root for connectivity. | data (stat text) | **Not enforced yet.** T1 roots only at the build's own class, so today these builds get their off-start nodes refused |
 
 Spec: "Allocation is checked, not merely drawn", "Weapon sets are allocated,
 coloured and summed separately", "Deallocation cascades, as one event".
@@ -48,9 +49,11 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | # | Rule | Source | Enforced |
 |---|---|---|---|
 | P1 | Each weapon set has its own point pool. A shared passive costs one point from both pools; a weapon-set passive costs one from its own pool only. | owner 0.5.5 (proof 9) | `passive.budget_exceeded` (iteration 4) |
-| P2 | The points available at a level are the per-level points plus quest points. The exact figures are unknown. | assumed (proof 1) | `passive.budget_exceeded` (iteration 4) |
-| P3 | The budget can legitimately be exceeded, through a rune and through the league mechanic *Martyr of the First Edict*, so the budget rule needs a tolerance or an extra-points field. | owner | Iteration 4 |
+| P2 | Each weapon set's pool is level − 1 (one point per level from level 2) plus 24 quest points, 4 per act. The app approximates the quest points at a level as min(24, 4 × floor(level / 10)), because it knows a target level, not quest progress. | owner 0.5.5 (proof 1); the per-level quest share is an approximation | `passive.budget_exceeded` (iteration 4) |
+| P3 | Two endgame sources each give one extra point: the Site of the Martyr of the First Edict and the Expedition drop *Olroth's Boon*. The budget allows both. | owner 0.5.5 (proof 1) | `passive.budget_exceeded` (iteration 4) |
 | P4 | An Instilled Modifier costs no passive point. The amulet grants it. | owner 0.5.5 | Stats overview lists them separately; `passive.budget_exceeded` must not count them |
+| P5 | Some ascendancy nodes grant passive points: their stat reads "Grants N Passive Skill Point(s)" (seven nodes, on Druid1 and Ranger3). An allocated one adds N to each pool. One real build needs this: 127 points = 125 + 2 Oracle "Passive Point" nodes. | data (stat text + corpus) | `passive.budget_exceeded` (iteration 4) |
+| P6 | *Weapon Master* (Mercenary2): "100 Passive Skill Points become Weapon Set Skill Points". What it does to the two pools is not understood yet. | open (owner question) | Not modelled |
 
 ## Passive tree: Instilled Modifiers
 
@@ -58,7 +61,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 |---|---|---|---|
 | I1 | The currency is a Distilled Emotion; applying one produces an Instilled Modifier, applied at `Amulet1`. A node's `recipe` lists three Liquid Emotions, and an ingredient may repeat. 875 nodes have a recipe; no keystone or ascendancy node does. | data | Search at `Amulet1` covers only nodes with a recipe |
 | I2 | Which nodes are instilled can't be inferred from the tree, so the player declares them. The declaration is app-only and is never exported. | data | `build.instilled_passives` |
-| I3 | A normal amulet carries one Instilled Modifier; at least one unique carries 3 more (`UniqueMultipleAnointments1`). | data (strong evidence) + assumed base (proof 6) | Not enforced: one entry by default, no cap |
+| I3 | A normal amulet carries one Instilled Modifier. Some drop-only amulets carry 2, and one special amulet allows 4 (`UniqueMultipleAnointments1`, "3 additional"). | owner 0.5.5 (proof 6) + data | Not enforced: one entry by default, no cap |
 
 ## Classes and ascendancies
 
@@ -67,7 +70,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | C1 | All 12 classes are selectable in 0.5.5 and share 6 physical start positions in pairs, keyed by `classStartIndex`. | data | `catalog_class.start_node_id` |
 | C2 | An ascendancy id (`Sorceress3`, `Druid1`, `Mercenary1`) uses the tree export's `ascendancyId` key space, and each belongs to exactly one class. A build with only an ascendancy is rooted on that ascendancy's class. | data | `ClassFromAscendancy` (on import and at runtime) |
 | C3 | An ascendancy node belongs to one ascendancy only. | data | Other ascendancies are hidden on the canvas; `ascendancy.mismatch` (iteration 4) |
-| C4 | Ascendancy points have a total count and come from the trials. The figures are unknown. | assumed (proof 2) | `ascendancy.budget_exceeded` (iteration 4) |
+| C4 | There are 8 ascendancy points, 2 per trial level. The app allows all 8 as soon as an ascendancy is chosen, at any level. | owner 0.5.5 (proof 2); allowing all 8 at once is the owner's design choice | `ascendancy.budget_exceeded` (iteration 4) |
 
 ## Gems
 
@@ -78,10 +81,10 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | G3 | `gem_type` is `active`, `support` or `spirit`. | data | Catalog |
 | G4 | A support's requirements live in `support_text` prose, not in fields. The parser understands 85% of supports fully, so a parsed requirement can only warn; only a curated requirement can be an error. | data | `support.requirement_unmet` (iteration 4) |
 | G5 | A support may be used more than once per character since 0.3. It was once only in 0.1 and 0.2. | data | `support.used_twice_in_build`, `until: 0.2` |
-| G6 | How many supports a skill gem holds depends on something not yet known: gem level, quality, tier or something else. | assumed (proof 3) | `support.socket_limit` (iteration 4) |
+| G6 | A skill holds at most 5 supports. The actual socket count varies per gem and isn't in a `.build`, so only the ceiling is checked. | owner 0.5.5 (proof 3) | `support.socket_limit` (iteration 4) |
 | G7 | The game's own skill-to-support pairing is `recommended_supports`. | data | `support.suggestion` (iteration 4) |
 | G8 | Skills are bound to weapon types, but the gem export carries no weapon-type field, so this can't be derived from synced data. | data (proof 5) | `weapon.mismatch` is blocked until the granted-skill data is synced |
-| G9 | Spirit funds persistent buffs, auras and minions. How much of it comes from the tree and how much only from gear is unknown. | assumed (proof 4) | `spirit.overcommitted`, warning only (iteration 4) |
+| G9 | Spirit funds persistent buffs, auras and minions. 100 comes from quests; the rest comes from items and a few tree and ascendancy nodes, several of them conditional and so not summable. | owner 0.5.5 (proof 4) | `spirit.overcommitted`: a warning only, above 100 plus the tree's flat Spirit (iteration 4) |
 | G10 | Gem requirements are met by attributes from the tree and levels, but gear isn't modelled and can close the gap. | design | `attributes.unmet`, warning only (iteration 4) |
 
 ## Items and slots
@@ -100,7 +103,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | # | Rule | Source | Enforced |
 |---|---|---|---|
 | U1 | A `.build` identifies a unique by `unique_name` alone. | docs | Import |
-| U2 | Unique names aren't unique: *Grand Spectrum* (3 jewels), *Grip of Kulemak* (5 rings) and *Guiding Palm* (3 sceptres) are distinct items sharing a name. It's unknown whether the game's `.build` tells them apart. *Grand Spectrum* is a jewel and can't appear in a `.build` at all. | data + assumed (proof 7) | `unique.name_ambiguous` (iteration 4) |
+| U2 | Three unique names repeat in the catalog. *Guiding Palm* is really three sceptres named *of the Eye*, *of the Heart* and *of the Mind*, which the catalog also has; its bare-name rows share their artwork. *Grip of Kulemak* is one ring at five counts of desecrated mods, which a `.build` can't express. *Grand Spectrum* is a jewel and can't appear in a `.build`. A real export writes the full name, `Guiding Palm of the Eye`. | data + owner 0.5.5 (proof 7) | `unique.name_ambiguous` (iteration 4) |
 | U3 | No published source carries a unique's modifiers, so everything the app says a unique does must be curated. | data | The curated `interactions.yaml` (iteration 4, not yet written) |
 | U4 | A unique fits a slot according to its `item_class`, through the curated slot map. | data + curated | `unique.slot_mismatch` (iteration 4) |
 
