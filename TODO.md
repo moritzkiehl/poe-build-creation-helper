@@ -15,13 +15,19 @@ Last updated 2026-09-15.
   was postponed on 2026-09-12; see the spec, "Deferred: a design round on how
   the editor is organised". Your input so far: a working session is "rounds
   across all areas".
-- [ ] **How to execute slice B2 and the canvas feedback, and in which
-  order:** subagent-driven or inline, B2 first or the canvas first. The plans
-  are `docs/plans/2026-09-13-slice-b2-equipment.md` and
-  `docs/plans/2026-09-15-canvas-feedback.md`. They don't conflict: both touch
-  `EditorContext`, but different lines, and the canvas's `allocatable()`
-  reuses the radius check that B2 changes, so it picks the change up either
-  way.
+- [ ] **When and how to execute the canvas feedback plan**
+  (`docs/plans/2026-09-15-canvas-feedback.md`): subagent-driven like B2, or
+  inline. Slice B2 is built (`49a252d`..`d51b8e7`), so the canvas's
+  `allocatable()` already inherits the jewel's own 1000-unit coverage.
+- [ ] **Update the "View-state query keys live in one registry" section of
+  `CLAUDE.md`?** It still says "once slice B2's first task lands" and
+  "Until then, grep…". Proposed text: "A query parameter that must survive
+  an edit is registered in one place: `App\Controller\ViewState::KEYS`.
+  Templates never list the keys by hand. `_search_state.html.twig` loops
+  over `viewState`, and link maps merge into it.
+  `testTheHeaderFieldFormCarriesEveryViewStateKey` checks every key in the
+  registry, and `ViewStateTest` fails if a key is dropped. Decided
+  2026-09-14, mechanised in slice B2." Say yes and I'll put it in.
 
 ## Checks only the game can answer
 
