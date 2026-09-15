@@ -36,3 +36,14 @@ answer, or a destructive or outward-facing action waiting on their go-ahead.
 Add an item the moment one comes up, rather than leaving it only in a chat
 message. Remove it once it is done, and record the outcome where it belongs —
 the spec, the proof list, a commit. Decided 2026-09-13.
+
+## Game rules live in docs/rules.md
+
+Every Path of Exile 2 rule the app relies on is listed in `docs/rules.md`,
+grouped by subject (passive tree, classes, gems, items, uniques, level
+intervals, the build file format). Whenever a rule is defined, settled,
+changed or dropped — an owner answer, a proof, a measurement, a design
+decision — add or update its entry in the same commit, with its source
+(data, owner plus game version, docs, or assumed plus the open proof) and
+where it is enforced. The spec keeps the reasoning; `rules.md` is the one
+list. Decided 2026-09-15.
