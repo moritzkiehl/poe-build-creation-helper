@@ -49,7 +49,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | # | Rule | Source | Enforced |
 |---|---|---|---|
 | P1 | Each weapon set has its own point pool. A shared passive costs one point from both pools; a weapon-set passive costs one from its own pool only. | owner 0.5.5 (proof 9) | `passive.budget_exceeded` (iteration 4) |
-| P2 | Each weapon set's pool is level − 1 (one point per level from level 2) plus 24 quest points, 4 per act. The app approximates the quest points at a level as min(24, 4 × floor(level / 10)), because it knows a target level, not quest progress. | owner 0.5.5 (proof 1); the per-level quest share is an approximation | `passive.budget_exceeded` (iteration 4) |
+| P2 | Each weapon set's pool is level − 1 (one point per level from level 2) plus 24 quest points, 4 per act. The app approximates the quest points at a level as min(24, 4 × floor(level / 10)), because it knows a target level, not quest progress. | owner 0.5.5 (proof 1); the per-level quest share is an approximation the owner confirmed | `passive.budget_exceeded` (iteration 4) |
 | P3 | Two endgame sources each give one extra point: the Site of the Martyr of the First Edict and the Expedition drop *Olroth's Boon*. The budget allows both. | owner 0.5.5 (proof 1) | `passive.budget_exceeded` (iteration 4) |
 | P4 | An Instilled Modifier costs no passive point. The amulet grants it. | owner 0.5.5 | Stats overview lists them separately; `passive.budget_exceeded` must not count them |
 | P5 | Some ascendancy nodes grant passive points: their stat reads "Grants N Passive Skill Point(s)" (seven nodes, on Druid1 and Ranger3). An allocated one adds N to each pool. One real build needs this: 127 points = 125 + 2 Oracle "Passive Point" nodes. | data (stat text + corpus) | `passive.budget_exceeded` (iteration 4) |
@@ -61,7 +61,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 |---|---|---|---|
 | I1 | The currency is a Distilled Emotion; applying one produces an Instilled Modifier, applied at `Amulet1`. A node's `recipe` lists three Liquid Emotions, and an ingredient may repeat. 875 nodes have a recipe; no keystone or ascendancy node does. | data | Search at `Amulet1` covers only nodes with a recipe |
 | I2 | Which nodes are instilled can't be inferred from the tree, so the player declares them. The declaration is app-only and is never exported. | data | `build.instilled_passives` |
-| I3 | A normal amulet carries one Instilled Modifier. Some drop-only amulets carry 2, and one special amulet allows 4 (`UniqueMultipleAnointments1`, "3 additional"). | owner 0.5.5 (proof 6) + data | Not enforced: one entry by default, no cap |
+| I3 | A normal amulet carries one Instilled Modifier. The *Twisted Amulet* and *Distorted Amulet* bases drop with 2 random notables, and the unique *Strugglescream* allows 3 more, 4 in all (`UniqueMultipleAnointments1`). | owner 0.5.5 (proof 6) + data | Not enforced: one entry by default, no cap |
 
 ## Classes and ascendancies
 
@@ -103,7 +103,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | # | Rule | Source | Enforced |
 |---|---|---|---|
 | U1 | A `.build` identifies a unique by `unique_name` alone. | docs | Import |
-| U2 | Three unique names repeat in the catalog. *Guiding Palm* is really three sceptres named *of the Eye*, *of the Heart* and *of the Mind*, which the catalog also has; its bare-name rows share their artwork. *Grip of Kulemak* is one ring at five counts of desecrated mods, which a `.build` can't express. *Grand Spectrum* is a jewel and can't appear in a `.build`. A real export writes the full name, `Guiding Palm of the Eye`. | data + owner 0.5.5 (proof 7) | `unique.name_ambiguous` (iteration 4) |
+| U2 | Three unique names repeat in the catalog. *Guiding Palm* is really three sceptres named *of the Eye*, *of the Heart* and *of the Mind*, which the catalog also has; its bare-name rows share their artwork. *Grip of Kulemak* is one ring at five counts of desecrated mods, which a `.build` can't express, so the app treats it as one unique (owner, 2026-09-15). *Grand Spectrum* is a jewel and can't appear in a `.build`. A real export writes the full name, `Guiding Palm of the Eye`. | data + owner 0.5.5 (proof 7) | `unique.name_ambiguous` (iteration 4) |
 | U3 | No published source carries a unique's modifiers, so everything the app says a unique does must be curated. | data | The curated `interactions.yaml` (iteration 4, not yet written) |
 | U4 | A unique fits a slot according to its `item_class`, through the curated slot map. | data + curated | `unique.slot_mismatch` (iteration 4) |
 

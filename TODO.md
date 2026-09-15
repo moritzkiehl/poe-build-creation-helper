@@ -44,19 +44,9 @@ reference builds. They're recorded in the spec and in `docs/rules.md`.
 
 ## Decisions from the proof answers
 
-- [ ] **Confirm the quest-point approximation:** the app assumes min(24,
-  4 × floor(level / 10)) quest points at a level. That matches your figures
-  for levels 20, 50, 60 and 80, but it's a guess between acts. For example,
-  it gives 4 at level 15 and 0 below level 10.
-- [ ] **Treat *Grip of Kulemak* as one unique?** Its five catalog rows differ
-  only in desecrated mods, which a `.build` can't carry. Treating it as one
-  would mean no "ambiguous unique" warning for it.
 - [ ] **Hide the three bare "Guiding Palm" rows** from the unique search? A
   real export writes the full name, *Guiding Palm of the Eye*, so the bare
   rows look like base entries no build would name.
-- [ ] **What are the "drop-only 2 instills"** in your proof 6 answer? I read
-  it as amulets that drop carrying two Instilled Modifiers. Correct me if
-  that's wrong.
 
 Proof 5 (weapon binding of skills) is not yours: it is a question about the
 catalog data, answered from it on 2026-09-14 and recorded in the spec.

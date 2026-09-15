@@ -1665,7 +1665,8 @@ patch.
    the Site of the Martyr of the First Edict, and the Expedition drop
    *Olroth's Boon*. With proof 9, each weapon set's pool is level − 1 + quest
    points + up to 2. The app knows a target level, not quest progress, so it
-   approximates the quest share as min(24, 4 × floor(level / 10)). Checked
+   approximates the quest share as min(24, 4 × floor(level / 10)), an
+   approximation the owner confirmed on 2026-09-15. Checked
    against the corpus, eleven files: every pool is within 99 + 24 + 2 = 125
    except *Frostbolt Cast On Crit Oracle – Min Maxed* at 127, and that build
    allocates both Oracle "Passive Point" nodes (`AscendancyDruid1Small1` and
@@ -1697,9 +1698,11 @@ patch.
    come from the granted-skill data, which is not synced. A data question, not
    a game check
 6. **Settled 2026-09-15 (owner, 0.5.5): one Instilled Modifier per normal
-   amulet.** One special amulet allows 4, which matches
-   `UniqueMultipleAnointments1` ("3 additional"). The owner also noted that
-   drop-only amulets with 2 exist. The editor still enforces no limit
+   amulet.** Two exceptions exist (owner, confirmed in the catalog). The
+   *Twisted Amulet* and *Distorted Amulet* bases drop carrying 2 random
+   notables, and the unique *Strugglescream* "Can have 3 Additional Instilled
+   Modifiers", 4 in all, which matches `UniqueMultipleAnointments1`. The
+   editor still enforces no limit
 7. **Settled 2026-09-15 (owner and corpus, 0.5.5).** *Guiding Palm* is not
    ambiguous in the game: the three sceptres are *Guiding Palm of the Eye*,
    *of the Heart* and *of the Mind* (owner), and the catalog has rows under
@@ -1709,7 +1712,9 @@ patch.
    of artwork (Fire, Cold, Lightning), so they look like base entries rather
    than separate items. *Grip of Kulemak*'s five rows (artwork
    `TokenOfPassage01`–`05`) are one ring at different counts of desecrated
-   mods (owner), and a `.build` can't express mods at all
+   mods (owner), and a `.build` can't express mods at all. The app therefore
+   treats it as one unique and raises no ambiguity warning for it (owner,
+   2026-09-15)
 8. **Settled 2026-09-14 (owner, 0.5.5): all of them.** A multi-node
    `unlockConstraint` needs every listed gate node allocated, not any one —
    which is what B1 already implements. Measured 2026-09-12: the field is
