@@ -7,7 +7,7 @@ whenever it hits one, instead of leaving it in a chat message. When an item
 is done, it is removed, and its outcome is recorded where it belongs (the
 spec, the proof list, a commit).
 
-Last updated 2026-09-13.
+Last updated 2026-09-15.
 
 ## Decisions
 
@@ -60,6 +60,7 @@ catalog data, answered from it on 2026-09-14 and recorded in the spec.
 
 ## Git
 
-- [ ] **Push the local docs commits** ahead of `origin/main`: `9fdb28a` (the
-  B2 design), `dcadce2` (the B2 plan), and the commit that added this file and
-  its `CLAUDE.md` rule. Or leave them until B2 ships.
+- [ ] **Push the local commits** ahead of `origin/main`: the runtime class
+  fallback (`edfbd77`, `afa786b`, `4a24737`), enablers scoped per weapon set
+  (`66b73aa`), the 2026-09-14 decisions (`eee2487`) and `docs/rules.md`.
+  `git log --oneline origin/main..HEAD` lists them.
