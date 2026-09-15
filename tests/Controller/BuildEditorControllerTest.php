@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Controller\ViewState;
 use App\Entity\Build;
 use App\Entity\BuildEvent;
 use App\Tests\Support\SeedsALegalPassiveTree;
@@ -1171,13 +1172,21 @@ final class BuildEditorControllerTest extends WebTestCase
     }
 
     /**
-     * The gate test the registry exists for: every key must reach the header's
-     * field macro, which inherits no Twig context and so is the form most
-     * likely to drop one.
+     * The gate test the registry exists for: every key in
+     * {@see ViewState::KEYS} must reach the header's field macro, which
+     * inherits no Twig context and so is the form most likely to drop one —
+     * so a ninth key added to the registry without a template update must
+     * fail this test rather than go unchecked. `ViewState::term()` only
+     * trims a query value, and `EditorSearches::all()` hands the whole map
+     * on as `viewState` untouched, so a distinct, non-empty value per key
+     * survives to the hidden field unchanged regardless of what that key
+     * means elsewhere (`intervals`/`supports`/`stats` are only matched
+     * against 'flat'/'per-passive'/'1'/'2' when deriving *other* variables
+     * such as `passivesUniform`, never when building `viewState` itself).
      */
     public function testTheHeaderFieldFormCarriesEveryViewStateKey(): void
     {
-        $state = ['q' => 'a', 'gem' => 'b', 'support' => 'c', 'unique' => 'd', 'instilled' => 'e', 'intervals' => 'flat', 'supports' => 'flat', 'stats' => '1'];
+        $state = array_combine(ViewState::KEYS, array_map(static fn (string $key): string => 'v_'.$key, ViewState::KEYS));
         $crawler = $this->client->request('GET', $this->createBuild().'?'.http_build_query($state));
 
         $form = $crawler->filter('#header-note')->closest('form');

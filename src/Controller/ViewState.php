@@ -14,7 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
  * plain form POST follows, the header's field macro, the links that change one
  * view, the GET search forms, and the canvas's fetch URL. Each of those once
  * kept its own list, and a key missed in one was silently dropped — five times
- * before this registry existed. Every consumer reads this list now.
+ * before this registry existed. Every consumer reads this list now: no
+ * template keeps its own hand-listed copy of the keys any more, they loop
+ * over `viewState` (`_search_state.html.twig`) or merge it into a link map.
  */
 final class ViewState
 {

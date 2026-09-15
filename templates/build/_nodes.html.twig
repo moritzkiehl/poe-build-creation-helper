@@ -26,10 +26,11 @@
 
     <h3>Levels</h3>
     {#
-        `viewState` (EditorContext) is the one map of every raw view-state
-        term, so a link built from it cannot drop a piece of state the way a
-        hand-listed set of query keys eventually will. Every link below
-        overrides only the one key it exists to change.
+        `viewState` (from `EditorSearches::all()`, built via `App\Controller\ViewState`)
+        is the one map of every raw view-state term, so a link built from it
+        cannot drop a piece of state the way a hand-listed set of query keys
+        eventually will. Every link below overrides only the one key it
+        exists to change.
     #}
     {% set editLink = {slug: build.shareSlug, token: token}|merge(viewState) %}
     {% if passivesUniform %}
