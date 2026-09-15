@@ -50,10 +50,3 @@ reference builds. They're recorded in the spec and in `docs/rules.md`.
 
 Proof 5 (weapon binding of skills) is not yours: it is a question about the
 catalog data, answered from it on 2026-09-14 and recorded in the spec.
-
-## Git
-
-- [ ] **Push the local commits** ahead of `origin/main`: the runtime class
-  fallback (`edfbd77`, `afa786b`, `4a24737`), enablers scoped per weapon set
-  (`66b73aa`), the 2026-09-14 decisions (`eee2487`) and `docs/rules.md`.
-  `git log --oneline origin/main..HEAD` lists them.
