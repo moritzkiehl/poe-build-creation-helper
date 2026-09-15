@@ -92,7 +92,7 @@ coloured and summed separately", "Deallocation cascades, as one event".
 | # | Rule | Source | Enforced |
 |---|---|---|---|
 | S1 | `inventory_id` has 14 values: `Weapon1`, `Weapon2`, `Offhand1`, `Offhand2`, `Helm1`, `BodyArmour1`, `Gloves1`, `Boots1`, `Belt1`, `Amulet1`, `Ring1`, `Ring2`, `Trinket1`, `Flask1`. No upstream source lists them. | data | `config/inventory_slots.yaml` (curated) |
-| S2 | A slot is identified by `(inventory_id, slot_x, slot_y)`. `Flask1` holds `slot_x` 0 (life flask) and 1 (mana flask); `Trinket1`, the charm belt, holds 2, 3 and 4. `slot_y` is 0 everywhere. | data | Slice B2 |
+| S2 | A slot is identified by `(inventory_id, slot_x, slot_y)`. `Flask1` holds `slot_x` 0 (life flask) and 1 (mana flask); `Trinket1`, the charm belt, holds 2, 3 and 4. `slot_y` is 0 everywhere. | data | `DocumentEditor` (addresses entries by `(inventory_id, slot_x)`, y = 0) and the one `position` form field `<inventory_id>@<slot_x>` parsed in `CommandFactory` |
 | S3 | `weapon_set` 1 and 2 name the slot halves `Weapon1`/`Offhand1` and `Weapon2`/`Offhand2`. | data | Wire format |
 | S4 | A `.build` carries no rare items and no modifiers, so nothing about a planned rare can be validated. Mod data serves browsing and crafting only. | docs + data | By construction |
 | S5 | Jewels and jewel sockets can't be represented in `.build`. The declared jewel keystone is app-only and never exported. | docs | `build.jewel_keystone` (slice B2) |

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Build;
 
 use App\Build\Edit\Command\AllocatePassive;
+use App\Build\Edit\Command\ClearSlot;
 use App\Build\Edit\Command\SetHeaderField;
 use App\Build\Edit\Command\SetSlot;
 use App\Build\Edit\CommandFactory;
@@ -41,10 +42,26 @@ final class CommandFactoryTest extends TestCase
 
     public function testAnEmptySlotValueBecomesNullRatherThanAnEmptyString(): void
     {
-        $command = $this->factory->fromRequest(7, 'slot.set', new InputBag(['inventory_id' => 'Ring1', 'unique_name' => '', 'from' => '1', 'to' => '100', 'additional_text' => '']));
+        $command = $this->factory->fromRequest(7, 'slot.set', new InputBag(['position' => 'Ring1@0', 'unique_name' => '', 'from' => '1', 'to' => '100', 'additional_text' => '']));
 
         self::assertInstanceOf(SetSlot::class, $command);
         self::assertNull($command->uniqueName);
+    }
+
+    public function testAPositionNamesTheSlotAndItsPlaceOnTheBelt(): void
+    {
+        $command = $this->factory->fromRequest(7, 'slot.clear', new InputBag(['position' => 'Trinket1@3']));
+
+        self::assertInstanceOf(ClearSlot::class, $command);
+        self::assertSame('Trinket1', $command->inventoryId);
+        self::assertSame(3, $command->slotX);
+    }
+
+    public function testAMalformedPositionIsRefused(): void
+    {
+        $this->expectException(InvalidEditCommand::class);
+
+        $this->factory->fromRequest(7, 'slot.clear', new InputBag(['position' => 'Trinket1']));
     }
 
     public function testClearingAHeaderFieldIsAccepted(): void

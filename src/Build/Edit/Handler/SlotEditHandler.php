@@ -25,6 +25,7 @@ final class SlotEditHandler
     {
         $payload = [
             'inventory_id' => $command->inventoryId,
+            'slot_x' => $command->slotX,
             'unique_name' => $command->uniqueName,
             'from' => $command->from,
             'to' => $command->to,
@@ -32,15 +33,15 @@ final class SlotEditHandler
         ];
 
         $this->builds->apply($command->buildId, 'slot.set', $payload, function (Build $build) use ($command): void {
-            $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->setInventorySlot($d, $command->inventoryId, $command->uniqueName, $command->from, $command->to, $command->additionalText));
+            $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->setInventorySlot($d, $command->inventoryId, $command->slotX, $command->uniqueName, $command->from, $command->to, $command->additionalText));
         });
     }
 
     #[AsMessageHandler]
     public function clear(ClearSlot $command): void
     {
-        $this->builds->apply($command->buildId, 'slot.clear', ['inventory_id' => $command->inventoryId], function (Build $build) use ($command): void {
-            $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->clearInventorySlot($d, $command->inventoryId));
+        $this->builds->apply($command->buildId, 'slot.clear', ['inventory_id' => $command->inventoryId, 'slot_x' => $command->slotX], function (Build $build) use ($command): void {
+            $this->builds->document($build, fn (BuildDocument $d): BuildDocument => $this->documents->clearInventorySlot($d, $command->inventoryId, $command->slotX));
         });
     }
 }

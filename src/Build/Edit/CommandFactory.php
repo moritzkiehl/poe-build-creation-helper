@@ -52,14 +52,54 @@ final class CommandFactory
             'support.add' => new AddSupport($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id')),
             'support.remove' => new RemoveSupport($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id')),
             'support.interval' => new SetSupportInterval($buildId, $this->int($payload, 'skill_index'), $this->string($payload, 'support_id'), $this->int($payload, 'from'), $this->int($payload, 'to')),
-            'slot.set' => new SetSlot($buildId, $this->string($payload, 'inventory_id'), $this->optionalString($payload, 'unique_name'), $this->int($payload, 'from'), $this->int($payload, 'to'), $this->string($payload, 'additional_text', required: false)),
-            'slot.clear' => new ClearSlot($buildId, $this->string($payload, 'inventory_id')),
+            'slot.set' => $this->setSlot($buildId, $payload),
+            'slot.clear' => $this->clearSlot($buildId, $payload),
             'snapshot.create' => new CreateSnapshot($buildId, $this->string($payload, 'name')),
             'history.revert' => new Revert($buildId, $this->int($payload, 'event_id')),
             'instilled.add' => new AddInstilled($buildId, $this->string($payload, 'id')),
             'instilled.remove' => new RemoveInstilled($buildId, $this->string($payload, 'id')),
             default => throw InvalidEditCommand::unknownAction($action),
         };
+    }
+
+    /**
+     * @param InputBag<string|int|float|bool|null> $payload
+     */
+    private function setSlot(int $buildId, InputBag $payload): SetSlot
+    {
+        [$inventoryId, $slotX] = $this->position($payload);
+
+        return new SetSlot($buildId, $inventoryId, $slotX, $this->optionalString($payload, 'unique_name'), $this->int($payload, 'from'), $this->int($payload, 'to'), $this->string($payload, 'additional_text', required: false));
+    }
+
+    /**
+     * @param InputBag<string|int|float|bool|null> $payload
+     */
+    private function clearSlot(int $buildId, InputBag $payload): ClearSlot
+    {
+        [$inventoryId, $slotX] = $this->position($payload);
+
+        return new ClearSlot($buildId, $inventoryId, $slotX);
+    }
+
+    /**
+     * A slot is named by one field, `<inventory_id>@<slot_x>` — the only
+     * place a position is parsed, so the direct slot forms and the unique
+     * search's target dropdown share one input shape.
+     *
+     * @param InputBag<string|int|float|bool|null> $payload
+     *
+     * @return array{0: string, 1: int}
+     */
+    private function position(InputBag $payload): array
+    {
+        $value = $this->string($payload, 'position');
+
+        if (1 !== preg_match('/^([A-Za-z0-9]+)@(\d+)$/', $value, $match)) {
+            throw InvalidEditCommand::noSuchEntry('equipment position "'.$value.'"');
+        }
+
+        return [$match[1], (int) $match[2]];
     }
 
     /**

@@ -438,20 +438,20 @@ final class BuildEditorControllerTest extends WebTestCase
     {
         $edit = $this->createBuild();
 
-        $this->client->request('POST', $edit.'/act', ['action' => 'slot.set', 'inventory_id' => 'Ring1', 'unique_name' => 'Kalandra\'s Touch', 'from' => '1', 'to' => '100', 'additional_text' => '']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'slot.set', 'position' => 'Ring1@0', 'unique_name' => 'Kalandra\'s Touch', 'from' => '1', 'to' => '100', 'additional_text' => '']);
         $this->client->followRedirect();
-        self::assertSelectorExists('#slot-name-Ring1[value="Kalandra\'s Touch"]');
+        self::assertSelectorExists('#slot-name-Ring1-0[value="Kalandra\'s Touch"]');
 
-        $this->client->request('POST', $edit.'/act', ['action' => 'slot.clear', 'inventory_id' => 'Ring1']);
+        $this->client->request('POST', $edit.'/act', ['action' => 'slot.clear', 'position' => 'Ring1@0']);
         $this->client->followRedirect();
-        self::assertSelectorNotExists('#slot-name-Ring1[value="Kalandra\'s Touch"]');
+        self::assertSelectorNotExists('#slot-name-Ring1-0[value="Kalandra\'s Touch"]');
     }
 
-    public function testAllFourteenSlotsAreOffered(): void
+    public function testEveryEquipmentPositionIsOffered(): void
     {
         $this->client->request('GET', $this->createBuild());
 
-        self::assertSelectorCount(14, '#build-slots form[data-slot]');
+        self::assertSelectorCount(17, '#build-slots form[data-slot]');
     }
 
     public function testAUniqueCanBeFoundBySearch(): void
@@ -462,10 +462,37 @@ final class BuildEditorControllerTest extends WebTestCase
             $this->client->request('GET', $this->createBuild().'?unique=Moonshard');
 
             self::assertSelectorTextContains('#build-slots', 'Test Moonshard Halo');
-            self::assertSelectorExists('#build-slots select[name="inventory_id"]');
+            self::assertSelectorExists('#build-slots select[name="position"]');
         } finally {
             $this->forgetUnique('test_unique_moonshard');
         }
+    }
+
+    public function testEveryFlaskAndCharmOfAnImportedBuildIsShownAndEditableOnItsOwn(): void
+    {
+        $entry = static fn (string $id, int $x, string $text): array => ['inventory_id' => $id, 'slot_x' => $x, 'slot_y' => 0, 'level_interval' => [1, 100], 'additional_text' => $text];
+        $json = json_encode(['name' => 'Belt', 'inventory_slots' => [
+            $entry('Flask1', 0, 'Test Life Flask'),
+            $entry('Flask1', 1, 'Test Mana Flask'),
+            $entry('Trinket1', 2, 'Test Charm A'),
+            $entry('Trinket1', 3, 'Test Charm B'),
+            $entry('Trinket1', 4, 'Test Charm C'),
+        ]], \JSON_THROW_ON_ERROR);
+
+        $this->client->request('POST', '/builds', ['json' => $json]);
+        $edit = (string) $this->client->getResponse()->headers->get('Location');
+        $this->client->request('GET', $edit);
+
+        // Before B2 the editor showed one flask of two and one charm of three.
+        foreach (['Flask1-0' => 'Test Life Flask', 'Flask1-1' => 'Test Mana Flask', 'Trinket1-2' => 'Test Charm A', 'Trinket1-3' => 'Test Charm B', 'Trinket1-4' => 'Test Charm C'] as $domId => $text) {
+            self::assertSelectorExists(\sprintf('#slot-text-%s[value="%s"]', $domId, $text));
+        }
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'slot.set', 'position' => 'Flask1@1', 'unique_name' => '', 'from' => '1', 'to' => '100', 'additional_text' => 'changed']);
+        $this->client->followRedirect();
+
+        self::assertSelectorExists('#slot-text-Flask1-1[value="changed"]');
+        self::assertSelectorExists('#slot-text-Flask1-0[value="Test Life Flask"]', 'editing the mana flask must leave the life flask alone');
     }
 
     public function testTheInstilledFieldSitsWithTheAmulet(): void

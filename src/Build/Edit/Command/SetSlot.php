@@ -11,6 +11,7 @@ final readonly class SetSlot implements EditCommand
     public function __construct(
         public int $buildId,
         public string $inventoryId,
+        public int $slotX,
         public ?string $uniqueName,
         public int $from,
         public int $to,

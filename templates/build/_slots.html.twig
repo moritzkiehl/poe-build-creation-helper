@@ -1,6 +1,6 @@
 {% set filled = {} %}
-{% for slot in document.inventorySlots %}
-    {% set filled = filled|merge({(slot.inventory_id): slot}) %}
+{% for entry in document.inventorySlots %}
+    {% set filled = filled|merge({(entry.inventory_id ~ '@' ~ (entry.slot_x|default(0))): entry}) %}
 {% endfor %}
 
 <section id="build-slots" class="full">
@@ -27,9 +27,9 @@
                         <input type="hidden" name="to" value="100">
                         {{ include('build/_search_state.html.twig') }}
                         <label for="unique-result-{{ loop.index0 }}">Into slot</label>
-                        <select id="unique-result-{{ loop.index0 }}" name="inventory_id">
-                            {% for slot in slots %}
-                                <option value="{{ slot.id }}">{{ slot.label }}</option>
+                        <select id="unique-result-{{ loop.index0 }}" name="position">
+                            {% for position in slotPositions %}
+                                <option value="{{ position.key }}">{{ position.label }}</option>
                             {% endfor %}
                         </select>
                         <button type="submit">Set</button>
@@ -42,24 +42,25 @@
     {% endif %}
 
     <ul>
-        {% for slot in slots %}
-            {% set current = filled[slot.id]|default(null) %}
+        {% for position in slotPositions %}
+            {% set current = filled[position.key]|default(null) %}
+            {% set domId = position.id ~ '-' ~ position.x %}
             <li>
-                <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-slot="{{ slot.id }}">
+                <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post" data-slot="{{ position.key }}">
                     <input type="hidden" name="action" value="slot.set">
-                    <input type="hidden" name="inventory_id" value="{{ slot.id }}">
+                    <input type="hidden" name="position" value="{{ position.key }}">
                     {{ include('build/_search_state.html.twig') }}
 
-                    <label for="slot-name-{{ slot.id }}">{{ slot.label }}</label>
-                    <input type="text" id="slot-name-{{ slot.id }}" name="unique_name" value="{{ current.unique_name|default('') }}" placeholder="a unique's name, or leave empty">
+                    <label for="slot-name-{{ domId }}">{{ position.label }}</label>
+                    <input type="text" id="slot-name-{{ domId }}" name="unique_name" value="{{ current.unique_name|default('') }}" placeholder="a unique's name, or leave empty">
 
-                    <label for="slot-from-{{ slot.id }}">From</label>
-                    <input type="number" id="slot-from-{{ slot.id }}" name="from" min="0" max="100" value="{{ current.level_interval[0]|default(1) }}">
-                    <label for="slot-to-{{ slot.id }}">to</label>
-                    <input type="number" id="slot-to-{{ slot.id }}" name="to" min="0" max="100" value="{{ current.level_interval[1]|default(100) }}">
+                    <label for="slot-from-{{ domId }}">From</label>
+                    <input type="number" id="slot-from-{{ domId }}" name="from" min="0" max="100" value="{{ current.level_interval[0]|default(1) }}">
+                    <label for="slot-to-{{ domId }}">to</label>
+                    <input type="number" id="slot-to-{{ domId }}" name="to" min="0" max="100" value="{{ current.level_interval[1]|default(100) }}">
 
-                    <label for="slot-text-{{ slot.id }}">Note</label>
-                    <input type="text" id="slot-text-{{ slot.id }}" name="additional_text" value="{{ current.additional_text|default('') }}">
+                    <label for="slot-text-{{ domId }}">Note</label>
+                    <input type="text" id="slot-text-{{ domId }}" name="additional_text" value="{{ current.additional_text|default('') }}">
 
                     <button type="submit">Save</button>
                 </form>
@@ -67,13 +68,13 @@
                 {% if current %}
                     <form action="{{ path('app_build_act', {slug: build.shareSlug, token: token}) }}" method="post">
                         <input type="hidden" name="action" value="slot.clear">
-                        <input type="hidden" name="inventory_id" value="{{ slot.id }}">
+                        <input type="hidden" name="position" value="{{ position.key }}">
                         {{ include('build/_search_state.html.twig') }}
                         <button type="submit">Clear</button>
                     </form>
                 {% endif %}
 
-                {% if 'Amulet1' == slot.id %}
+                {% if 'Amulet1' == position.id %}
                     <div id="build-instilled-search">
                         <h3>Instilled Modifier</h3>
                         <p>Three Distilled Emotions on the amulet grant a passive node's effect without allocating it. Only nodes with a recipe can be instilled.</p>

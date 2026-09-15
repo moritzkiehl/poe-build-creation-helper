@@ -192,22 +192,21 @@ final class DocumentEditor
         return $this->withSkills($document, $skills);
     }
 
-    public function setInventorySlot(BuildDocument $document, string $inventoryId, ?string $uniqueName, int $from, int $to, string $additionalText): BuildDocument
+    public function setInventorySlot(BuildDocument $document, string $inventoryId, int $slotX, ?string $uniqueName, int $from, int $to, string $additionalText): BuildDocument
     {
-        if (!$this->slots->isKnown($inventoryId)) {
-            throw InvalidEditCommand::noSuchEntry('equipment slot "'.$inventoryId.'"');
+        if (!$this->slots->hasPosition($inventoryId, $slotX)) {
+            throw InvalidEditCommand::noSuchEntry('equipment position "'.$inventoryId.'@'.$slotX.'"');
         }
 
         $slots = $document->inventorySlots;
-        $index = $this->indexOfSlot($document, $inventoryId);
+        $index = $this->indexOfSlot($document, $inventoryId, $slotX);
 
         // An entry the game wrote may carry keys this command does not own —
         // `weapon_set` only appears on some entries. Update only what this
-        // command changes and leave the rest exactly as it was; `slot_x` and
-        // `slot_y` default to 0 only when the entry does not exist yet.
+        // command changes and leave the rest exactly as it was.
         $entry = null !== $index ? $slots[$index] : [
             'inventory_id' => $inventoryId,
-            'slot_x' => 0,
+            'slot_x' => $slotX,
             'slot_y' => 0,
         ];
 
@@ -229,9 +228,9 @@ final class DocumentEditor
         return $this->withSlots($document, $slots);
     }
 
-    public function clearInventorySlot(BuildDocument $document, string $inventoryId): BuildDocument
+    public function clearInventorySlot(BuildDocument $document, string $inventoryId, int $slotX): BuildDocument
     {
-        $index = $this->indexOfSlot($document, $inventoryId);
+        $index = $this->indexOfSlot($document, $inventoryId, $slotX);
 
         if (null === $index) {
             return $document;
@@ -255,10 +254,12 @@ final class DocumentEditor
         return [$from, $to];
     }
 
-    private function indexOfSlot(BuildDocument $document, string $inventoryId): ?int
+    private function indexOfSlot(BuildDocument $document, string $inventoryId, int $slotX): ?int
     {
         foreach ($document->inventorySlots as $index => $slot) {
-            if (($slot['inventory_id'] ?? null) === $inventoryId) {
+            // slot_y is part of the key, but the corpus never varies it and no
+            // form sets it, so only y = 0 is addressable.
+            if (($slot['inventory_id'] ?? null) === $inventoryId && ($slot['slot_x'] ?? 0) === $slotX && ($slot['slot_y'] ?? 0) === 0) {
                 return $index;
             }
         }

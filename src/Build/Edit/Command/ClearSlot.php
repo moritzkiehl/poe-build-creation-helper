@@ -8,7 +8,7 @@ use App\Build\Edit\EditCommand;
 
 final readonly class ClearSlot implements EditCommand
 {
-    public function __construct(public int $buildId, public string $inventoryId)
+    public function __construct(public int $buildId, public string $inventoryId, public int $slotX)
     {
     }
 }
