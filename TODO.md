@@ -15,8 +15,13 @@ Last updated 2026-09-15.
   was postponed on 2026-09-12; see the spec, "Deferred: a design round on how
   the editor is organised". Your input so far: a working session is "rounds
   across all areas".
-- [ ] **How to execute slice B2:** subagent-driven or inline. The plan is
-  `docs/plans/2026-09-13-slice-b2-equipment.md`.
+- [ ] **How to execute slice B2 and the canvas feedback, and in which
+  order:** subagent-driven or inline, B2 first or the canvas first. The plans
+  are `docs/plans/2026-09-13-slice-b2-equipment.md` and
+  `docs/plans/2026-09-15-canvas-feedback.md`. They don't conflict: both touch
+  `EditorContext`, but different lines, and the canvas's `allocatable()`
+  reuses the radius check that B2 changes, so it picks the change up either
+  way.
 
 ## Checks only the game can answer
 
