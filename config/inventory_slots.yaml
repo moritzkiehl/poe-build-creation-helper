@@ -4,6 +4,10 @@
 # carry it. These ids were read out of fourteen .build files the game exported
 # at 0.5.5 and are therefore measured, not documented. If a patch adds a slot,
 # this file is where it is added — by hand, against a real exported file.
+#
+# Flask1 and Trinket1 share one strip on the belt and each holds several
+# entries, so they list their positions: the slot_x values the corpus shows,
+# not a count — Trinket1 starts at 2. Every other id is one position at 0.
 inventory_slots:
     - { id: Weapon1,    label: 'Weapon (set 1)' }
     - { id: Offhand1,   label: 'Offhand (set 1)' }
@@ -17,5 +21,5 @@ inventory_slots:
     - { id: Amulet1,    label: 'Amulet' }
     - { id: Ring1,      label: 'Ring (left)' }
     - { id: Ring2,      label: 'Ring (right)' }
-    - { id: Trinket1,   label: 'Trinket' }
-    - { id: Flask1,     label: 'Flask' }
+    - { id: Trinket1,   label: 'Charms', positions: [{ x: 2, label: 'Charm 1' }, { x: 3, label: 'Charm 2' }, { x: 4, label: 'Charm 3' }] }
+    - { id: Flask1,     label: 'Flasks', positions: [{ x: 0, label: 'Life flask' }, { x: 1, label: 'Mana flask' }] }
