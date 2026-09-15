@@ -92,7 +92,7 @@ final class BuildEditorController extends AbstractController
     {
         $params = ['slug' => $build->getShareSlug(), 'token' => $token];
 
-        foreach (['q', 'gem', 'support', 'unique', 'instilled', 'intervals', 'supports', 'stats'] as $key) {
+        foreach (ViewState::KEYS as $key) {
             $value = $request->request->get($key);
 
             if (\is_string($value) && '' !== $value) {

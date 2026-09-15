@@ -40,6 +40,21 @@ final class BuildEditorControllerTest extends WebTestCase
         self::assertSelectorExists('input[value="Respec at 60"]');
     }
 
+    public function testAPlainEditPostKeepsEveryViewStateKeyInTheRedirect(): void
+    {
+        $edit = $this->createBuild();
+        $state = ['q' => 'a', 'gem' => 'b', 'support' => 'c', 'unique' => 'd', 'instilled' => 'e', 'intervals' => 'flat', 'supports' => 'flat', 'stats' => '1'];
+
+        $this->client->request('POST', $edit.'/act', ['action' => 'header.set', 'field' => 'note', 'value' => 'kept'] + $state);
+
+        self::assertResponseRedirects();
+        $location = (string) $this->client->getResponse()->headers->get('Location');
+
+        foreach ($state as $key => $value) {
+            self::assertStringContainsString($key.'='.$value, $location, $key.' must survive the redirect a plain form POST follows');
+        }
+    }
+
     public function testAHeaderFieldCanBeClearedRatherThanBeingRefused(): void
     {
         $edit = $this->createBuild();

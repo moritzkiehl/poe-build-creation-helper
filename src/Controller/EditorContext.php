@@ -102,22 +102,6 @@ final class EditorContext
 
         return array_merge([
             'build' => $build,
-            // Every view-state query key with its raw, possibly-empty term —
-            // never a resolved default, so a view nobody chose never lands in
-            // a link. Every link that leaves the editor for itself merges
-            // into this one map and overrides only the key it exists to
-            // change, so no template keeps a hand-listed copy that can drop a
-            // key.
-            'viewState' => [
-                'q' => $searches['passiveQuery'],
-                'gem' => $searches['gemQuery'],
-                'support' => $searches['supportQuery'],
-                'unique' => $searches['uniqueQuery'],
-                'instilled' => $searches['instilledQuery'],
-                'intervals' => $searches['intervalsOverride'],
-                'supports' => $searches['supportsOverride'],
-                'stats' => $searches['statsOverride'],
-            ],
             'highlightedIds' => $highlightedIds,
             'token' => $token,
             'document' => $document,

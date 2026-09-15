@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Catalog\CatalogSearch;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -27,6 +26,7 @@ final class EditorSearches
 
     /**
      * @return array{
+     *     viewState: array<string, string>,
      *     passiveQuery: string,
      *     passiveResults: list<array{id: string, name: string, kind: string, stats: list<string>}>,
      *     gemQuery: string,
@@ -44,24 +44,16 @@ final class EditorSearches
      */
     public function all(): array
     {
-        $request = $this->requests->getCurrentRequest();
+        $state = ViewState::fromRequest($this->requests->getCurrentRequest());
 
-        $passive = $this->term($request, 'q');
-        $gem = $this->term($request, 'gem');
-        $support = $this->term($request, 'support');
-        $unique = $this->term($request, 'unique');
-        $instilled = $this->term($request, 'instilled');
-
-        // Neither view-state override is a search term, but each survives an
-        // edit the same way a search term does — as a query parameter that
-        // wins over a stale hidden field from the request body — so it is
-        // read with the same nullsafe helper rather than inventing a second
-        // idiom for the same problem.
-        $intervalsOverride = $this->term($request, 'intervals');
-        $supportsOverride = $this->term($request, 'supports');
-        $statsOverride = $this->term($request, 'stats');
+        $passive = $state['q'];
+        $gem = $state['gem'];
+        $support = $state['support'];
+        $unique = $state['unique'];
+        $instilled = $state['instilled'];
 
         return [
+            'viewState' => $state,
             'passiveQuery' => $passive,
             'passiveResults' => '' !== $passive ? $this->search->passives($passive) : [],
             'gemQuery' => $gem,
@@ -72,32 +64,9 @@ final class EditorSearches
             'uniqueResults' => '' !== $unique ? $this->search->search($unique, 'unique') : [],
             'instilledQuery' => $instilled,
             'instilledResults' => '' !== $instilled ? $this->search->instillablePassives($instilled) : [],
-            'intervalsOverride' => $intervalsOverride,
-            'supportsOverride' => $supportsOverride,
-            'statsOverride' => $statsOverride,
+            'intervalsOverride' => $state['intervals'],
+            'supportsOverride' => $state['supports'],
+            'statsOverride' => $state['stats'],
         ];
-    }
-
-    /**
-     * A search term normally arrives in the query string — the search forms
-     * submit via GET. An edit is a POST carrying neither, so the redirect and
-     * the Turbo response that follow it fall back to the request body, which
-     * the `/act` forms carry the term in as a hidden field. The query string
-     * wins when present, even empty, so clearing the search box still clears
-     * the term instead of resurrecting it from a stale hidden field.
-     */
-    private function term(?Request $request, string $key): string
-    {
-        if (null === $request) {
-            return '';
-        }
-
-        $value = $request->query->get($key);
-
-        if (!\is_string($value)) {
-            $value = $request->request->get($key);
-        }
-
-        return trim(\is_string($value) ? $value : '');
     }
 }
