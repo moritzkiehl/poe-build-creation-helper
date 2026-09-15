@@ -13,7 +13,7 @@ use App\Interchange\BuildDocument;
  * Both halves travel together on purpose: reverting a build that restored the
  * passives but kept a later note would be a state the user never had.
  *
- * @phpstan-type Snapshot array{document: array<string, mixed>, header: array{class_key: string|null, target_level: int|null, note: string|null, archetype_key: string|null}}
+ * @phpstan-type Snapshot array{document: array<string, mixed>, header: array{class_key: string|null, target_level: int|null, note: string|null, archetype_key: string|null, jewel_keystone?: string|null, instilled_passives?: list<string>}}
  */
 final class BuildSnapshot
 {
@@ -40,6 +40,8 @@ final class BuildSnapshot
                 'target_level' => $build->getTargetLevel(),
                 'note' => $build->getNote(),
                 'archetype_key' => $build->getArchetypeKey(),
+                'jewel_keystone' => $build->getJewelKeystone(),
+                'instilled_passives' => $build->getInstilledPassives(),
             ],
         ];
     }
@@ -66,6 +68,18 @@ final class BuildSnapshot
         $build->setTargetLevel($snapshot['header']['target_level']);
         $build->setNote($snapshot['header']['note']);
         $build->setArchetypeKey($snapshot['header']['archetype_key']);
+
+        // Snapshots written before these two fields existed carry no key for
+        // them. Their value at that point is unknown, so a revert to one leaves
+        // the current value alone — clearing it would invent a state the
+        // player never had.
+        if (\array_key_exists('jewel_keystone', $snapshot['header'])) {
+            $build->setJewelKeystone($snapshot['header']['jewel_keystone']);
+        }
+
+        if (\array_key_exists('instilled_passives', $snapshot['header'])) {
+            $build->setInstilledPassives($snapshot['header']['instilled_passives']);
+        }
     }
 
     /**

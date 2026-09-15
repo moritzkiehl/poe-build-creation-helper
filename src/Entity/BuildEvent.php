@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Build\Edit\BuildSnapshot;
 use App\Repository\BuildEventRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
  * storing it whole means reverting is a copy instead of a replay engine.
  * Reverting appends a new event of its own: the log is never rewritten.
  *
- * @phpstan-type Snapshot array{document: array<string, mixed>, header: array{class_key: string|null, target_level: int|null, note: string|null, archetype_key: string|null}}
+ * @phpstan-import-type Snapshot from BuildSnapshot
  */
 #[ORM\Entity(repositoryClass: BuildEventRepository::class)]
 #[ORM\Table(name: 'build_event')]

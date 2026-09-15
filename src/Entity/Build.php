@@ -89,6 +89,14 @@ class Build
     private array $instilledPassives = [];
 
     /**
+     * The keystone a declared keystone-radius jewel works around. App-only:
+     * the `.build` format has no jewels at all, so it never enters `document`
+     * or an export.
+     */
+    #[ORM\Column(length: 128, nullable: true)]
+    private ?string $jewelKeystone = null;
+
+    /**
      * @var array{passives: list<array<string, mixed>>, skills: list<array<string, mixed>>, inventory_slots: list<array<string, mixed>>}
      */
     #[ORM\Column(type: Types::JSON)]
@@ -308,6 +316,26 @@ class Build
         }
 
         $this->instilledPassives = $remaining;
+        $this->touch();
+    }
+
+    public function getJewelKeystone(): ?string
+    {
+        return $this->jewelKeystone;
+    }
+
+    public function setJewelKeystone(?string $jewelKeystone): void
+    {
+        $this->jewelKeystone = $jewelKeystone;
+        $this->touch();
+    }
+
+    /**
+     * @param list<string> $ids
+     */
+    public function setInstilledPassives(array $ids): void
+    {
+        $this->instilledPassives = array_values(array_unique($ids));
         $this->touch();
     }
 
